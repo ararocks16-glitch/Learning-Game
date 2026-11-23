@@ -1,0 +1,325 @@
+// ===================== RENDERING =====================
+const TABS = [
+  { id: 'home',    icon: '🏠', name: 'Home' },
+  { id: 'jobs',    icon: '💼', name: 'Jobs' },
+  { id: 'school',  icon: '🏫', name: 'School' },
+  { id: 'sports',  icon: '🏅', name: 'Sports' },
+  { id: 'shop',    icon: '🛒', name: 'Shop' },
+  { id: 'housing', icon: '🔑', name: 'Housing' },
+  { id: 'bank',    icon: '🏦', name: 'Bank' },
+  { id: 'me',      icon: '🧑', name: 'Me' },
+  { id: 'goals',   icon: '🏆', name: 'Goals' },
+];
+
+function bar(v) {
+  const cls = v < 25 ? 'low' : v < 50 ? 'mid' : 'ok';
+  return `<div class="bar"><div class="fill ${cls}" style="width:${v}%"></div></div>`;
+}
+function lvlBar(v) {
+  return `<div class="bar small"><div class="fill skill" style="width:${v}%"></div></div>`;
+}
+
+function render() {
+  if (!S) return;
+  const wd = WEEKDAYS[weekday()];
+  const night = S.hour < 6 || S.hour >= 20;
+  document.body.classList.toggle('night', night);
+
+  $('#hud').innerHTML = `
+    <div class="who"><span class="avatar">${S.avatar}</span><div><b>${esc(S.name)}</b><div class="muted">${home().icon} ${home().name}</div></div></div>
+    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">Day ${S.day} · ${wd}${isWeekend() ? ' 🎉' : ''}</div></div>
+    <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
+
+  $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
+    `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
+
+  const warn = [];
+  if (S.needs.food < 25) warn.push('🍽️ You are hungry!');
+  if (S.needs.energy < 20) warn.push('⚡ You are exhausted!');
+  if (S.needs.hygiene < 30) warn.push('🧼 You need a shower!');
+  if (S.needs.health < 30) warn.push('❤️ Your health is low!');
+  if (S.laundryDays > 7) warn.push('👕 Your clothes are dirty!');
+  if (!S.today.brushed && S.hour > 20) warn.push('🪥 Brush your teeth before bed!');
+  if (S.job && !isWeekend() && !S.today.worked && !S.today.sick && S.day >= S.job.startDay && S.hour >= 5 && S.hour < 11)
+    warn.push('💼 Time to go to work!');
+  $('#warnings').innerHTML = warn.map(w => `<span class="chip warn">${w}</span>`).join('');
+
+  $('#tabs').innerHTML = TABS.map(t => `<button class="tab ${tab === t.id ? 'active' : ''}" onclick="setTab('${t.id}')">${t.icon}<span>${t.name}</span></button>`).join('');
+
+  const views = { home: viewHome, jobs: viewJobs, school: viewSchool, sports: viewSports, shop: viewShop, housing: viewHousing, bank: viewBank, me: viewMe, goals: viewGoals };
+  $('#view').innerHTML = views[tab]();
+
+  $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
+}
+
+function setTab(t) { tab = t; render(); $('#view').scrollTop = 0; }
+
+// ---------- views ----------
+function jobCard() {
+  if (!S.job) return `<div class="card job none"><h3>💼 No Job</h3><p>You need money! Go to the <a onclick="setTab('jobs')">Jobs</a> tab to find work.</p></div>`;
+  const j = S.job, job = JOBS[j.id];
+  const c = commute();
+  const canWork = !isWeekend() && !S.today.worked && !S.today.sick && S.day >= j.startDay;
+  let status;
+  if (S.day < j.startDay) status = 'Your first day is tomorrow.';
+  else if (isWeekend()) status = 'Weekend — no work! 🎉';
+  else if (S.today.worked) status = '✅ You worked today.';
+  else if (S.today.sick) status = '🤒 Called in sick today.';
+  else status = 'Shift: leave between 6 and 9 AM to be on time.';
+  return `<div class="card job">
+    <h3>💼 ${job.name} <span class="muted">$${j.wage.toFixed(2)}/hr</span></h3>
+    <p class="muted">${status} · Commute: ${c.how} (${c.time * 60} min${c.cost ? `, $${c.cost} each way` : ''})</p>
+    <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
+    <div class="row">
+      <button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goWork()">🚌 Go to Work (8 hrs)</button>
+      <button class="btn ghost" ${canWork ? '' : 'disabled'} onclick="callInSick()">📞 Call in Sick</button>
+      <button class="btn ghost danger" onclick="quitJob()">Quit</button>
+    </div></div>`;
+}
+
+function viewHome() {
+  const acts = HOME_ACTIONS.map(a => {
+    const locked = a.need && !has(a.need);
+    const hint = typeof a.hint === 'function' ? a.hint() : a.hint;
+    return `<button class="action ${locked ? 'locked' : ''}" ${locked ? 'disabled' : ''} onclick="homeAct('${a.id}')">
+      <span class="ic">${a.icon}</span><b>${a.name}</b><small>${locked ? '🔒 Buy one at the shop' : hint}</small></button>`;
+  }).join('');
+  return `${jobCard()}
+    <div class="row info">
+      <span class="chip">🛒 Meals at home: <b>${S.groceries}</b></span>
+      <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
+      <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>
+      <span class="chip">${S.today.brushed ? '✅' : '⬜'} Brushed teeth today</span>
+    </div>
+    <h2>At Home</h2><div class="grid actions">${acts}</div>`;
+}
+function homeAct(id) {
+  const a = HOME_ACTIONS.find(x => x.id === id);
+  const before = S.hour + S.day * 24;
+  a.fn();
+  if (S.hour + S.day * 24 !== before) done(); else render();
+}
+
+function viewJobs() {
+  const cats = ['All', ...new Set(JOBS.map(j => j.cat))];
+  let list = JOBS.filter(j => jobFilter.cat === 'All' || j.cat === jobFilter.cat);
+  if (jobFilter.onlyCan) list = list.filter(meetsReqs);
+  list = [...list].sort((a, b) => a.pay - b.pay);
+  const qualified = JOBS.filter(meetsReqs).length;
+  return `<h2>💼 Job Board <span class="muted">(${JOBS.length} jobs · you qualify for ${qualified})</span></h2>
+    <p class="muted">Interviews happen on weekdays, 8 AM–4 PM. Dress nicely, be clean, and tell them what you can do!</p>
+    <div class="row filters">
+      <select onchange="jobFilter.cat=this.value;render()">${cats.map(c => `<option ${c === jobFilter.cat ? 'selected' : ''}>${c}</option>`).join('')}</select>
+      <label><input type="checkbox" ${jobFilter.onlyCan ? 'checked' : ''} onchange="jobFilter.onlyCan=this.checked;render()"> Only jobs I'm qualified for</label>
+    </div>
+    <div class="grid jobs">${list.map(j => {
+      const can = canApply(j);
+      const ok = meetsReqs(j);
+      const cd = S.cooldown[j.id] && S.cooldown[j.id] > S.day;
+      const mine = S.job && S.job.id === j.id;
+      const reqs = j.req.length ? j.req.map(r => {
+        const good = skillLevel(r.s) >= r.lvl;
+        return `<span class="req ${good ? 'good' : 'bad'}">${skillName(r.s)} ${r.lvl}</span>`;
+      }).join('') : '<span class="req good">No skills needed</span>';
+      return `<div class="card jobc ${ok ? 'qual' : ''} ${mine ? 'mine' : ''}">
+        <div class="jt"><b>${j.name}</b><span class="pay">$${j.pay}/hr</span></div>
+        <div class="muted small">${j.cat} · ~${money(j.pay * 40)}/week${j.insurance ? ' · 🩺 insurance' : ''}</div>
+        <div class="req ${S.edu >= j.edu ? 'good' : 'bad'}">🎓 ${EDU_NAMES[j.edu]}</div>
+        <div class="reqs">${reqs}</div>
+        ${mine ? '<button class="btn" disabled>Your job</button>'
+          : cd ? `<button class="btn" disabled>Re-apply Day ${S.cooldown[j.id]}</button>`
+          : `<button class="btn ${can.ok ? 'primary' : 'ghost'}" onclick="startInterview(${j.id})">Apply</button>`}
+      </div>`;
+    }).join('')}</div>`;
+}
+
+function viewSchool() {
+  const edu = EDUCATION.map(e => {
+    const prog = S.eduProgress[e.level];
+    const doneE = S.edu >= e.level;
+    const can = S.edu >= e.needs;
+    return `<div class="card">
+      <h3>🎓 ${e.name} ${doneE ? '✅' : ''}</h3><p>${e.desc}</p>
+      <p class="muted">${e.sessions} classes · ${money(e.price)} each (${money(e.price * e.sessions)} total) · ${e.hours} hrs each</p>
+      ${lvlBar(prog / e.sessions * 100)}<p class="muted">${prog}/${e.sessions} classes done</p>
+      ${doneE ? '' : `<button class="btn ${can ? 'primary' : 'ghost'}" onclick="attendSchool(${e.level})">${can ? `Go to class (${money(e.price)})` : `Needs ${EDU_NAMES[e.needs]}`}</button>`}
+    </div>`;
+  }).join('');
+  const classes = Object.entries(SKILLS).map(([k, s]) => `<div class="card skill">
+      <div class="jt"><b>${s.icon} ${s.name}</b><span>${Math.round(S.skills[k])}</span></div>${lvlBar(S.skills[k])}
+      <div class="row"><button class="btn primary sm" onclick="takeClass('${k}')">Class ${money(s.price)} · 2h</button>
+      ${LIBRARY_SKILLS.includes(k) ? `<button class="btn ghost sm" onclick="library('${k}')">📚 Library free · 3h</button>` : ''}</div>
+    </div>`).join('');
+  return `<h2>🏫 School</h2><p>You have a <b>${EDU_NAMES[S.edu]}</b>. More education = better jobs. Can't afford it? The 🏦 Bank gives student loans.</p>
+    <div class="grid two">${edu}</div>
+    <h2>📝 Skill Classes</h2><p class="muted">Classes cost money but teach you fast. The library is free but slower. Open 8 AM–9 PM.</p>
+    <div class="grid skills">${classes}</div>`;
+}
+
+function viewSports() {
+  const cards = Object.entries(SPORTS).map(([k, s]) => {
+    const lvl = S.sports[k];
+    const gearOk = !s.gear || S.owned['gear_' + k];
+    return `<div class="card sport">
+      <div class="jt"><b>${s.icon} ${s.name}</b><span>Level ${Math.round(lvl)}</span></div>${lvlBar(lvl)}
+      ${s.gear ? `<p class="muted small">${gearOk ? `✅ You have a ${s.gear.name}` : `Needs: ${s.gear.name}`}</p>` : `<p class="muted small">No gear needed · ${s.practiceWhere} $${s.practiceFee}</p>`}
+      ${!gearOk ? `<button class="btn primary sm" onclick="buyGear('${k}')">Buy ${s.gear.name} (${money(s.gear.price)})</button>` : `
+      <div class="row">
+        <button class="btn ghost sm" onclick="practice('${k}')">Practice${s.practiceFee ? ` $${s.practiceFee}` : ' (free)'}</button>
+        <button class="btn primary sm" onclick="lesson('${k}',false)">Coach ${money(s.lesson)}</button>
+        <button class="btn primary sm" ${lvl < 40 ? 'disabled title="Reach level 40 first"' : ''} onclick="lesson('${k}',true)">⭐ Pro Coach ${money(s.pro)}</button>
+      </div>
+      <details><summary>🏆 Tournaments (weekends)</summary>
+        ${TOURNAMENTS.map(t => `<div class="trow"><span>${t.name}<br><small class="muted">Entry ${money(t.fee)} · 1st: ${money(t.prize1)} · players ~level ${t.opp}</small></span>
+          <button class="btn sm ${isWeekend() ? 'primary' : 'ghost'}" onclick="tournament('${k}','${t.id}')">Enter</button></div>`).join('')}
+      </details>`}
+    </div>`;
+  }).join('');
+  const trophies = S.trophies.length ? S.trophies.map(t => `<span class="chip">🏆 ${SPORTS[t.sport].icon} ${TOURNAMENTS.find(x => x.id === t.t).name} (Day ${t.day})</span>`).join('') : '<span class="muted">No trophies yet.</span>';
+  return `<h2>🏅 Sports</h2>
+    <p>Practice on your own for free (or cheap), or <b>pay a coach</b> to get better faster. When you reach level 40, a ⭐ Pro Coach will train you.
+    Enter <b>tournaments on Saturday & Sunday</b> (7 AM–1 PM) to win prize money! Get really good and you could even go pro (check the Sports jobs).</p>
+    <p class="muted">Sports make you sweaty and tired — shower afterwards!</p>
+    <div class="grid sports">${cards}</div>
+    <h3>Trophy Case</h3><div class="row">${trophies}</div>`;
+}
+
+function viewShop() {
+  const cats = [...new Set(ITEMS.map(i => i.cat))];
+  return `<h2>🛒 Shop</h2><p class="muted">Stores are open 8 AM–10 PM. Think before you buy: do you <b>need</b> it, or just <b>want</b> it?</p>
+    ${cats.map(c => `<h3>${c}</h3><div class="grid shop">${ITEMS.filter(i => i.cat === c).map(it => {
+      const owned = !it.consumable && !it.clothes && has(it.id);
+      const clothesOwned = it.clothes && S.clothes >= it.clothes;
+      return `<div class="card item ${owned || clothesOwned ? 'owned' : ''}">
+        <div class="jt"><b>${it.icon} ${it.name}</b><span class="pay">${money(it.price)}</span></div>
+        <p class="muted small">${it.desc}</p>
+        ${owned ? `<div class="row"><span class="chip good">✅ Owned</span><button class="btn ghost sm" onclick="sellItem('${it.id}')">Sell</button></div>`
+          : clothesOwned ? '<span class="chip good">✅ Owned</span>'
+          : `<button class="btn primary sm" onclick="buy('${it.id}')">Buy</button>`}
+      </div>`;
+    }).join('')}</div>`).join('')}`;
+}
+
+function viewHousing() {
+  const cur = home();
+  return `<h2>🔑 Housing</h2>
+    <div class="card"><h3>You live in: ${cur.icon} ${cur.name}</h3><p>${cur.desc}</p>
+    ${cur.type === 'rent' ? `<p>Rent: ${money(cur.rent)}/week + ${money(cur.utilities)} utilities, paid every Monday.${S.missedRent ? ` <b class="neg">Missed rent: ${S.missedRent}/2</b>` : ''}</p>` : ''}
+    ${cur.type === 'buy' ? `<p>You own this home! ${S.mortgage ? `Mortgage left: ${money(S.mortgage.balance)} (${money(S.mortgage.weekly)}/week)` : 'No mortgage — it\'s all yours.'} Property tax & utilities: ${money(cur.upkeep)}/week.</p>
+      <div class="row">${S.mortgage ? `<button class="btn primary sm" onclick="payMortgage()">Pay off mortgage (${money(S.mortgage.balance)})</button>` : ''}<button class="btn ghost sm" onclick="sellHouse()">Sell house</button></div>` : ''}
+    </div>
+    <p class="muted">Your take-home pay: about <b>${money(weeklyIncome())}/week</b>. A good rule: housing should cost less than 1/3 of your pay.</p>
+    <div class="grid homes">${Object.entries(HOMES).map(([k, h]) => `<div class="card home ${k === S.home ? 'mine' : ''}">
+      <div class="jt"><b>${h.icon} ${h.name}</b><span class="pay">${h.type === 'free' ? 'Free' : h.type === 'rent' ? money(h.rent) + '/wk' : money(h.price)}</span></div>
+      <p class="muted small">${h.desc}</p>
+      <p class="small">Comfort: ${'⭐'.repeat(Math.ceil(h.comfort / 2))}${h.type === 'rent' ? ` · Utilities ${money(h.utilities)}/wk` : h.type === 'buy' ? ` · Upkeep ${money(h.upkeep)}/wk` : ''}</p>
+      ${k === S.home ? '<span class="chip good">🏠 You live here</span>' : `<button class="btn primary sm" onclick="moveTo('${k}')">${h.type === 'buy' ? 'Buy' : h.type === 'rent' ? 'Rent' : 'Move back'}</button>`}
+    </div>`).join('')}</div>`;
+}
+function payMortgage() {
+  const amt = S.mortgage.balance;
+  confirmModal(`Pay off the rest of your mortgage: ${money(amt)}?`, () => {
+    if (!spend(amt, 'Paid off mortgage')) return;
+    S.mortgage = null; unlock('debt_free');
+    log('🎉 You paid off your mortgage!', 'good'); done();
+  });
+}
+
+function viewBank() {
+  const insuredByJob = S.job && JOBS[S.job.id].insurance;
+  const amts = [20, 100, 500, 1000];
+  return `<h2>🏦 Bank</h2><p class="muted">Open 8 AM–9 PM.</p>
+    <div class="grid two">
+    <div class="card"><h3>🐷 Savings Account</h3><p>Balance: <b>${money(S.savings)}</b></p>
+      <p class="muted">Earns <b>0.5% interest</b> every week. Money you save grows by itself!</p>
+      <div class="row">${amts.map(a => `<button class="btn primary sm" onclick="bank('deposit',${a})">+${money(a)}</button>`).join('')}<button class="btn primary sm" onclick="bank('deposit','all')">Deposit all</button></div>
+      <div class="row">${amts.map(a => `<button class="btn ghost sm" onclick="bank('withdraw',${a})">-${money(a)}</button>`).join('')}<button class="btn ghost sm" onclick="bank('withdraw','all')">Withdraw all</button></div>
+    </div>
+    <div class="card"><h3>💳 Loans</h3><p>You owe: <b class="${S.loan > 0 ? 'neg' : ''}">${money(S.loan)}</b> · Limit: ${money(loanLimit())}</p>
+      <p class="muted">Loans grow by <b>2% every week</b> (interest). The bank takes a minimum payment every Monday. Good for school or emergencies — but pay it back fast!</p>
+      <div class="row">${[500, 1000, 3000].map(a => `<button class="btn ghost sm" onclick="bank('borrow',${a})">Borrow ${money(a)}</button>`).join('')}</div>
+      <div class="row">${[100, 500].map(a => `<button class="btn primary sm" onclick="bank('repay',${a})">Repay ${money(a)}</button>`).join('')}<button class="btn primary sm" onclick="bank('repay','all')">Repay max</button></div>
+    </div>
+    <div class="card"><h3>🩺 Health Insurance</h3>
+      ${insuredByJob ? '<p>✅ Your job gives you health insurance for free! (That\'s called a "benefit".)</p>'
+        : `<p>${S.insurance ? '✅ You are insured.' : '❌ You are not insured.'} Cost: $35/week.</p>
+           <p class="muted">Hospital visit without insurance: $3,000. With insurance: $300.</p>
+           <button class="btn ${S.insurance ? 'ghost' : 'primary'} sm" onclick="toggleInsurance()">${S.insurance ? 'Cancel insurance' : 'Sign up'}</button>`}
+    </div>
+    <div class="card"><h3>📊 Net Worth</h3><p class="big ${netWorth() < 0 ? 'neg' : ''}">${money(netWorth())}</p>
+      <p class="muted">Net worth = everything you own minus everything you owe.</p>
+      <h3>This week so far</h3>
+      <table class="stub">${S.week.lines.slice(-10).map(l => `<tr class="${l.amount < 0 ? 'minus' : 'plus'}"><td>${esc(l.label)}</td><td>${l.amount < 0 ? '-' : '+'}${money(Math.abs(l.amount))}</td></tr>`).join('') || '<tr><td class="muted">Nothing yet</td><td></td></tr>'}</table>
+    </div></div>`;
+}
+
+function viewMe() {
+  const all = Object.keys(SKILLS).map(k => [k, S.skills[k]]).sort((a, b) => b[1] - a[1]);
+  return `<h2>${S.avatar} ${esc(S.name)}</h2>
+    <p>🎓 ${EDU_NAMES[S.edu]} · Day ${S.day} of your life · Jobs held: ${S.jobsWorked.length}</p>
+    <p class="muted">These are the things you can tell a boss in a job interview. They want a level that's high enough!</p>
+    <h3>Skills</h3>
+    <div class="grid skills">${all.map(([k, v]) => `<div class="card skill"><div class="jt"><b>${skillName(k)}</b><span>${Math.round(v)}</span></div>${lvlBar(v)}</div>`).join('')}</div>
+    <h3>Sports</h3>
+    <div class="grid skills">${Object.keys(SPORTS).map(k => `<div class="card skill"><div class="jt"><b>${skillName(k)}</b><span>${Math.round(S.sports[k])}</span></div>${lvlBar(S.sports[k])}</div>`).join('')}</div>
+    <h3>Stuff you own</h3><div class="row">${ITEMS.filter(i => has(i.id)).map(i => `<span class="chip">${i.icon} ${i.name}</span>`).join('') || '<span class="muted">Nothing yet.</span>'}
+    ${Object.keys(SPORTS).filter(k => S.owned['gear_' + k]).map(k => `<span class="chip">${SPORTS[k].icon} ${SPORTS[k].gear.name}</span>`).join('')}</div>
+    <p style="margin-top:24px"><button class="btn ghost danger" onclick="resetGame()">🔄 Start a New Life</button></p>`;
+}
+
+function viewGoals() {
+  const got = ACHIEVEMENTS.filter(a => S.achievements[a.id]).length;
+  return `<h2>🏆 Life Goals <span class="muted">${got}/${ACHIEVEMENTS.length}</span></h2>
+    <div class="grid goals">${ACHIEVEMENTS.map(a => `<div class="card goal ${S.achievements[a.id] ? 'got' : ''}">
+      <span class="ic">${S.achievements[a.id] ? a.icon : '🔒'}</span><div><b>${a.name}</b><div class="muted small">${a.desc}${S.achievements[a.id] ? ` · Day ${S.achievements[a.id]}` : ''}</div></div></div>`).join('')}</div>
+    <h2>💡 Life Lessons</h2><ul class="tips">${LIFE_TIPS.map(t => `<li>${t}</li>`).join('')}</ul>`;
+}
+
+// ---------- setup screen ----------
+const AVATARS = ['🧑', '👩', '👨', '🧒', '👧', '👦', '🧑‍🦱', '👩‍🦰', '🧑‍🦳', '👱', '🧔', '👩‍🦱'];
+function showSetup() {
+  $('#app').classList.add('hidden');
+  const s = $('#setup');
+  s.classList.remove('hidden');
+  s.innerHTML = `<div class="setup-card">
+    <h1>🌱 Life Lessons</h1>
+    <p>Grow up, get a job, pay bills, play sports, and learn what life is really like!</p>
+    <label>Your name<input id="pname" maxlength="16" placeholder="Type your name"></label>
+    <div class="label">Pick a look</div>
+    <div class="avatars">${AVATARS.map((a, i) => `<button class="av ${i === 0 ? 'sel' : ''}" data-av="${a}">${a}</button>`).join('')}</div>
+    <div class="label">What are you naturally good at? Pick <b>2</b>.</div>
+    <div class="talents">${Object.entries(SKILLS).map(([k, sk]) => `<button class="tal" data-t="${k}">${sk.icon} ${sk.name}</button>`).join('')}</div>
+    <button class="btn primary big" id="startBtn">Start My Life ▶</button>
+  </div>`;
+  let av = AVATARS[0];
+  const tals = new Set();
+  s.querySelectorAll('.av').forEach(b => b.onclick = () => { s.querySelectorAll('.av').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); av = b.dataset.av; });
+  s.querySelectorAll('.tal').forEach(b => b.onclick = () => {
+    const t = b.dataset.t;
+    if (tals.has(t)) { tals.delete(t); b.classList.remove('sel'); }
+    else if (tals.size < 2) { tals.add(t); b.classList.add('sel'); }
+  });
+  $('#startBtn').onclick = () => {
+    const name = $('#pname').value.trim();
+    if (!name) { toast('Type your name first!', 'bad'); return; }
+    if (tals.size !== 2) { toast('Pick 2 things you are good at.', 'bad'); return; }
+    s.classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    tab = 'home';
+    newGame(name, av, [...tals]);
+    render();
+  };
+}
+
+function startTips() {
+  let i = Math.floor(Math.random() * LIFE_TIPS.length);
+  const show = () => { $('#tip').textContent = '💡 ' + LIFE_TIPS[i % LIFE_TIPS.length]; i++; };
+  show(); setInterval(show, 15000);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  startTips();
+  const saved = load();
+  if (saved) { S = saved; $('#setup').classList.add('hidden'); render(); }
+  else showSetup();
+});
