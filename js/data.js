@@ -376,6 +376,7 @@ const ACHIEVEMENTS = [
   { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
   { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },
   { id: 'hero',          icon: '🦸', name: 'Real Hero',           desc: 'Call 911 to help someone who is hurt.' },
+  { id: 'goodneighbor',  icon: '🏘️', name: 'Good Neighbor',       desc: 'Become great friends with a neighbor.' },
   { id: 'popular',       icon: '🙂', name: 'Good Friend',         desc: 'Have 5 friends.' },
   { id: 'credit',        icon: '📈', name: 'Great Credit',        desc: 'Reach a credit score of 740.' },
   { id: 'taxes',         icon: '🧾', name: 'Tax Pro',             desc: 'File your taxes.' },

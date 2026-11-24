@@ -346,6 +346,11 @@ details.walls summary { cursor: pointer; }
 .cand { display: flex; gap: 10px; align-items: flex-start; }
 .energy .pbar { margin: 4px 0; }
 .news li { margin: 4px 0; }
+.talk { display: flex; gap: 14px; align-items: flex-start; }
+.talk > img.avatar { width: 96px; height: 96px; flex: none; }
+.bubble { position: relative; margin-top: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 1.02rem; line-height: 1.4; }
+.bubble::before { content: ''; position: absolute; left: -10px; top: 14px; border: 8px solid transparent; border-right-color: var(--line); border-left: 0; }
+@media (max-width: 600px) { .talk > img.avatar { width: 64px; height: 64px; } }
 
 </style>
 </head>
@@ -762,6 +767,7 @@ const ACHIEVEMENTS = [
   { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
   { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },
   { id: 'hero',          icon: '🦸', name: 'Real Hero',           desc: 'Call 911 to help someone who is hurt.' },
+  { id: 'goodneighbor',  icon: '🏘️', name: 'Good Neighbor',       desc: 'Become great friends with a neighbor.' },
   { id: 'popular',       icon: '🙂', name: 'Good Friend',         desc: 'Have 5 friends.' },
   { id: 'credit',        icon: '📈', name: 'Great Credit',        desc: 'Reach a credit score of 740.' },
   { id: 'taxes',         icon: '🧾', name: 'Tax Pro',             desc: 'File your taxes.' },
@@ -8249,6 +8255,116 @@ function peopleCard() {
     <p class="lesson">💡 Friendships fade if you never talk. Text, hang out and remember birthdays!</p></div>`;
 }
 
+// ---------- talking to your neighbors ----------
+const NEIGHBOR_TYPES = {
+  gardener: { job: 'a retired teacher', pet: 'a cat named Biscuit', hobby: 'gardening', gray: true,
+    hello: ['Oh, hello dear! Lovely to see you.', 'Well hi there! I was just watering my roses.', 'Hello, neighbor! Biscuit the cat says hi too.'],
+    advice: ['When I taught school, I always said: read a little every day. It adds up!', 'Save a little from every paycheck. When you\'re my age, you\'ll be glad you did.', 'Plants need water, sunshine and patience. So do people!', 'Always write down your bills on a calendar so you never forget one.'],
+    help: ['garden', '🌻 Help in the garden', 'Thank you so much! My back isn\'t what it used to be. Here, take some tomatoes!'] },
+  parent: { job: 'a nurse at the hospital', pet: 'a big friendly dog named Rocket', hobby: 'running', gray: false,
+    hello: ['Hey! Sorry, it\'s busy — the kids are running around everywhere!', 'Hi neighbor! Just got home from a long shift at the hospital.', 'Oh hey! Rocket, sit! Sorry, he loves meeting people.'],
+    advice: ['As a nurse, I always say: wash your hands! It stops so many germs.', 'Drink lots of water and get enough sleep. Your body will thank you.', 'Get a flu shot every fall. It really helps!', 'If someone is badly hurt, call 911 right away and stay calm.'],
+    help: ['dog', '🦮 Walk Rocket the dog', 'You\'re a lifesaver! Rocket LOVES walks. Here\'s $10 for your help.'] },
+  student: { job: 'a college student', pet: 'a goldfish named Bubbles', hobby: 'playing guitar', gray: false,
+    hello: ['Yo! What\'s up, neighbor?', 'Hey! I was just practicing guitar. Hope it wasn\'t too loud!', 'Oh hi! I\'m taking a break from studying. Big test tomorrow.'],
+    advice: ['College costs a lot, so I work part-time and use the library — it\'s free!', 'Make a budget! I write down everything I spend, even snacks.', 'Practice anything for 20 minutes a day and you\'ll get way better.', 'Studying with a friend makes it more fun.'],
+    help: ['study', '📚 Study together', 'That really helped! I think I\'m ready for my test now. Thanks, friend!'] },
+};
+
+function ensureNeighbors() {
+  ensureSocialState();
+  const nb = S.neighbors;
+  if (!nb.people) {
+    const kinds = ['gardener', 'parent', 'student'];
+    nb.people = kinds.map((kind, i) => {
+      const look = randomLook();
+      if (NEIGHBOR_TYPES[kind].gray) look.hair = '#b8b2aa';
+      return { name: nb.names[i] || pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES), kind, look, rel: 20, talkedDay: -1, helpedDay: -1, topics: [] };
+    });
+    nb.names = nb.people.map(p => p.name);
+  }
+}
+function neighborLine(p, topic) {
+  const T = NEIGHBOR_TYPES[p.kind], first = p.name.split(' ')[0];
+  const h = holidayToday(), ev = eventToday(), se = seasonOf();
+  if (topic === 'hello') {
+    if (isBirthday()) return `Happy birthday, ${S.name}! 🎂 How old are you now? ${S.age}? Wow!`;
+    if (h) return `Happy ${h.name}! ${h.icon} ${T.hello[0]}`;
+    if (S.neighbors.complaints > 0 && p.kind !== 'student') return `Hi... um, it was a little loud at your place late last night. Could you keep it quieter after 10 PM? Thanks!`;
+    if (S.bin > 4) return `Hi! Just so you know, your trash bin is getting pretty smelly. Trash day is Tuesday morning!`;
+    if (p.rel >= 70) return `${S.name}! My favorite neighbor! ${pickR(T.hello)}`;
+    if (p.topics.length === 0 && p.talkedDay < 0) return `Oh, hi! I don't think we've met. I'm ${first}. I'm ${T.job}, and I have ${T.pet}. I love ${T.hobby}!`;
+    return pickR(T.hello);
+  }
+  if (topic === 'weather') {
+    if (S.storm) return 'What a storm! ⛈️ Make sure you have a flashlight in case the power goes out.';
+    if (S.weather === 'snowy') return S.snowDay ? 'A snow day! ❄️ Everything is closed. Want to build a snowman later?' : 'Look at all this snow! ❄️ Don\'t forget your coat — it\'s freezing!';
+    if (S.weather === 'hot') return 'Phew, it\'s SO hot! 🥵 Drink lots of water today, okay?';
+    if (S.weather === 'rainy') return 'Rain, rain, rain! 🌧️ Good for my plants, though.';
+    if (S.rainbow) return 'Did you see the rainbow this morning? 🌈 So pretty!';
+    return { winter: 'Brr, winter is chilly! I can\'t wait for spring.', spring: 'I love spring! 🌷 Everything is blooming.', summer: 'Beautiful summer day! ☀️ Perfect for the beach.', fall: 'I love the fall leaves! 🍂 So many colors.' }[se];
+  }
+  if (topic === 'news') {
+    if (ev) return `Are you going to the ${ev.name}? ${ev.icon} It's at Lakeside Park today!`;
+    if (S.election && electionDay()) return 'Today is Election Day! 🗳️ Did you vote yet? Every vote counts!';
+    if (S.mayor && Math.random() < 0.3) return `What do you think of Mayor ${S.mayor.name}? I hope they keep their promise!`;
+    if (S.news && S.news.length) return `Did you hear? "${S.news[0].text || S.news[0]}" That's what everybody is talking about!`;
+    return 'Hmm, nothing much is new on our street. Pretty quiet!';
+  }
+  if (topic === 'advice') return pickR(T.advice);
+  if (topic === 'you') {
+    const bits = [];
+    if (S.job) bits.push(`How's your job as a ${JOBS[S.job.id].name}?`);
+    else bits.push('Are you looking for a job? The Job Center has lots of them!');
+    if (S.pets && S.pets.length) bits.push(`And how is ${S.pets[0].name}? So cute!`);
+    if (S.ill) bits.push(`You don't look so good... is it ${ILLNESS[S.ill.type].name.toLowerCase()}? Get some rest!`);
+    return bits.join(' ');
+  }
+  return '...';
+}
+function talkNeighbor(i, topic = 'hello') {
+  ensureNeighbors();
+  const p = S.neighbors.people[i];
+  if (S.hour >= 22 || S.hour < 7) return nope(`Shh! It's late. ${p.name.split(' ')[0]} is sleeping. 😴`);
+  const T = NEIGHBOR_TYPES[p.kind], first = p.name.split(' ')[0];
+  let line;
+  if (topic === 'help') {
+    if (p.helpedDay === S.day) line = 'You already helped me today. Thank you so much!';
+    else {
+      if (S.needs.energy < 15) return nope('You\'re too tired to help right now.');
+      p.helpedDay = S.day; pass(1); p.rel = clamp(p.rel + 12);
+      if (T.help[0] === 'garden') { S.fridgeFood.push({ id: 'veggies', exp: S.day + 5 }, { id: 'veggies', exp: S.day + 5 }); S.needs.fun = clamp(S.needs.fun + 5); }
+      if (T.help[0] === 'dog') { earn(10, `Walked ${first}'s dog`); S.needs.fun = clamp(S.needs.fun + 5); }
+      if (T.help[0] === 'study') { const k = pickR(['math', 'write', 'sci']); S.skills[k] = Math.min(100, S.skills[k] + 1); }
+      line = T.help[2];
+      log(`🤝 You helped your neighbor ${p.name}.`, 'good');
+    }
+  } else {
+    line = neighborLine(p, topic);
+    if (!p.topics.includes(topic)) { p.topics.push(topic); p.rel = clamp(p.rel + 3); }
+    pass(0.1);
+  }
+  if (p.talkedDay !== S.day) { p.talkedDay = S.day; p.topics = [topic]; p.rel = clamp(p.rel + 2); S.needs.fun = clamp(S.needs.fun + 4); }
+  if (p.rel >= 80) unlock('goodneighbor');
+  const hearts = '❤️'.repeat(Math.max(1, Math.round(p.rel / 20)));
+  const choices = [['hello', '👋 Say hi'], ['weather', '🌦️ The weather'], ['news', '📰 What\'s new?'], ['you', '🙂 Talk about you'], ['advice', '💡 Ask for advice'], ['help', T.help[1]]];
+  showModal(`<div class="talk"><img class="avatar" src="${avatarURL(p.look, 96)}" alt="${esc(p.name)}">
+    <div><b>${esc(p.name)}</b> <span class="muted small">${T.job} · ${hearts}</span><div class="bubble">${esc(line)}</div></div></div>
+    <p class="muted small">What do you want to say?</p>
+    <div class="row">${choices.map(([k, l]) => `<button class="btn sm ${k === topic ? 'primary' : 'ghost'}" onclick="talkNeighbor(${i}, '${k}')">${l}</button>`).join('')}</div>`,
+    [{ label: '👋 Say goodbye', cls: 'ghost', fn: () => done() }]);
+  save(); render();
+}
+function neighborsCard() {
+  ensureNeighbors();
+  const asleep = S.hour >= 22 || S.hour < 7;
+  return `<div class="card"><h3>🏘️ Your Neighbors</h3>
+    <div class="mrows">${S.neighbors.people.map((p, i) => mrow(`<img class="avatar" style="width:36px;height:36px" src="${avatarURL(p.look, 36)}" alt="">`, p.name,
+      `${NEIGHBOR_TYPES[p.kind].job} · ${'❤️'.repeat(Math.max(1, Math.round(p.rel / 20)))}${asleep ? ' · 😴 sleeping' : p.talkedDay === S.day ? ' · talked today' : ''}`,
+      b('💬 Talk', `talkNeighbor(${i})`, 'primary', asleep))).join('')}</div>
+    <p class="lesson">💡 Being friendly with your neighbors makes your street a nicer place to live!</p></div>`;
+}
+
 </script>
   <script>
 // ===================== WORK & MONEY: SHIFTS, DAYS OFF, CREDIT, TAXES, BUDGET, ELECTRICITY =====================
@@ -9182,7 +9298,7 @@ function viewHome() {
     return `<button class="action ${locked ? 'locked' : ''}" ${locked ? 'disabled' : ''} onclick="homeAct('${a.id}')">
       <span class="ic">${a.icon}</span><b>${a.name}</b><small>${locked ? '🔒 Buy one at the Mall' : hint}</small></button>`;
   }).join('');
-  if (!S.doorOpen) return `${doorSection()}${jobCard()}`;
+  if (!S.doorOpen) return `${doorSection()}${jobCard()}${neighborsCard()}`;
   const [ti, tl, tc] = teethStatus();
   return `${homeSection()}${petsSection()}${jobCard()}
     <div class="row info">
@@ -9198,7 +9314,7 @@ function viewHome() {
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${energyCard()}${carCard()}`;
+    ${energyCard()}${carCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);

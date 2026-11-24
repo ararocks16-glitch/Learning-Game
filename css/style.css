@@ -339,3 +339,8 @@ details.walls summary { cursor: pointer; }
 .cand { display: flex; gap: 10px; align-items: flex-start; }
 .energy .pbar { margin: 4px 0; }
 .news li { margin: 4px 0; }
+.talk { display: flex; gap: 14px; align-items: flex-start; }
+.talk > img.avatar { width: 96px; height: 96px; flex: none; }
+.bubble { position: relative; margin-top: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 1.02rem; line-height: 1.4; }
+.bubble::before { content: ''; position: absolute; left: -10px; top: 14px; border: 8px solid transparent; border-right-color: var(--line); border-left: 0; }
+@media (max-width: 600px) { .talk > img.avatar { width: 64px; height: 64px; } }

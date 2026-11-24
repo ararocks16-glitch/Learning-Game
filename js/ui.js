@@ -243,7 +243,7 @@ function viewHome() {
     return `<button class="action ${locked ? 'locked' : ''}" ${locked ? 'disabled' : ''} onclick="homeAct('${a.id}')">
       <span class="ic">${a.icon}</span><b>${a.name}</b><small>${locked ? '🔒 Buy one at the Mall' : hint}</small></button>`;
   }).join('');
-  if (!S.doorOpen) return `${doorSection()}${jobCard()}`;
+  if (!S.doorOpen) return `${doorSection()}${jobCard()}${neighborsCard()}`;
   const [ti, tl, tc] = teethStatus();
   return `${homeSection()}${petsSection()}${jobCard()}
     <div class="row info">
@@ -259,7 +259,7 @@ function viewHome() {
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${energyCard()}${carCard()}`;
+    ${energyCard()}${carCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);
