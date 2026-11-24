@@ -206,7 +206,7 @@ function peopleCard() {
   ensureSocialState();
   return `<div class="card"><h3>👨‍👩‍👧 Family</h3><div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `❤️ Relationship ${Math.round(m.rel)}`, has('phone') ? b('📞 Call', `callFamily('${k}')`) : '')).join('')}</div>
     ${S.home !== 'parents' ? `<button class="btn sm ghost" onclick="travelTo('h_parents')">🏡 Visit your parents</button>` : ''}</div>
-    <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Age ${fr.age}${fr.age === S.age ? ' (same as you!)' : ''} · Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}${fr.classmate ? ' · high school friend' : ''}`, b('Hang out', `hangOut(${i})`) + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}${S.friends.length ? '<button class="btn sm primary" onclick="dinnerParty()">🍽️ Invite friends over for dinner</button>' : ''}
+    <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Age ${fr.age}${fr.age === S.age ? ' (same as you!)' : ''} · Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}${fr.classmate ? ' · high school friend' : ''}`, b('Hang out', `hangOut(${i})`) + b('💬 Say nice', `sayNice('friend', ${i})`, 'ghost') + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}${S.friends.length ? '<button class="btn sm primary" onclick="dinnerParty()">🍽️ Invite friends over for dinner</button>' : ''}
     <p class="lesson">💡 Friendships fade if you never talk. Text, hang out and remember birthdays!</p></div>`;
 }
 
@@ -247,6 +247,7 @@ function neighborLine(p, topic) {
     if (h) return `Happy ${h.name}! ${h.icon} ${T.hello[0]}`;
     if (S.neighbors.complaints > 0 && p.kind !== 'student') return `Hi... um, it was a little loud at your place late last night. Could you keep it quieter after 10 PM? Thanks!`;
     if (S.bin > 4) return `Hi! Just so you know, your trash bin is getting pretty smelly. Trash day is Tuesday morning!`;
+    if (hasTree() && Math.random() < 0.5) return `Hi ${S.name}! I saw your Christmas tree through the window — it's awesome! 🎄`;
     if (p.rel >= 70) return `${S.name}! My favorite neighbor! ${pickR(T.hello)}`;
     if (p.topics.length === 0 && p.talkedDay < 0) return `Oh, hi! I don't think we've met. I'm ${first}. I'm ${T.job}, and I have ${T.pet}. I love ${T.hobby}!`;
     return pickR(T.hello);
@@ -281,6 +282,7 @@ function talkNeighbor(i, topic = 'hello') {
   ensureNeighbors();
   const p = S.neighbors.people[i];
   if (S.hour >= 22 || S.hour < 7) return nope(`Shh! It's late. ${p.name.split(' ')[0]} is sleeping. 😴`);
+  if (topic === 'nice') return sayNice('neighbor', i);
   const T = NEIGHBOR_TYPES[p.kind], first = p.name.split(' ')[0];
   let line;
   if (topic === 'help') {
@@ -302,7 +304,7 @@ function talkNeighbor(i, topic = 'hello') {
   if (p.talkedDay !== S.day) { p.talkedDay = S.day; p.topics = [topic]; p.rel = clamp(p.rel + 2); S.needs.fun = clamp(S.needs.fun + 4); }
   if (p.rel >= 80) unlock('goodneighbor');
   const hearts = '❤️'.repeat(Math.max(1, Math.round(p.rel / 20)));
-  const choices = [['hello', '👋 Say hi'], ['weather', '🌦️ The weather'], ['news', '📰 What\'s new?'], ['you', '🙂 Talk about you'], ['advice', '💡 Ask for advice'], ['help', T.help[1]]];
+  const choices = [['hello', '👋 Say hi'], ['nice', '💬 Say something nice'], ['weather', '🌦️ The weather'], ['news', '📰 What\'s new?'], ['you', '🙂 Talk about you'], ['advice', '💡 Ask for advice'], ['help', T.help[1]]];
   showModal(`<div class="talk"><img class="avatar" src="${avatarURL(p.look, 96)}" alt="${esc(p.name)}">
     <div><b>${esc(p.name)}</b> <span class="muted small">${T.job} · ${hearts}</span><div class="bubble">${esc(line)}</div></div></div>
     <p class="muted small">What do you want to say?</p>

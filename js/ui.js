@@ -120,7 +120,7 @@ const PLACE_VIEWS = {
   school: () => viewSchool(),
   library: () => viewLibrary(),
   sports: () => viewSports(),
-  market: () => viewShopAt('market'),
+  market: () => treeCard() + groceryAisle() + viewShopAt('market'),
   mall: () => viewShopAt('mall'),
   diner: () => viewShopAt('diner'),
   cars: () => viewShopAt('cars'),
@@ -151,7 +151,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -197,6 +197,7 @@ function restroomBar() {
   return `<div class="card restroom"><b>🚻 Restroom</b>
     <button class="btn ghost sm" onclick="useToilet();done()">🚽 Use the toilet</button>
     <button class="btn ghost sm" onclick="washHands();done()">🧼 Wash hands</button>
+    <button class="btn ghost sm" onclick="goToBed()">😴 Go to bed</button>
     <button class="btn ghost sm" onclick="travelTo('home')">🏠 Go home</button></div>`;
 }
 

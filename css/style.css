@@ -357,3 +357,6 @@ details.walls summary { cursor: pointer; }
 .talk.small { margin: 6px 0; gap: 8px; }
 .talk.small > img.avatar { width: 40px; height: 40px; }
 .talk.small .bubble { margin-top: 2px; padding: 6px 10px; font-size: .92rem; }
+.nicelist { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.nicelist .btn { text-align: left; white-space: normal; }
+.card.money h4 { margin: 10px 0 4px; font-size: .9rem; color: var(--muted); }

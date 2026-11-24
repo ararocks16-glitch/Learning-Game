@@ -81,7 +81,7 @@ const TRIP_ACTIONS = {
       pass(h, 'sleep'); fun(30); S.needs.hygiene = clamp(S.needs.hygiene - 20);
       log(S.weather === 'rainy' ? '⛺ You camped out. Your tent leaked a little, but listening to the rain was cozy!' : '⛺ You slept under the stars! You heard owls and crickets all night.', 'good'); } },
     { id: 'marsh', icon: '🔥', name: 'Roast Marshmallows', hint: '$3 · 30 min', fn: () => {
-      if (!spend(3, 'Marshmallows')) return;
+      if (S.today.marsh > 0) S.today.marsh--; else if (!spend(3, 'Marshmallows')) return;
       pass(0.5, 'relax'); fun(10); S.needs.food = clamp(S.needs.food + 6);
       log(Math.random() < 0.3 ? '🔥 Your marshmallow caught on fire! You blew it out and ate it anyway.' : '🔥 You roasted a perfect golden marshmallow. Yum!'); } },
     { id: 'walk', icon: '🌲', name: 'Forest Nature Walk', hint: '1 hr · free · Animal skill', fn: () => {

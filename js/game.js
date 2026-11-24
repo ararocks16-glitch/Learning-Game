@@ -192,6 +192,7 @@ function tick(h, mode) {
   if (n.food <= 0) n.health -= 3 * h;
   petTick(h);
   lifeTick(h, mode);
+  if (mode !== 'sleep') sunTick(h);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
   if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
@@ -729,8 +730,8 @@ const HOME_ACTIONS = [
     fn: () => takeBath() },
   { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: () => `2 min · ${S.today.brushAM ? '✅' : '⬜'} after breakfast · ${S.today.brushPM ? '✅' : '⬜'} after dinner`,
     fn: () => brushTeeth() },
-  { id: 'sleep', icon: '😴', name: 'Sleep Until Morning', hint: 'Wake up at 7 AM',
-    fn: () => { const h = S.hour < 7 ? 7 - S.hour : 31 - S.hour; if (h > 14) return nope('It\'s too early to go to bed. Try a nap instead.'); pass(h, 'sleep'); log(`😴 You slept ${h.toFixed(1)} hours.`); } },
+  { id: 'sleep', icon: '😴', name: 'Go to Bed', hint: 'Sleep until 7 AM',
+    fn: () => { const h = S.hour < 7 ? 7 - S.hour : 31 - S.hour; if (h > 14) return nope('It\'s too early to go to bed. Try a nap instead.'); pass(h, 'sleep'); log(`😴 You went to bed and slept ${h.toFixed(1)} hours.`); } },
   { id: 'nap', icon: '💤', name: 'Take a Nap', hint: '2 hours',
     fn: () => { pass(2, 'sleep'); log('💤 You took a nap.'); } },
   { id: 'laundry', icon: '🧺', name: 'Do Laundry', hint: () => hasF('washer') ? 'Free at home · 1 hr' : 'Laundromat $8 · 2 hrs',

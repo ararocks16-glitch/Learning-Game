@@ -26,7 +26,7 @@ function lifeTick(h, mode) {
   const ill = S.ill && ILLNESS[S.ill.type];
   if (ill && mode !== 'sleep') { n.energy -= ill.energy * h; n.fun -= ill.fun * h; if (mode === 'sport') n.health -= 2 * h; }
   // cold outside in winter without a coat
-  if (seasonOf() === 'winter' && mode !== 'sleep' && !atHome() && !S.insideOf && !has('coat')) {
+  if (seasonOf() === 'winter' && mode !== 'sleep' && !atHome() && !S.insideOf && !has('coat') && !S.today.warm) {
     n.health -= 1.2 * h; n.fun -= 1.5 * h; S.gotCold = (S.gotCold || 0) + h;
   }
   // a messy home is no fun
