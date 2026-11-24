@@ -666,6 +666,7 @@ function travelTo(dest, opts = {}) {
       document.body.classList.remove('traveling');
       if (info.cost) charge(info.cost, 'Bus fare');
       S.loc = dest;
+      if (dest === 'home') S.doorOpen = false;   // you arrive outside your front door
       pass(info.hours, 'awake');
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).`);
       if (!opts.keepTab) tab = dest;

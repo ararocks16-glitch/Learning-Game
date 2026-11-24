@@ -136,10 +136,10 @@ function book(c, x, y, w, h, col) {
   c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x + w - 0.8, y, 0.8, h);
 }
 
-function drawRoom(cv) {
-  const cssW = cv.parentElement.clientWidth;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.style.height = (cssW * RH / RW) + 'px';
+function drawRoom(cv, fixedW) {
+  const cssW = fixedW || cv.parentElement.clientWidth;
+  const dpr = fixedW ? 1 : Math.min(2, window.devicePixelRatio || 1);
+  if (!fixedW) cv.style.height = (cssW * RH / RW) + 'px';
   cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssW * dpr * RH / RW);
   const c = cv.getContext('2d');
   c.setTransform(cv.width / RW, 0, 0, cv.width / RW, 0, 0);

@@ -60,7 +60,8 @@ function render() {
   if (S.needs.hygiene < 30) warn.push('<span class="chip warn">🧼 You need a shower!</span>');
   if (S.needs.health < 30) warn.push('<span class="chip warn">❤️ Your health is low! Visit the 🏥 Hospital.</span>');
   if (S.laundryDays > 7) warn.push('<span class="chip warn">👕 Your clothes are dirty!</span>');
-  if (!S.today.brushed && S.hour > 20) warn.push('<span class="chip warn">🪥 Brush your teeth before bed!</span>');
+  if (!S.today.brushAM && S.hour >= 8.5 && S.hour < 15) warn.push('<span class="chip warn">🪥 Brush your teeth after breakfast (2 minutes)!</span>');
+  if (!S.today.brushPM && S.hour >= 19) warn.push('<span class="chip warn">🪥 Brush your teeth after dinner!</span>');
   if (workDue()) warn.push(`<button class="chip warn" onclick="goWork()">💼 Time to go to work! (tap to go)</button>`);
   $('#warnings').innerHTML = warn.join('');
 
@@ -72,6 +73,8 @@ function render() {
   $('#view').innerHTML = viewFor(tab);
   const roomCv = $('#room');
   if (roomCv) drawRoom(roomCv);
+  const doorCv = $('#doorcv');
+  if (doorCv && !doorAnim) drawDoorView(doorCv, 0);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
 }
 
@@ -176,11 +179,14 @@ function viewHome() {
     return `<button class="action ${locked ? 'locked' : ''}" ${locked ? 'disabled' : ''} onclick="homeAct('${a.id}')">
       <span class="ic">${a.icon}</span><b>${a.name}</b><small>${locked ? '🔒 Buy one at the Mall' : hint}</small></button>`;
   }).join('');
+  if (!S.doorOpen) return `${doorSection()}${jobCard()}`;
+  const [ti, tl, tc] = teethStatus();
   return `${homeSection()}${jobCard()}
     <div class="row info">
       <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
       <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>
-      <span class="chip">${S.today.brushed ? '✅' : '⬜'} Brushed teeth today</span>
+      <span class="chip">🪥 Teeth: ${S.today.brushAM ? '✅' : '⬜'} morning ${S.today.brushPM ? '✅' : '⬜'} night</span>
+      <span class="chip ${tc}">🦷 ${ti} ${tl}</span>
     </div>
     <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span></div>
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>`;
@@ -312,6 +318,9 @@ function viewHospital() {
       <div class="card"><h3>🩺 See a Doctor</h3><p>Health +45 · 1.5 hrs</p>
         <p>Cost: <b>${insured ? '$20' : '$150'}</b> ${insured ? '(you have health insurance!)' : '(no insurance)'}</p>
         <button class="btn primary" onclick="seeDoctor()">See the doctor</button></div>
+      <div class="card"><h3>🦷 Dentist</h3><p>Teeth: <b>${teethStatus()[0]} ${teethStatus()[1]}</b></p>
+        <p>A cleaning makes your teeth sparkling clean. Cost: <b>${insured ? '$15' : '$90'}</b></p>
+        <button class="btn primary" onclick="dentistClean()">Get a teeth cleaning</button></div>
       <div class="card"><h3>🚑 Emergency Room</h3><p>If your health reaches zero, an ambulance brings you here.</p>
         <p>Bill: <b>${insured ? '$300' : '$3,000'}</b></p>
         <p class="lesson">💡 Health insurance is sold at the 🏦 Bank. Some jobs give it to you for free.</p></div>
@@ -468,6 +477,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (S.loc === undefined) S.loc = 'home';
     if (S.needs.bladder === undefined) S.needs = { food: S.needs.food, energy: S.needs.energy, hygiene: S.needs.hygiene, bladder: 70, fun: S.needs.fun, health: S.needs.health };
     if (S.handsDirty === undefined) S.handsDirty = false;
+    if (S.plaque === undefined) { S.plaque = 0; S.cavityAt = 60 + Math.floor(Math.random() * 31); delete S.dirtyTeeth; }
+    if (S.doorOpen === undefined) S.doorOpen = true;
     if (!S.look) S.look = randomLook();
     ensureMoneyState();
     ensureHomeState();

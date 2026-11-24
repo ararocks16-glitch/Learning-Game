@@ -121,8 +121,8 @@ function newGame(name, look, talents) {
     job: null, jobsWorked: [], cooldown: {}, loc: 'home', handsDirty: false,
     home: 'parents', mortgage: null, missedRent: 0,
     owned: {}, groceries: 4, clothes: 1, laundryDays: 0,
-    today: { worked: false, brushed: false, showered: false, sick: false },
-    showerStreak: 0, dirtyTeeth: 0,
+    today: { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false },
+    showerStreak: 0, plaque: 0, cavityAt: 60 + Math.floor(Math.random() * 31), doorOpen: true,
     insurance: false, sportsTried: {}, trophies: [],
     achievements: {}, taxRefundDone: false,
     week: { income: 0, expenses: 0, lines: [] },
@@ -215,9 +215,9 @@ function newDay() {
       if (j.misses >= 3) fire('You missed too many days of work without calling.');
     }
   }
-  if (!S.today.brushed) {
-    S.dirtyTeeth++;
-  } else S.dirtyTeeth = Math.max(0, S.dirtyTeeth - 1);
+  // teeth: brushing twice a day keeps them clean. Skipping for 2-3 months gives you a cavity.
+  const brushes = (S.today.brushAM ? 1 : 0) + (S.today.brushPM ? 1 : 0);
+  S.plaque = Math.max(0, (S.plaque || 0) + (brushes >= 2 ? -1 : brushes === 1 ? 0.5 : 1));
   if (S.today.showered) S.showerStreak++; else S.showerStreak = 0;
   if (S.showerStreak >= 7) unlock('clean_week');
 
@@ -227,7 +227,7 @@ function newDay() {
   S.day++;
   moneyNewDay();
   homeNewDay();
-  S.today = { worked: false, brushed: false, showered: false, sick: false };
+  S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
   if (weekday() === 0) weeklyBills();
   if (S.day >= 30) unlock('month');
@@ -539,11 +539,12 @@ function weeklyBills() {
 
 // ---------- random events ----------
 function dailyEvent() {
-  if (S.dirtyTeeth >= 3 && Math.random() < 0.5) {
+  if (S.plaque >= S.cavityAt) {
     const cost = S.insurance || (S.job && JOBS[S.job.id].insurance) ? 40 : 250;
     charge(cost, 'Dentist: cavity filled');
-    S.dirtyTeeth = 0;
-    queueModal(`<h2>🦷 Ouch, a Cavity!</h2><p>You forgot to brush your teeth too many days. The dentist filled a cavity.</p><p>Bill: <b>${money(cost)}</b></p><p class="lesson">💡 Brushing every day is free. Fixing cavities is not!</p>`);
+    S.plaque = 0; S.cavityAt = 60 + Math.floor(Math.random() * 31);
+    S.needs.health = clamp(S.needs.health - 10);
+    queueModal(`<h2>🦷 Ouch, a Cavity!</h2><p>Your tooth started to hurt. You haven't been brushing enough for a long time, so the dentist had to fill a cavity.</p><p>Bill: <b>${money(cost)}</b></p><p class="lesson">💡 Brush for 2 minutes, twice a day: after breakfast and after dinner. Brushing is free. Fixing cavities is not!</p>`);
     log(`🦷 Cavity! Dentist bill ${money(cost)}.`, 'bad');
     return;
   }
@@ -626,6 +627,35 @@ const PARK_ACTIONS = [
     fn: () => { if (S.needs.energy < 15) return nope('Too tired to play.'); pass(1, 'sport'); S.needs.fun = clamp(S.needs.fun + 12); addSkill('fit', 1); log('🛝 You went down the slide and swung on the swings!'); } },
 ];
 
+function brushTeeth() {
+  pass(2 / 60);
+  S.needs.hygiene = clamp(S.needs.hygiene + 6);
+  const morning = S.hour >= 4 && S.hour < 15;
+  const slot = morning ? 'brushAM' : 'brushPM';
+  const again = S.today[slot];
+  S.today[slot] = true; S.today.brushed = true;
+  const both = S.today.brushAM && S.today.brushPM;
+  log(again ? '🪥 You brushed your teeth for 2 minutes again. Extra sparkly!'
+    : `🪥 You brushed your teeth for 2 whole minutes ${morning ? 'after breakfast' : 'after dinner'}.${both ? ' That\'s twice today! ⭐' : ''}`);
+}
+function teethStatus() {
+  const r = (S.plaque || 0) / (S.cavityAt || 75);
+  if (r < 0.2) return ['✨', 'Sparkling clean', 'good'];
+  if (r < 0.45) return ['🙂', 'A little dirty', ''];
+  if (r < 0.75) return ['😬', 'Getting yellow', 'warn'];
+  return ['😣', 'A cavity is coming!', 'warn'];
+}
+function dentistClean() {
+  if (S.hour < 8 || S.hour > 17) return nope('The dentist is open 8 AM to 5 PM.');
+  const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
+  const cost = insured ? 15 : 90;
+  if (!spend(cost, 'Dentist cleaning')) return;
+  pass(1);
+  S.plaque = 0;
+  log(`🦷 The dentist cleaned your teeth. They're sparkling! Cost: ${money(cost)}.`, 'good');
+  done();
+}
+
 // ---------- home actions ----------
 const HOME_ACTIONS = [
   { id: 'eat', icon: '🍽️', name: 'Eat a Meal', hint: 'Uses 1 grocery meal · 30 min',
@@ -642,8 +672,8 @@ const HOME_ACTIONS = [
     fn: () => homeShower() },
   { id: 'bath', icon: '🛁', name: 'Bubble Bath', hint: '1 hr · clean & relaxed', need: 'bathtub',
     fn: () => takeBath() },
-  { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: '5 min',
-    fn: () => { pass(0.1); S.needs.hygiene = clamp(S.needs.hygiene + 8); S.today.brushed = true; log('🪥 You brushed your teeth.'); } },
+  { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: () => `2 min · ${S.today.brushAM ? '✅' : '⬜'} after breakfast · ${S.today.brushPM ? '✅' : '⬜'} after dinner`,
+    fn: () => brushTeeth() },
   { id: 'sleep', icon: '😴', name: 'Sleep Until Morning', hint: 'Wake up at 7 AM',
     fn: () => { const h = S.hour < 7 ? 7 - S.hour : 31 - S.hour; if (h > 14) return nope('It\'s too early to go to bed. Try a nap instead.'); pass(h, 'sleep'); log(`😴 You slept ${h.toFixed(1)} hours.`); } },
   { id: 'nap', icon: '💤', name: 'Take a Nap', hint: '2 hours',

@@ -299,3 +299,7 @@ details.walls summary { cursor: pointer; }
 #minimap { position: absolute; left: 10px; bottom: 10px; width: 170px; border-radius: 8px; border: 2px solid rgba(255,255,255,.9); box-shadow: 0 2px 8px rgba(0,0,0,.3); cursor: pointer; }
 .maphint { position: absolute; top: 10px; left: 10px; background: rgba(29,43,58,.75); color: #fff; font-size: .75rem; padding: 4px 8px; border-radius: 6px; line-height: 1.2; pointer-events: none; }
 @media (max-width: 600px) { #minimap { width: 110px; } .maphint { display: none; } .mapctl button { width: 32px; height: 32px; } }
+
+/* front door */
+.doorbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); margin-bottom: 10px; }
+.btn.big-door { font-size: 1.05rem; padding: 12px 22px; }

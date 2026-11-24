@@ -35,6 +35,7 @@ function hasF(f) {
 }
 const atHome = () => S.loc === 'home';
 function quickToilet() {
+  if (atHome() && !S.doorOpen) S.doorOpen = true;   // hurry inside!
   if (atHome() && !homeToilet()) return;
   useToilet(); done();
 }
