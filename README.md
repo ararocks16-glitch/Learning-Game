@@ -26,4 +26,5 @@ You just finished high school. You live with your parents and have $300.
 - `js/data.js`: jobs, skills, sports, items, homes and goals
 - `js/game.js`: game rules (time, needs, work, money, events)
 - `js/map.js`: the town map
+- `js/people.js`, `js/money.js`, `js/home.js`: characters, side money, home stuff
 - `js/ui.js`: drawing the screens

@@ -284,3 +284,10 @@ img.avatar.big { width: 72px; height: 72px; }
 details.card { margin: 10px 0; }
 details.card #restyle { margin-top: 10px; }
 @media (max-width: 520px) { .cc { grid-template-columns: 1fr; justify-items: center; } .cc-opts { width: 100%; } }
+
+/* inside your home */
+.roomwrap { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); line-height: 0; border: 3px solid var(--bg2); margin-bottom: 8px; }
+#room { width: 100%; display: block; }
+.card.needbuy { border-color: var(--warn); margin: 8px 0; }
+.chip.warn { background: #fff4dd; border-color: #f5c66b; color: #7a4d00; }
+details.walls summary { cursor: pointer; }

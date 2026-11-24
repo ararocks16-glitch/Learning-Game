@@ -129,6 +129,8 @@ function newGame(name, look, talents) {
     log: [],
   };
   ensureMoneyState();
+  S.homeV2 = true;
+  ensureHomeState();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
@@ -174,7 +176,7 @@ function tick(h, mode) {
     }
   }
   if (mode === 'sleep') {
-    const per = 8.5 + home().comfort * 0.6 + (has('bed') ? 2 : 0);
+    const per = 8.5 + home().comfort * 0.6 + (has('bed') ? 2 : hasF('mattress') ? 0 : -3);
     n.energy += per * h;
     if (n.food > 25) n.health += 1 * h;
   } else {
@@ -183,8 +185,9 @@ function tick(h, mode) {
   if (n.food <= 0) n.health -= 3 * h;
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
-  if (has('couch') && mode === 'relax') n.fun += 2 * h;
-  if (has('plant')) n.fun += 0.1 * h;
+  if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
+  if (atHome() && mode !== 'sleep') n.fun += cozy() * 0.03 * h;
+  if (atHome() && has('fan') && S.weather === 'hot') n.fun += 0.5 * h;
   for (const k in n) n[k] = clamp(n[k]);
   if (S.home === 'parents') n.fun = Math.min(n.fun, 80);
 }
@@ -222,8 +225,9 @@ function newDay() {
   // --- start of the new day ---
   S.day++;
   moneyNewDay();
+  homeNewDay();
   S.today = { worked: false, brushed: false, showered: false, sick: false };
-  S.laundryDays++;
+  if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
   if (weekday() === 0) weeklyBills();
   if (S.day >= 30) unlock('month');
   if (S.day >= 365) unlock('year');
@@ -624,23 +628,27 @@ const PARK_ACTIONS = [
 // ---------- home actions ----------
 const HOME_ACTIONS = [
   { id: 'eat', icon: '🍽️', name: 'Eat a Meal', hint: 'Uses 1 grocery meal · 30 min',
-    fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Supermarket.'); S.groceries--; pass(0.5); ateFood(40); log('🍽️ You ate a meal at home.'); } },
+    fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Supermarket.'); S.groceries--; pass(0.5); ateFood(40); if (hasF('table')) S.needs.fun = clamp(S.needs.fun + 3); log(hasF('table') ? '🍽️ You ate a meal at the table.' : '🍽️ You ate a meal sitting on the floor. (A table would be nice!)'); } },
   { id: 'cook', icon: '🍳', name: 'Cook a Meal', hint: 'Uses 1 meal · 1 hr · better food & cooking skill',
-    fn: () => { if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
-  { id: 'toilet', icon: '🚽', name: 'Use the Toilet', hint: '5 min · don\'t forget to flush!',
-    fn: () => useToilet() },
+    fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
+  { id: 'snack', icon: '🍿', name: 'Have a Snack', hint: () => `Fruit, chips, cereal, pizza · you have ${Object.values(S.pantry).reduce((a, v) => a + v, 0)}`,
+    fn: () => snackMenu() },
+  { id: 'toilet', icon: '🚽', name: 'Use the Toilet', hint: () => hasF('toilet') ? '5 min · don\'t forget to flush!' : '⚠️ You don\'t have a toilet!',
+    fn: () => { if (homeToilet()) useToilet(); } },
   { id: 'hands', icon: '🧼', name: 'Wash Your Hands', hint: '2 min · stops germs',
     fn: () => washHands() },
-  { id: 'shower', icon: '🚿', name: 'Take a Shower', hint: '30 min',
-    fn: () => { pass(0.5); S.needs.hygiene = 100; S.today.showered = true; log('🚿 You took a shower. Squeaky clean!'); } },
+  { id: 'shower', icon: '🚿', name: 'Take a Shower', hint: () => hasF('shower') ? '30 min' : '⚠️ You don\'t have a shower!',
+    fn: () => homeShower() },
+  { id: 'bath', icon: '🛁', name: 'Bubble Bath', hint: '1 hr · clean & relaxed', need: 'bathtub',
+    fn: () => takeBath() },
   { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: '5 min',
     fn: () => { pass(0.1); S.needs.hygiene = clamp(S.needs.hygiene + 8); S.today.brushed = true; log('🪥 You brushed your teeth.'); } },
   { id: 'sleep', icon: '😴', name: 'Sleep Until Morning', hint: 'Wake up at 7 AM',
     fn: () => { const h = S.hour < 7 ? 7 - S.hour : 31 - S.hour; if (h > 14) return nope('It\'s too early to go to bed. Try a nap instead.'); pass(h, 'sleep'); log(`😴 You slept ${h.toFixed(1)} hours.`); } },
   { id: 'nap', icon: '💤', name: 'Take a Nap', hint: '2 hours',
     fn: () => { pass(2, 'sleep'); log('💤 You took a nap.'); } },
-  { id: 'laundry', icon: '🧺', name: 'Do Laundry', hint: () => has('washer') ? 'Free at home · 1 hr' : 'Laundromat $8 · 2 hrs',
-    fn: () => { if (!has('washer')) { if (!spend(8, 'Laundromat')) return; pass(2); } else pass(1); S.laundryDays = 0; log('🧺 Your clothes are clean!'); } },
+  { id: 'laundry', icon: '🧺', name: 'Do Laundry', hint: () => hasF('washer') ? 'Free at home · 1 hr' : 'Laundromat $8 · 2 hrs',
+    fn: () => { if (!hasF('washer')) { if (!spend(8, 'Laundromat')) return; pass(2); } else pass(1); S.laundryDays = 0; log('🧺 Your clothes are clean!'); } },
   { id: 'clean', icon: '🧹', name: 'Clean Up', hint: '1 hr · feel better',
     fn: () => { pass(1); S.needs.fun = clamp(S.needs.fun + 6); S.needs.hygiene = clamp(S.needs.hygiene - 5); log(S.home === 'parents' ? '🧹 You cleaned your room. Mom is happy!' : '🧹 You cleaned your place. It looks great.'); } },
   { id: 'tv', icon: '📺', name: 'Watch TV', hint: '2 hrs · needs TV', need: 'tv',
@@ -650,7 +658,7 @@ const HOME_ACTIONS = [
   { id: 'laptop', icon: '💻', name: 'Practice on Laptop', hint: '2 hrs · Computers skill', need: 'laptop',
     fn: () => { pass(2, 'study'); const g = addSkill('comp', 4); log(`💻 You practiced coding. Computers +${g.toFixed(1)}`); } },
   { id: 'read', icon: '📖', name: 'Read a Book', hint: '1 hr · Writing skill',
-    fn: () => { pass(1, 'relax'); addSkill('write', 1.5); log('📖 You read a good book.'); } },
+    fn: () => { pass(1, 'relax'); addSkill('write', has('bookshelf') ? 2.5 : 1.5); log(has('bookshelf') ? '📖 You read a book from your bookshelf.' : '📖 You read a good book.'); } },
   { id: 'run', icon: '🏃', name: 'Exercise', hint: '1 hr · Fitness skill · free',
     fn: () => { if (S.needs.energy < 15) return nope('Too tired to exercise.'); pass(1, 'sport'); addSkill('fit', 2.5); S.needs.health = clamp(S.needs.health + 3); log('🏃 You exercised. Fitness up! (Better shower now...)'); } },
   { id: 'friend', icon: '📞', name: 'Call a Friend', hint: '1 hr · Fun & talking skill',
@@ -798,13 +806,14 @@ function buy(itemId) {
   else if (it.id === 'salad') { ateFood(40); S.needs.health = clamp(S.needs.health + 4); log('🥗 You ate a healthy lunch.'); }
   else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
   else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
-  else if (moneyBuy(it.id)) { /* side-money supplies */ }
+  else if (moneyBuy(it.id) || homeBuy(it.id)) { /* supplies, snacks */ }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
     S.owned[it.id] = true;
     log(`${it.icon} You bought a ${it.name}!${it.bill ? ` (Bill: ${money(it.bill)}/week)` : ''}`, 'good');
     if (it.id === 'car' || it.id === 'newcar') unlock('car');
   }
+  afterBuyHome(it);
   done();
 }
 function sellItem(itemId) {
@@ -839,6 +848,7 @@ function moveTo(hid) {
       if (!spend(upfront, `Move in: ${h.name}`)) return;
       S.home = hid; S.missedRent = 0;
       pass(4);
+      homeWelcome();
       log(`🔑 You moved into a ${h.name}!`, 'good');
       unlock('moved_out');
       done();
@@ -872,6 +882,7 @@ function moveTo(hid) {
 }
 function finishBuy(hid) {
   S.home = hid; S.missedRent = 0;
+  homeWelcome();
   pass(6);
   log(`🏠 You bought a ${HOMES[hid].name}! Welcome home!`, 'good');
   unlock('homeowner'); unlock('moved_out');

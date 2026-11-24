@@ -47,7 +47,7 @@ function render() {
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
-  if (S.needs.bladder < 25) warn.push(`<button class="chip warn" onclick="useToilet();done()">🚽 You really need the bathroom! (tap to go)</button>`);
+  if (S.needs.bladder < 25) warn.push(`<button class="chip warn" onclick="quickToilet()">🚽 You really need the bathroom! (tap to go)</button>`);
   if (S.handsDirty) warn.push(`<button class="chip warn" onclick="washHands();done()">🧼 Wash your hands! (tap)</button>`);
   if (S.needs.food < 25) warn.push('<span class="chip warn">🍽️ You are hungry!</span>');
   if (S.needs.energy < 20) warn.push('<span class="chip warn">⚡ You are exhausted!</span>');
@@ -64,6 +64,8 @@ function render() {
   }).join('');
 
   $('#view').innerHTML = viewFor(tab);
+  const roomCv = $('#room');
+  if (roomCv) drawRoom(roomCv);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
 }
 
@@ -158,14 +160,13 @@ function jobCard() {
 
 function viewHome() {
   const acts = HOME_ACTIONS.map(a => {
-    const locked = a.need && !has(a.need);
+    const locked = a.need && !hasF(a.need);
     const hint = typeof a.hint === 'function' ? a.hint() : a.hint;
     return `<button class="action ${locked ? 'locked' : ''}" ${locked ? 'disabled' : ''} onclick="homeAct('${a.id}')">
       <span class="ic">${a.icon}</span><b>${a.name}</b><small>${locked ? '🔒 Buy one at the Mall' : hint}</small></button>`;
   }).join('');
-  return `${jobCard()}
+  return `${homeSection()}${jobCard()}
     <div class="row info">
-      <span class="chip">🛒 Meals at home: <b>${S.groceries}</b></span>
       <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
       <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>
       <span class="chip">${S.today.brushed ? '✅' : '⬜'} Brushed teeth today</span>
@@ -266,8 +267,8 @@ function viewShopAt(place) {
   const items = ITEMS.filter(i => i.place === place);
   const cats = [...new Set(items.map(i => i.cat))];
   const intro = {
-    market: 'Groceries are the cheapest way to eat. Open 8 AM–10 PM.',
-    mall: 'Think before you buy: do you <b>need</b> it, or just <b>want</b> it? Open 8 AM–10 PM.',
+    market: 'Groceries are the cheapest way to eat. Don\'t forget toilet paper and soap! Open 8 AM–10 PM.',
+    mall: 'Furniture, appliances, bathroom stuff, decorations, clothes and more. Think before you buy: do you <b>need</b> it, or just <b>want</b> it? Open 8 AM–10 PM.',
     diner: 'Eating out is fast and tasty, but costs more than cooking at home.',
     cars: 'A bike is free to ride. A car is fastest but costs money every week. Driving skill 20 needed for a car.',
   }[place];
@@ -458,6 +459,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (S.handsDirty === undefined) S.handsDirty = false;
     if (!S.look) S.look = randomLook();
     ensureMoneyState();
+    ensureHomeState();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();
