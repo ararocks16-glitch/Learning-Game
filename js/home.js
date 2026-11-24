@@ -210,9 +210,12 @@ function artSeed(seed) { let s = Math.floor(seed * 1e9) || 1; return () => (s = 
 function drawArt(c, x, y, w, h, art) {
   const r = artSeed(art.seed);
   const frame = art.kind === 'famous' ? '#c9a227' : art.kind === 'print' ? '#222' : '#8a5a34';
-  c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x + 3, y + 4, w, h);
-  c.fillStyle = frame; c.fillRect(x - 4, y - 4, w + 8, h + 8);
-  if (art.kind === 'famous') { c.strokeStyle = '#f5dd7a'; c.lineWidth = 1.5; c.strokeRect(x - 2, y - 2, w + 4, h + 4); }
+  const fg = c.createLinearGradient(x - 5, y - 5, x + w + 5, y + h + 5);
+  fg.addColorStop(0, tone(frame, 0.3)); fg.addColorStop(0.5, frame); fg.addColorStop(1, tone(frame, -0.35));
+  c.fillStyle = fg; c.fillRect(x - 6, y - 6, w + 12, h + 12);
+  c.strokeStyle = tone(frame, -0.4, 0.8); c.lineWidth = 1; c.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
+  if (art.kind === 'famous') { c.strokeStyle = '#f5dd7a'; c.lineWidth = 1.2; c.strokeRect(x - 4, y - 4, w + 8, h + 8); }
+  if (art.kind === 'print') { c.fillStyle = '#f5f3ee'; c.fillRect(x - 1, y - 1, w + 2, h + 2); x += 4; y += 4; w -= 8; h -= 8; }
   c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
   const subject = Math.floor(r() * 3);
   const neat = Math.min(1, art.q / 70);
@@ -246,154 +249,4 @@ function drawArt(c, x, y, w, h, art) {
     }
   }
   c.restore();
-}
-
-function drawRoom(cv) {
-  const W = 1000, H = 360;
-  const cssW = cv.parentElement.clientWidth;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.style.height = (cssW * H / W) + 'px';
-  cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssW * dpr * H / W);
-  const c = cv.getContext('2d');
-  c.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0);
-  const FLOOR = 260;
-  const own = f => hasF(f);
-  const ghost = (x, y, w, h, label) => {
-    c.save(); c.setLineDash([6, 5]); c.strokeStyle = 'rgba(80,80,80,.55)'; c.lineWidth = 2; c.strokeRect(x, y, w, h); c.restore();
-    txt(c, label, x + w / 2, y + h / 2, 'rgba(70,70,70,.8)', 13, 700);
-  };
-  // walls
-  c.fillStyle = S.wallColor; c.fillRect(0, 0, 790, FLOOR);
-  const wg = c.createLinearGradient(0, 0, 0, FLOOR); wg.addColorStop(0, 'rgba(255,255,255,.15)'); wg.addColorStop(1, 'rgba(0,0,0,.08)');
-  c.fillStyle = wg; c.fillRect(0, 0, 790, FLOOR);
-  if (S.home === 'mansion') { c.fillStyle = '#c9a227'; c.fillRect(0, 22, 790, 4); }
-  // bathroom tiles
-  c.fillStyle = '#e8f1f5'; c.fillRect(790, 0, 210, FLOOR);
-  c.strokeStyle = 'rgba(120,150,170,.35)'; c.lineWidth = 1;
-  for (let y = 0; y < FLOOR; y += 20) { c.beginPath(); c.moveTo(790, y); c.lineTo(1000, y); c.stroke(); }
-  for (let x = 790; x < 1000; x += 20) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, FLOOR); c.stroke(); }
-  c.fillStyle = '#9aa7b0'; c.fillRect(784, 0, 8, FLOOR);
-  // floors
-  c.fillStyle = '#b98b5a'; c.fillRect(0, FLOOR, 790, H - FLOOR);
-  c.strokeStyle = 'rgba(80,50,20,.25)';
-  for (let y = FLOOR + 14; y < H; y += 14) { c.beginPath(); c.moveTo(0, y); c.lineTo(790, y); c.stroke(); }
-  for (let i = 0; i < 40; i++) { const y = FLOOR + Math.floor(i / 8) * 14; const x = (i % 8) * 100 + (Math.floor(i / 8) % 2) * 50; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 14); c.stroke(); }
-  c.fillStyle = '#d7e0e4'; c.fillRect(790, FLOOR, 210, H - FLOOR);
-  c.strokeStyle = 'rgba(100,120,130,.3)';
-  for (let x = 790; x < 1000; x += 25) { c.beginPath(); c.moveTo(x, FLOOR); c.lineTo(x, H); c.stroke(); }
-  c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(0, FLOOR, 1000, 5);
-  c.fillStyle = '#f4f1ea'; c.fillRect(0, FLOOR - 8, 784, 8);
-
-  // window (shows the time of day)
-  const night = S.hour < 6 || S.hour >= 20;
-  const sky = c.createLinearGradient(0, 40, 0, 150);
-  if (night) { sky.addColorStop(0, '#0d1b3e'); sky.addColorStop(1, '#2a3d6b'); }
-  else if (S.weather === 'rainy') { sky.addColorStop(0, '#8a96a8'); sky.addColorStop(1, '#b8c2cf'); }
-  else { sky.addColorStop(0, '#7cc4f5'); sky.addColorStop(1, '#cfeaff'); }
-  c.fillStyle = '#fff'; c.fillRect(40, 36, 128, 118);
-  c.fillStyle = sky; c.fillRect(46, 42, 116, 106);
-  if (night) { c.fillStyle = '#fff'; for (let i = 0; i < 10; i++) c.fillRect(50 + (i * 37) % 108, 46 + (i * 23) % 60, 2, 2); c.beginPath(); c.arc(140, 64, 9, 0, Math.PI * 2); c.fill(); }
-  else if (S.weather !== 'rainy') { c.fillStyle = '#ffd23f'; c.beginPath(); c.arc(70, 66, 11, 0, Math.PI * 2); c.fill(); }
-  c.fillStyle = '#5ea34f'; c.fillRect(46, 128, 116, 20);
-  c.fillStyle = '#fff'; c.fillRect(101, 42, 6, 106); c.fillRect(46, 92, 116, 6);
-  if (has('curtains')) { c.fillStyle = '#b0413e'; c.fillRect(26, 30, 22, 132); c.fillRect(160, 30, 22, 132); c.fillStyle = '#7a2b29'; c.fillRect(22, 26, 164, 7); }
-
-  // paintings on the walls
-  const spots = [[218, 50, 70, 54], [330, 40, 86, 64], [440, 60, 60, 46], [520, 44, 70, 54], [620, 36, 60, 46], [700, 40, 64, 50], [236, 128, 50, 40], [452, 128, 54, 40]];
-  S.walls.forEach((w, i) => { const sp = spots[i]; if (sp) drawArt(c, ...sp, w); });
-
-  // ---------- bedroom ----------
-  if (has('wardrobe')) { c.fillStyle = '#7a5230'; c.fillRect(190, 120, 70, 140); c.fillStyle = '#8e6440'; c.fillRect(194, 124, 30, 132); c.fillRect(228, 124, 28, 132); c.fillStyle = '#d4af37'; c.fillRect(220, 186, 3, 10); c.fillRect(229, 186, 3, 10); }
-  if (has('lamp')) {
-    c.fillStyle = '#555'; c.fillRect(176, 160, 4, 100); c.fillRect(166, 256, 24, 4);
-    c.fillStyle = '#f3e3b0'; c.beginPath(); c.moveTo(162, 160); c.lineTo(194, 160); c.lineTo(186, 138); c.lineTo(170, 138); c.fill();
-    if (night) { const g = c.createRadialGradient(178, 160, 4, 178, 170, 120); g.addColorStop(0, 'rgba(255,230,150,.45)'); g.addColorStop(1, 'rgba(255,230,150,0)'); c.fillStyle = g; c.fillRect(60, 60, 240, 220); }
-  }
-  if (has('bed')) {
-    c.fillStyle = '#6b4226'; c.fillRect(20, 188, 14, 82); c.fillRect(20, 225, 150, 40);
-    c.fillStyle = '#f5f5f5'; c.fillRect(34, 214, 136, 18);
-    c.fillStyle = '#3f6fb5'; c.fillRect(70, 212, 100, 26); c.fillStyle = '#5585cc'; c.fillRect(70, 212, 100, 6);
-    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(52, 212, 16, 8, 0, 0, Math.PI * 2); c.fill();
-  } else if (hasF('mattress')) {
-    c.fillStyle = '#e9e4da'; c.fillRect(25, 238, 140, 22); c.fillStyle = '#8fa9c9'; c.fillRect(70, 234, 95, 14);
-    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(45, 236, 14, 7, 0, 0, Math.PI * 2); c.fill();
-  } else ghost(25, 220, 140, 40, '🛏️ No bed');
-
-  // ---------- living room ----------
-  if (has('rug')) { c.fillStyle = '#a34b5a'; c.beginPath(); c.ellipse(420, 300, 130, 28, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#e8c07a'; c.lineWidth = 3; c.beginPath(); c.ellipse(420, 300, 115, 22, 0, 0, Math.PI * 2); c.stroke(); }
-  if (has('bookshelf')) {
-    c.fillStyle = '#6b4226'; c.fillRect(280, 110, 64, 150);
-    for (let s = 0; s < 4; s++) { c.fillStyle = '#4e2f1a'; c.fillRect(284, 146 + s * 36, 56, 3); for (let k = 0; k < 7; k++) { c.fillStyle = ['#c0392b', '#2f80ed', '#27ae60', '#f39c12', '#8e44ad', '#16a085', '#e67e22'][(k + s) % 7]; c.fillRect(286 + k * 7.5, 120 + s * 36, 6, 25 - (k % 3) * 3 + 1); } }
-  }
-  if (has('couch')) {
-    c.fillStyle = '#4b7f8c'; c.fillRect(352, 200, 140, 40); c.fillStyle = '#5c94a3'; c.fillRect(358, 216, 128, 28);
-    c.fillStyle = '#3f6c77'; c.fillRect(346, 210, 16, 46); c.fillRect(482, 210, 16, 46); c.fillRect(356, 244, 132, 14);
-    c.fillStyle = '#ffd166'; c.fillRect(368, 206, 26, 18);
-  }
-  if (has('aquarium')) {
-    c.fillStyle = '#4e342e'; c.fillRect(505, 210, 70, 50); c.fillStyle = 'rgba(80,170,230,.8)'; c.fillRect(505, 166, 70, 44);
-    c.fillStyle = '#f39c12'; c.beginPath(); c.ellipse(530, 184, 6, 3, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e74c3c'; c.beginPath(); c.ellipse(552, 194, 5, 3, 0, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#2e7d32'; c.fillRect(512, 196, 3, 14); c.fillRect(566, 192, 3, 18);
-  }
-  if (has('tv')) {
-    c.fillStyle = '#5d4037'; c.fillRect(380, 150, 90, 8);
-    c.fillStyle = '#111'; c.fillRect(378, 96, 94, 54); c.fillStyle = night ? '#4a7fd1' : '#2c3e50'; c.fillRect(382, 100, 86, 46);
-    if (has('console')) { c.fillStyle = '#222'; c.fillRect(440, 160, 26, 8); }
-  }
-  if (has('desk')) {
-    c.fillStyle = '#8d6e63'; c.fillRect(588, 196, 84, 8); c.fillRect(592, 204, 6, 56); c.fillRect(662, 204, 6, 56);
-    if (has('laptop')) { c.fillStyle = '#90a4ae'; c.fillRect(612, 190, 36, 6); c.fillStyle = '#263238'; c.fillRect(616, 166, 28, 24); c.fillStyle = '#4fc3f7'; c.fillRect(619, 169, 22, 18); }
-  } else if (has('laptop')) { c.fillStyle = '#263238'; c.fillRect(610, 240, 28, 20); }
-  if (has('plant')) { c.fillStyle = '#c0703c'; c.fillRect(560, 236, 22, 24); c.fillStyle = '#3e8e41'; c.beginPath(); c.arc(571, 224, 14, 0, Math.PI * 2); c.arc(562, 214, 9, 0, Math.PI * 2); c.arc(580, 212, 9, 0, Math.PI * 2); c.fill(); }
-  if (has('fan')) { c.fillStyle = '#ddd'; c.fillRect(270, 230, 4, 30); c.beginPath(); c.arc(272, 222, 12, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#999'; c.lineWidth = 1; c.beginPath(); c.arc(272, 222, 12, 0, Math.PI * 2); c.stroke(); }
-
-  // ---------- kitchen ----------
-  if (own('fridge')) {
-    c.fillStyle = '#eceff1'; c.fillRect(690, 100, 56, 160); c.strokeStyle = '#b0bec5'; c.lineWidth = 2; c.strokeRect(690, 100, 56, 160);
-    c.beginPath(); c.moveTo(690, 158); c.lineTo(746, 158); c.stroke(); c.fillStyle = '#90a4ae'; c.fillRect(738, 120, 3, 26); c.fillRect(738, 170, 3, 34);
-    c.fillStyle = '#ff7043'; c.fillRect(700, 176, 10, 8); c.fillStyle = '#42a5f5'; c.fillRect(714, 190, 12, 9);
-  } else ghost(690, 100, 56, 160, '🧊 ?');
-  if (own('stove')) {
-    c.fillStyle = '#cfd8dc'; c.fillRect(620, 196, 64, 64); c.fillStyle = '#37474f'; c.fillRect(620, 190, 64, 8); c.fillRect(628, 214, 48, 32);
-    c.fillStyle = '#263238'; [[636, 192], [668, 192]].forEach(([x, y]) => { c.beginPath(); c.ellipse(x, y, 10, 3, 0, 0, Math.PI * 2); c.fill(); });
-    if (has('microwave')) { c.fillStyle = '#b0bec5'; c.fillRect(626, 150, 52, 32); c.fillStyle = '#263238'; c.fillRect(630, 154, 32, 24); }
-  } else {
-    if (!has('desk')) ghost(620, 196, 64, 64, '🍳 ?');
-    if (has('microwave')) { c.fillStyle = '#b0bec5'; c.fillRect(626, 226, 52, 32); c.fillStyle = '#263238'; c.fillRect(630, 230, 32, 24); }
-  }
-  if (own('table')) {
-    c.fillStyle = '#a1887f'; c.fillRect(470, 266, 110, 8); c.fillRect(478, 274, 6, 44); c.fillRect(566, 274, 6, 44);
-    c.fillStyle = '#8d6e63'; c.fillRect(450, 250, 6, 68); c.fillRect(450, 286, 22, 5); c.fillRect(594, 250, 6, 68); c.fillRect(578, 286, 22, 5);
-    if (S.groceries > 0) { c.fillStyle = '#ff7043'; c.beginPath(); c.arc(520, 262, 6, 0, Math.PI * 2); c.fill(); c.fillStyle = '#fdd835'; c.beginPath(); c.arc(532, 262, 5, 0, Math.PI * 2); c.fill(); }
-  }
-
-  // ---------- bathroom ----------
-  c.fillStyle = '#8d6e63'; c.fillRect(784, 120, 8, 140);
-  if (has('bathtub')) {
-    c.fillStyle = '#fff'; c.beginPath(); c.roundRect ? c.roundRect(890, 214, 104, 46, 10) : c.rect(890, 214, 104, 46); c.fill(); c.strokeStyle = '#cfd8dc'; c.lineWidth = 2; c.stroke();
-    c.fillStyle = 'rgba(180,225,250,.9)'; c.fillRect(896, 216, 92, 10); c.fillStyle = '#fff'; [[910, 214], [930, 212], [950, 215]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 6, 0, Math.PI * 2); c.fill(); });
-  }
-  if (hasF('shower') && (has('shower') || !has('bathtub'))) {
-    c.fillStyle = 'rgba(200,230,245,.55)'; c.fillRect(912, 60, 82, 150); c.strokeStyle = '#90a4ae'; c.lineWidth = 2; c.strokeRect(912, 60, 82, 150);
-    c.fillStyle = '#90a4ae'; c.fillRect(950, 60, 4, 20); c.beginPath(); c.ellipse(952, 82, 12, 4, 0, 0, Math.PI * 2); c.fill();
-  } else if (!hasF('shower')) ghost(912, 100, 82, 150, '🚿 ?');
-  if (own('toilet')) {
-    c.fillStyle = '#fff'; c.fillRect(812, 186, 28, 40); c.strokeStyle = '#cfd8dc'; c.lineWidth = 1.5; c.strokeRect(812, 186, 28, 40);
-    c.beginPath(); c.ellipse(842, 232, 26, 10, 0, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill(); c.stroke();
-    c.fillRect(830, 236, 22, 24); c.strokeRect(830, 236, 22, 24);
-    c.fillStyle = '#b0bec5'; c.fillRect(818, 192, 10, 3);
-    if (S.supplies > 0 || S.home === 'parents') { c.fillStyle = '#fff'; c.beginPath(); c.arc(872, 200, 8, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#ccc'; c.stroke(); c.fillStyle = '#bbb'; c.beginPath(); c.arc(872, 200, 3, 0, Math.PI * 2); c.fill(); }
-  } else ghost(806, 190, 66, 70, '🚽 ?');
-  if (own('washer')) {
-    c.fillStyle = '#f5f5f5'; c.fillRect(800, 120, 56, 56); c.strokeStyle = '#bbb'; c.lineWidth = 1.5; c.strokeRect(800, 120, 56, 56);
-    c.fillStyle = '#90caf9'; c.beginPath(); c.arc(828, 152, 16, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#78909c'; c.stroke();
-  }
-  // sink & mirror
-  c.fillStyle = '#b3e5fc'; c.fillRect(812, 30, 44, 56); c.strokeStyle = '#90a4ae'; c.lineWidth = 3; c.strokeRect(812, 30, 44, 56);
-
-  // you!
-  if (atHome()) drawPerson(c, 300, 330, 2.3, S.look);
-
-  // night darkness (lamp glow drawn above)
-  if (night) { c.fillStyle = has('lamp') ? 'rgba(20,30,60,.18)' : 'rgba(20,30,60,.35)'; c.fillRect(0, 0, W, H); }
 }

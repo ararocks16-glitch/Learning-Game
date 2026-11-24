@@ -7,7 +7,8 @@ A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools neede
 - `js/map.js`: the town map (drawing, roads, travel)
 - `js/people.js`: drawn characters and the character creator
 - `js/money.js`: the 21 side-money ideas, weather, stocks, books
-- `js/home.js`: what homes include, furniture, supplies, snacks, paintings on walls, the room picture
+- `js/home.js`: what homes include, furniture, supplies, snacks, paintings on walls
+- `js/room.js`: the realistic drawing of the inside of your home
 - `js/ui.js`: screens
 
 ## Always republish the playable web page after changes
@@ -18,6 +19,6 @@ https://claude.ai/artifact/Faqvr9mFAk22ZSvkjTXGEs
 After ANY change to the game:
 1. Run `python3 tools/build-artifact.py` (writes `dist/play.html`).
 2. Republish with the Artifact tool to the URL above: `file_path` = `dist/play.html`, `url` = the URL above,
-   and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/ui.js": "js/ui.js"}`.
+   and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/room.js": "js/room.js", "js/ui.js": "js/ui.js"}`.
    (Read the artifact first if this session hasn't, as the tool requires.)
 3. Commit and push.

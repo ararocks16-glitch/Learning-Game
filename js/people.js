@@ -41,9 +41,14 @@ function drawPerson(c, x, y, s, look, phase = 0, moving = false) {
   c.strokeStyle = look.pants;
   c.beginPath(); c.moveTo(x + 2.2 * s, y - 13 * s); c.lineTo(x + 2.2 * s + sw, y - 2.5 * s); c.stroke();
   // shoes
-  c.fillStyle = '#2b2b2b';
-  c.beginPath(); c.ellipse(x - 2.4 * s - sw, y - 1.6 * s, 2.4 * s, 1.4 * s, 0, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.ellipse(x + 2.4 * s + sw, y - 1.6 * s, 2.4 * s, 1.4 * s, 0, 0, Math.PI * 2); c.fill();
+  [[x - 2.4 * s - sw, -1], [x + 2.4 * s + sw, 1]].forEach(([fx, d]) => {
+    c.fillStyle = '#2b2b2b'; c.beginPath(); c.ellipse(fx + d * 0.4 * s, y - 1.6 * s, 2.6 * s, 1.5 * s, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#f2f2f2'; c.fillRect(fx - 2.4 * s + d * 0.4 * s, y - 0.9 * s, 4.8 * s, 0.6 * s);
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(fx + d * 0.4 * s - 0.8 * s, y - 2.3 * s, 0.9 * s, 0.4 * s, 0, 0, Math.PI * 2); c.fill();
+  });
+  // pant leg crease
+  c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 0.5 * s;
+  c.beginPath(); c.moveTo(x - 2.2 * s, y - 12 * s); c.lineTo(x - 2.2 * s - sw, y - 3.5 * s); c.moveTo(x + 2.2 * s, y - 12 * s); c.lineTo(x + 2.2 * s + sw, y - 3.5 * s); c.stroke();
   // arms (behind)
   c.lineWidth = 3 * s;
   c.strokeStyle = shade(look.shirt, -0.12);
@@ -56,7 +61,15 @@ function drawPerson(c, x, y, s, look, phase = 0, moving = false) {
   const g = c.createLinearGradient(x - 6 * s, 0, x + 6 * s, 0);
   g.addColorStop(0, shade(look.shirt, 0.08)); g.addColorStop(1, shade(look.shirt, -0.12));
   c.fillStyle = g; rrPath(c, x - 6 * s, y - 26 * s, 12 * s, 14 * s, 3.5 * s); c.fill();
-  c.fillStyle = shade(look.pants, -0.1); c.fillRect(x - 6 * s, y - 14 * s, 12 * s, 2 * s);
+  c.strokeStyle = shade(look.shirt, -0.2); c.lineWidth = 0.5 * s;
+  c.beginPath(); c.moveTo(x - 3 * s, y - 20 * s); c.quadraticCurveTo(x - 1 * s, y - 17 * s, x - 3.5 * s, y - 14.5 * s);
+  c.moveTo(x + 3.5 * s, y - 21 * s); c.quadraticCurveTo(x + 2 * s, y - 18 * s, x + 3.8 * s, y - 15 * s); c.stroke();
+  c.fillStyle = shade(look.shirt, 0.15);
+  c.beginPath(); c.moveTo(x - 3.2 * s, y - 26 * s); c.lineTo(x, y - 23 * s); c.lineTo(x - 1 * s, y - 26.2 * s); c.fill();
+  c.beginPath(); c.moveTo(x + 3.2 * s, y - 26 * s); c.lineTo(x, y - 23 * s); c.lineTo(x + 1 * s, y - 26.2 * s); c.fill();
+  c.fillStyle = '#3a2a1e'; c.fillRect(x - 6 * s, y - 14 * s, 12 * s, 1.8 * s);
+  c.fillStyle = '#c9a54a'; c.fillRect(x - 1.1 * s, y - 14.2 * s, 2.2 * s, 2.2 * s);
+  c.fillStyle = shade(look.shirt, -0.3); c.fillRect(x - 0.5 * s, y - 13.6 * s, 1 * s, 1 * s);
   // neck + head
   c.fillStyle = shade(look.skin, -0.08); c.fillRect(x - 1.6 * s, y - 27.5 * s, 3.2 * s, 2.5 * s);
   const hg = c.createRadialGradient(x - 2 * s, hy - 2 * s, 1 * s, x, hy, 7.5 * s);
@@ -66,14 +79,25 @@ function drawPerson(c, x, y, s, look, phase = 0, moving = false) {
   c.fillStyle = shade(look.skin, -0.05);
   c.beginPath(); c.arc(x - 6.4 * s, hy + 0.5 * s, 1.4 * s, 0, Math.PI * 2); c.arc(x + 6.4 * s, hy + 0.5 * s, 1.4 * s, 0, Math.PI * 2); c.fill();
   // face
-  c.fillStyle = '#2a2a2a';
-  c.beginPath(); c.arc(x - 2.3 * s, hy + 0.6 * s, 0.9 * s, 0, Math.PI * 2); c.arc(x + 2.3 * s, hy + 0.6 * s, 0.9 * s, 0, Math.PI * 2); c.fill();
+  [-1, 1].forEach(d => {
+    const ex = x + d * 2.3 * s, ey = hy + 0.5 * s;
+    c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, ey, 1.35 * s, 1 * s, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#4a3222'; c.beginPath(); c.arc(ex, ey + 0.1 * s, 0.75 * s, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#111'; c.beginPath(); c.arc(ex, ey + 0.1 * s, 0.4 * s, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(ex - 0.3 * s, ey - 0.25 * s, 0.22 * s, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = shade(look.hair, -0.1); c.lineWidth = 0.55 * s;
+    c.beginPath(); c.moveTo(ex - d * 1.4 * s, ey - 1.9 * s); c.quadraticCurveTo(ex, ey - 2.5 * s, ex + d * 1.3 * s, ey - 2 * s); c.stroke();
+  });
+  c.strokeStyle = shade(look.skin, -0.25); c.lineWidth = 0.5 * s;
+  c.beginPath(); c.moveTo(x + 0.2 * s, hy + 0.8 * s); c.quadraticCurveTo(x + 0.9 * s, hy + 2 * s, x - 0.2 * s, hy + 2.2 * s); c.stroke();
   c.fillStyle = 'rgba(240,120,120,.35)';
   c.beginPath(); c.arc(x - 3.6 * s, hy + 2.6 * s, 1.2 * s, 0, Math.PI * 2); c.arc(x + 3.6 * s, hy + 2.6 * s, 1.2 * s, 0, Math.PI * 2); c.fill();
   c.strokeStyle = '#7a3b2e'; c.lineWidth = 0.8 * s;
   c.beginPath(); c.arc(x, hy + 2.6 * s, 1.8 * s, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
   // hair on top
-  c.fillStyle = look.hair;
+  const hairG = c.createLinearGradient(x - 6 * s, hy - 8 * s, x + 6 * s, hy);
+  hairG.addColorStop(0, shade(look.hair, 0.16)); hairG.addColorStop(0.5, look.hair); hairG.addColorStop(1, shade(look.hair, -0.12));
+  c.fillStyle = hairG;
   const cap = (r = 6.9) => { c.beginPath(); c.arc(x, hy - 0.4 * s, r * s, Math.PI * 1.02, Math.PI * 1.98); c.closePath(); c.fill(); };
   switch (look.style) {
     case 'short':
@@ -95,6 +119,10 @@ function drawPerson(c, x, y, s, look, phase = 0, moving = false) {
       break;
     case 'braids':
       cap(); break;
+  }
+  if (look.style !== 'buzz') {
+    c.strokeStyle = 'rgba(255,255,255,.22)'; c.lineWidth = 0.7 * s;
+    c.beginPath(); c.arc(x - 0.5 * s, hy - 1 * s, 5.2 * s, Math.PI * 1.2, Math.PI * 1.5); c.stroke();
   }
   c.restore();
 }
