@@ -41,7 +41,7 @@ const TRIP_ACTIONS = {
   trailhead: [
     { id: 'hike', icon: '🥾', name: 'Hike to the Top', hint: '4 hrs · Fitness skill · amazing view', fn: () => {
       if (!tripCheck(45, 6, 14)) return;
-      pass(4, 'sport'); addSkill('fit', 5); fun(18); S.needs.health = clamp(S.needs.health + 4);
+      pass(4, 'sport'); addSkill('fit', has('boots') ? 7 : 5); fun(18); S.needs.health = clamp(S.needs.health + 4);
       log(S.weather === 'rainy' ? '🥾 You hiked to the top in the rain. Muddy, but you did it!' : '🏔️ You hiked all the way to the snowy top! You could see the whole world from up there.', 'good'); } },
     { id: 'ski', icon: '⛷️', name: 'Go Skiing', hint: '$45 lift ticket · 3 hrs', fn: () => {
       if (!tripCheck(35, 8, 16) || !spend(45, 'Ski lift ticket')) return;

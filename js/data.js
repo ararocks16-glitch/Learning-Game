@@ -360,6 +360,7 @@ const ACHIEVEMENTS = [
   { id: 'decorator',     icon: '🖼️', name: 'Decorator',           desc: 'Hang 3 paintings on your walls.' },
   { id: 'cozy',          icon: '🏡', name: 'Home Sweet Home',     desc: 'Reach a coziness of 25.' },
   { id: 'traveler',      icon: '🧭', name: 'World Traveler',      desc: 'Visit all 6 places outside of town.' },
+  { id: 'townhopper',    icon: '🏘️', name: 'Town Hopper',         desc: 'Do something in all 4 other towns.' },
   { id: 'sponsored',     icon: '🤝', name: 'Sponsored',           desc: 'Get a sponsor.' },
   { id: 'pro_athlete',   icon: '🌟', name: 'Going Pro',           desc: 'Get hired as a pro athlete.' },
 ];

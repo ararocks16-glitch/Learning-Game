@@ -16,12 +16,7 @@ const TABS = [
   { id: 'park',       icon: '🌳', name: 'Park' },
   { id: 'cityhall',   icon: '🏛️', name: 'City Hall' },
   { id: 'theater',    icon: '🎭', name: 'Theater' },
-  { id: 'beach',      icon: '🏖️', name: 'Beach' },
-  { id: 'trailhead',  icon: '🏔️', name: 'Mountain' },
-  { id: 'lake',       icon: '🎣', name: 'Lake' },
-  { id: 'campground', icon: '🏕️', name: 'Camp' },
-  { id: 'village',    icon: '🧺', name: 'Village' },
-  { id: 'zoo',        icon: '🦒', name: 'Wildlife' },
+  { id: 'places',     icon: '🧭', name: 'All Places', personal: true },
   { id: 'money',      icon: '💰', name: 'Money', personal: true },
   { id: 'me',         icon: '🧑', name: 'Me', personal: true },
   { id: 'goals',      icon: '🏆', name: 'Goals', personal: true },
@@ -65,7 +60,9 @@ function render() {
   if (workDue()) warn.push(`<button class="chip warn" onclick="goWork()">💼 Time to go to work! (tap to go)</button>`);
   $('#warnings').innerHTML = warn.join('');
 
-  $('#tabs').innerHTML = TABS.map(t => {
+  const curP = PLACES[placeId(S.loc)];
+  const tabList = curP && curP.far ? [{ id: S.loc, icon: curP.icon, name: curP.name.split(' ')[0] }, ...TABS] : TABS;
+  $('#tabs').innerHTML = tabList.map(t => {
     const here = !t.personal && placeId(t.id) === placeId(S.loc);
     return `<button class="tab ${tab === t.id ? 'active' : ''} ${here ? 'here' : ''} ${t.personal ? 'personal' : ''}" onclick="setTab('${t.id}')">${t.icon}<span>${t.name}</span>${here ? '<i>📍</i>' : ''}</button>`;
   }).join('');
@@ -75,6 +72,8 @@ function render() {
   if (roomCv) drawRoom(roomCv);
   const doorCv = $('#doorcv');
   if (doorCv && !doorAnim) drawDoorView(doorCv, 0);
+  const entCv = $('#entcv');
+  if (entCv && !placeDoorAnim) drawEntrance(entCv, entCv.dataset.pid, 0);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
 }
 
@@ -102,10 +101,14 @@ function viewFor(t) {
   if (t === 'me') return viewMe();
   if (t === 'goals') return viewGoals();
   if (t === 'money') return viewMoney();
+  if (t === 'places') return viewDirectory();
   if (placeId(t) !== placeId(S.loc)) return viewGoThere(t);
   const place = placeOf(t);
-  const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">You are here.</p></div></div>`;
-  const body = PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : viewWorkplace(t);
+  const pid = placeId(t);
+  const outside = t !== 'home' && ENTRANCE[pid] && S.insideOf !== pid;
+  const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
+  if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
+  const body = PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t);
   return head + body + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
@@ -122,7 +125,7 @@ function viewGoThere(t) {
     beach: 'Swim in the ocean, surf, build sandcastles, collect seashells.', trailhead: 'Hike to the snowy top or go skiing.',
     lake: 'Go fishing and paddle a canoe.', campground: 'Camp overnight in the forest and roast marshmallows.',
     village: 'A farmers market: buy fresh food, sell veggies, shells and fish.', zoo: 'See elephants, giraffes and zebras.', hospital: 'See a doctor when you feel sick.', park: 'Relax by the lake, feed the ducks, hang out with friends.',
-  }[t] || 'A place in town.';
+  }[t] || (PLACES[t] && PLACES[t].blurb) || 'A place in town.';
   const isWork = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
   return `<div class="card goto">
     <div class="placehead"><span class="pic">${t === 'home' ? home().icon : p.icon}</span><div><h2>${t === 'home' ? 'Home' : p.name}</h2><p>${blurb}</p></div></div>
@@ -131,6 +134,21 @@ function viewGoThere(t) {
     ${isWork ? '<p class="muted">This is where you work. Use the "Go to Work" button to start your shift.</p>' : ''}
     <p class="muted small">Tip: you can also click buildings on the map.</p>
   </div>`;
+}
+
+function viewDirectory() {
+  const groups = [['🏙️ Maple Town', id => !PLACES[id].far && PLACES[id].kind === 'place']];
+  TOWN_NAMES.slice(1).forEach(tn => groups.push([tn.name, id => PLACES[id].town && tn.name.toLowerCase().includes(PLACES[id].town === 'seaside' ? 'seaside' : PLACES[id].town)]));
+  groups.push(['🌳 Outdoors', id => PLACES[id].far && !PLACES[id].town]);
+  const row = id => {
+    const p = PLACES[id];
+    const here = placeId(S.loc) === id;
+    const info = here ? null : travelInfo(S.loc, id);
+    return `<div class="mrow"><span class="mi">${p.icon}</span><div class="mt"><b>${p.name}</b><small>${here ? '📍 You are here' : `${info.icon} ${travelTime(info.hours)}${info.cost ? ` · $${info.cost}` : ''}`}${ENTRANCE[id] ? ` · ${hoursText(id)}` : ''}</small></div>
+      <div class="mb">${here ? `<button class="btn sm ghost" onclick="setTab('${id}')">Look</button>` : `<button class="btn sm primary" onclick="travelTo('${id}')">Go</button>`}</div></div>`;
+  };
+  return `<h2>🧭 All Places</h2><p class="muted">Every place in the world, sorted by town. Far places take longer to get to!</p>
+    ${groups.map(([name, f]) => { const ids = Object.keys(PLACES).filter(f); return ids.length ? `<div class="card money"><h3>${name}</h3><div class="mrows">${ids.map(row).join('')}</div></div>` : ''; }).join('')}`;
 }
 
 function restroomBar() {

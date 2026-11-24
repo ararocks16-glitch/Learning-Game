@@ -5,6 +5,7 @@
 
 const WORLD = { x0: -5400, y0: -3420, x1: 6600, y1: 4180 };
 const TOWN = { x: 0, y: 0, w: MAP_W, h: MAP_H, cx: 600, cy: 380 };
+const TOWN_NAMES = [{ name: '🏙️ Maple Town', x: TOWN.cx, y: TOWN.cy, box: [0, 0, MAP_W, MAP_H] }];
 const CHUNK = 512;
 
 // ---------- noise ----------
@@ -321,6 +322,7 @@ function vHouse(c, h) {
 // ---------- the far places ----------
 function drawFarPlace(c, id, lod) {
   const p = PLACES[id];
+  if (p.shop) return drawShop(c, id, lod);
   const [x, y, w, h] = p.r;
   const rnd = seeded(id.length * 97);
   if (id === 'beach') {
@@ -480,7 +482,7 @@ function renderChunk(cx, cy, lod) {
       else if (t.t === 'palm') wPalm(c, t.x, t.y, t.s); else if (t.t === 'rock') wRock(c, t.x, t.y, t.s); else if (t.t === 'bush') bush(c, t.x, t.y, t.s, '#3f8f45');
     }]); });
     VHOUSES.forEach(h => { if (overlap([h.x - 10, h.y - 20, h.w + 30, h.h + 40], [x0, y0, CHUNK, CHUNK])) draw.push([h.y + h.h, () => vHouse(c, h)]); });
-    Object.entries(PLACES).forEach(([id, p]) => { if (p.far && overlap([p.r[0] - 20, p.r[1] - 700, p.r[2] + 200, p.r[3] + 720], [x0, y0, CHUNK, CHUNK])) draw.push([p.r[1] + p.r[3], () => drawFarPlace(c, id, lod)]); });
+    Object.entries(PLACES).forEach(([id, p]) => { if (p.far && overlap([p.r[0] - 20, p.r[1] - 700, p.r[2] + 200, p.r[3] + (id === 'harbor' ? 1200 : 720)], [x0, y0, CHUNK, CHUNK])) draw.push([p.r[1] + p.r[3], () => drawFarPlace(c, id, lod)]); });
     draw.sort((a, b) => a[0] - b[0]).forEach(d => d[1]());
   } else {
     VHOUSES.forEach(h => { if (overlap([h.x, h.y, h.w, h.h], [x0, y0, CHUNK, CHUNK])) { fillR(c, h.x + 20, h.y + 26, 44, 34, h.wall); tri(c, [[h.x + 14, h.y + 28], [h.x + 42, h.y + 6], [h.x + 70, h.y + 28]], h.roof); } });
@@ -733,14 +735,14 @@ function drawDynamic(t, dt) {
   const ls = Math.min(9, Math.max(1, 1 / cam.z));
   const showTown = cam.z >= 0.45;
   Object.entries(PLACES).forEach(([id, p]) => {
-    if (!p.far && !showTown) return;
+    if ((!p.far || p.town) && !showTown) return;
     if (p.kind === 'deco' && hover !== id) return;
     if (p.kind === 'home' && id !== myHome && hover !== id) return;
     const isHover = hover === id;
     let label = `${p.icon} ${p.name}`;
     if (id === myHome) label = `🏠 Home`;
     if (id === myWork) label = `💼 ${p.name} (Work)`;
-    const s = p.far ? ls : 1;
+    const s = p.far && !p.town ? ls : 1;
     const fs = (isHover ? 12 : 10) * s;
     c.font = `${isHover ? 800 : 700} ${fs}px system-ui, sans-serif`;
     const tw = c.measureText(label).width + 12 * s;
@@ -753,14 +755,13 @@ function drawDynamic(t, dt) {
     txt(c, label, lx, ly + (isHover ? 1 : -0.5) * s, fg, fs, isHover ? 800 : 700);
     if (isHover) { c.strokeStyle = '#2f80ed'; c.lineWidth = 3 * s; rr(c, p.r[0] - 3, p.r[1] - 3, p.r[2] + 6, p.r[3] + 6, 8); c.stroke(); }
   });
-  if (!showTown) {
-    const s = ls * 1.4;
+  if (!showTown) TOWN_NAMES.forEach((tn, i) => {
+    const s = ls * 1.4, hv = hover === 'town:' + i;
     c.font = `800 ${12 * s}px system-ui, sans-serif`;
-    const lbl = '🏙️ Maple Town';
-    const tw = c.measureText(lbl).width + 16 * s;
-    fillR(c, TOWN.cx - tw / 2, TOWN.cy - 10 * s, tw, 22 * s, hover === 'town' ? '#1d2b3a' : 'rgba(255,255,255,.95)', 11 * s);
-    txt(c, lbl, TOWN.cx, TOWN.cy + 1 * s, hover === 'town' ? '#fff' : '#1d2b3a', 12 * s, 800);
-  }
+    const tw = c.measureText(tn.name).width + 16 * s;
+    fillR(c, tn.x - tw / 2, tn.y - 10 * s, tw, 22 * s, hv ? '#1d2b3a' : 'rgba(255,255,255,.95)', 11 * s);
+    txt(c, tn.name, tn.x, tn.y + 1 * s, hv ? '#fff' : '#1d2b3a', 12 * s, 800);
+  });
 
   // the player
   let px, py, moving = false, segDir = [1, 0];
@@ -875,12 +876,12 @@ function resizeMap() {
 function placeAt([x, y]) {
   const far = cam.z < 0.45;
   for (const [id, p] of Object.entries(PLACES)) {
-    if (far && !p.far) continue;
+    if (far && (!p.far || p.town)) continue;
     const pad = p.far && far ? 60 / cam.z * 0.3 : 0;
     const [rx, ry, rw, rh] = p.r;
     if (x >= rx - pad && x <= rx + rw + pad && y >= ry - 8 - pad && y <= ry + rh + pad) return id;
   }
-  if (far && x > -100 && x < MAP_W + 100 && y > -100 && y < MAP_H + 100) return 'town';
+  if (far) for (let i = 0; i < TOWN_NAMES.length; i++) { const b2 = TOWN_NAMES[i].box; if (x > b2[0] - 100 && x < b2[0] + b2[2] + 100 && y > b2[1] - 100 && y < b2[1] + b2[3] + 100) return 'town:' + i; }
   return null;
 }
 function initMap() {
@@ -923,7 +924,7 @@ function initMap() {
     if (pts.size < 2) pinch = null;
     if (drag && !wasDrag) {
       const id = placeAt(toWorld(...p));
-      if (id === 'town') { cam.x = TOWN.cx; cam.y = TOWN.cy; cam.z = 1; cam.follow = false; clampCam(); }
+      if (id && id.startsWith('town:')) { const tn = TOWN_NAMES[+id.slice(5)]; cam.x = tn.x; cam.y = tn.y; cam.z = 1; cam.follow = false; clampCam(); }
       else if (id) clickPlace(id);
     }
     drag = null; mapCanvas.style.cursor = 'grab';
