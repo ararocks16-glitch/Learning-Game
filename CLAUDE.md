@@ -18,6 +18,13 @@ A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools neede
 - `js/towns.js`: the 4 other towns (Seaside Bay, Pinecrest, Snowpeak, Riverside Village)
 - `js/ui.js`: screens
 
+## The game lives in Artifacts, and only the owner plays it
+
+- The game is played in the owner's claude.ai Artifacts (pinned in their sidebar). That is the only place it's played.
+- It must stay **private**: only the owner can play it. Never share it, never change who can open it, and never post it anywhere else.
+  (Only the owner can share it, from the page's Share menu, if they ever choose to.)
+- Keep the same artifact URL forever, so the owner always plays the newest version there.
+
 ## Always republish the playable web page after changes
 
 The game is published as a web page so the user can always play the newest version:

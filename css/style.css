@@ -311,3 +311,4 @@ details.walls summary { cursor: pointer; }
 .petcard { background: var(--bg); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 3px; }
 .pbar { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 6px; font-size: .78rem; }
 .pbar .bar { margin: 0; }
+.petshopcard canvas.petpic { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; display: block; margin-bottom: 6px; }

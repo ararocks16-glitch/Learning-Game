@@ -362,6 +362,7 @@ const ACHIEVEMENTS = [
   { id: 'traveler',      icon: '🧭', name: 'World Traveler',      desc: 'Visit all 6 places outside of town.' },
   { id: 'townhopper',    icon: '🏘️', name: 'Town Hopper',         desc: 'Do something in all 4 other towns.' },
   { id: 'pet_owner',     icon: '🐾', name: 'Pet Owner',           desc: 'Get a pet.' },
+  { id: 'zoo_keeper',    icon: '🦎', name: 'Animal Lover',        desc: 'Have 3 different kinds of animals at once.' },
   { id: 'happy_pet',     icon: '🐶', name: 'Best Friend',         desc: 'Keep a pet happy for 7 days in a row.' },
   { id: 'sponsored',     icon: '🤝', name: 'Sponsored',           desc: 'Get a sponsor.' },
   { id: 'pro_athlete',   icon: '🌟', name: 'Going Pro',           desc: 'Get hired as a pro athlete.' },

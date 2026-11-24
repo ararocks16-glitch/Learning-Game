@@ -79,6 +79,7 @@ function render() {
   if (roomCv) drawRoom(roomCv);
   const doorCv = $('#doorcv');
   if (doorCv && !doorAnim) drawDoorView(doorCv, 0);
+  if (document.querySelector('canvas.petpic')) drawShopPics();
   const intCv = $('#intcv');
   if (intCv) drawInterior(intCv, intCv.dataset.pid);
   const entCv = $('#entcv');
