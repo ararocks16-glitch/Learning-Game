@@ -14,6 +14,9 @@ const TABS = [
   { id: 'realestate', icon: '🔑', name: 'Homes' },
   { id: 'hospital',   icon: '🏥', name: 'Hospital' },
   { id: 'park',       icon: '🌳', name: 'Park' },
+  { id: 'cityhall',   icon: '🏛️', name: 'City Hall' },
+  { id: 'theater',    icon: '🎭', name: 'Theater' },
+  { id: 'money',      icon: '💰', name: 'Money', personal: true },
   { id: 'me',         icon: '🧑', name: 'Me', personal: true },
   { id: 'goals',      icon: '🏆', name: 'Goals', personal: true },
 ];
@@ -36,8 +39,8 @@ function render() {
   document.body.classList.toggle('night', night);
 
   $('#hud').innerHTML = `
-    <div class="who"><span class="avatar">${S.avatar}</span><div><b>${esc(S.name)}</b><div class="muted">📍 ${esc(locName(S.loc))}</div></div></div>
-    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">Day ${S.day} · ${wd}${isWeekend() ? ' 🎉' : ''}</div></div>
+    <div class="who">${avatarImg(S.look, 48)}<div><b>${esc(S.name)}</b><div class="muted">📍 ${esc(locName(S.loc))}</div></div></div>
+    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">Day ${S.day} · ${wd}${isWeekend() ? ' 🎉' : ''} · ${WEATHER[S.weather].icon} ${WEATHER[S.weather].name}</div></div>
     <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
 
   $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
@@ -78,16 +81,19 @@ const PLACE_VIEWS = {
   realestate: () => viewHousing(),
   hospital: () => viewHospital(),
   park: () => viewPark(),
+  cityhall: () => viewWorkplace('cityhall'),
+  theater: () => viewWorkplace('theater'),
 };
 
 function viewFor(t) {
   if (t === 'me') return viewMe();
   if (t === 'goals') return viewGoals();
+  if (t === 'money') return viewMoney();
   if (placeId(t) !== placeId(S.loc)) return viewGoThere(t);
   const place = placeOf(t);
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">You are here.</p></div></div>`;
   const body = PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : viewWorkplace(t);
-  return head + body + (t === 'home' ? '' : restroomBar());
+  return head + body + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -98,8 +104,8 @@ function viewGoThere(t) {
     school: 'Take skill classes or study for a degree.', library: 'Study for free and read books.',
     sports: 'Practice sports, pay for lessons and enter tournaments.', market: 'Buy groceries to eat at home.',
     mall: 'Clothes, electronics and stuff for your home.', diner: 'Eat out: burgers, salads, pancakes and milkshakes.',
-    cars: 'Buy a bike or a car to get around faster.', bank: 'Savings, loans and health insurance.',
-    realestate: 'Rent an apartment or buy a house.', hospital: 'See a doctor when you feel sick.', park: 'Relax by the lake, feed the ducks, hang out with friends.',
+    cars: 'Buy a bike or a car to get around faster.', bank: 'Savings, loans, health insurance and the stock market.',
+    realestate: 'Rent an apartment, buy a house, or buy rental houses.', cityhall: 'Start a business, enter the Invention Fair, buy raffle tickets.', theater: 'Talent Show every Saturday evening!', hospital: 'See a doctor when you feel sick.', park: 'Relax by the lake, feed the ducks, hang out with friends.',
   }[t] || 'A place in town.';
   const isWork = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
   return `<div class="card goto">
@@ -118,7 +124,13 @@ function restroomBar() {
     <button class="btn ghost sm" onclick="travelTo('home')">🏠 Go home</button></div>`;
 }
 
-function setTab(t) { tab = t; render(); }
+function setTab(t) {
+  tab = t; render();
+  if (t === 'me') {
+    const el = $('#restyle');
+    if (el) characterCreator(el, S.look, () => { save(); const hud = $('#hud img.avatar'); if (hud) hud.src = avatarURL(S.look, 48); });
+  }
+}
 
 // ---------- views ----------
 function jobCard() {
@@ -369,7 +381,8 @@ function viewBank() {
 
 function viewMe() {
   const all = Object.keys(SKILLS).map(k => [k, S.skills[k]]).sort((a, b) => b[1] - a[1]);
-  return `<h2>${S.avatar} ${esc(S.name)}</h2>
+  return `<div class="placehead">${avatarImg(S.look, 72, 'avatar big')}<h2>${esc(S.name)}</h2></div>
+    <details class="card"><summary>✂️ Change your look (new haircut, new clothes!)</summary><div id="restyle"></div></details>
     <p>🎓 ${EDU_NAMES[S.edu]} · Day ${S.day} of your life · Jobs held: ${S.jobsWorked.length}</p>
     <p class="muted">These are the things you can tell a boss in a job interview. They want a level that's high enough!</p>
     <h3>Skills</h3>
@@ -390,7 +403,6 @@ function viewGoals() {
 }
 
 // ---------- setup screen ----------
-const AVATARS = ['🧑', '👩', '👨', '🧒', '👧', '👦', '🧑‍🦱', '👩‍🦰', '🧑‍🦳', '👱', '🧔', '👩‍🦱'];
 function showSetup() {
   $('#app').classList.add('hidden');
   const s = $('#setup');
@@ -399,15 +411,15 @@ function showSetup() {
     <h1>🌱 Life Lessons</h1>
     <p>Grow up, get a job, pay bills, play sports, and learn what life is really like!</p>
     <label>Your name<input id="pname" maxlength="16" placeholder="Type your name"></label>
-    <div class="label">Pick a look</div>
-    <div class="avatars">${AVATARS.map((a, i) => `<button class="av ${i === 0 ? 'sel' : ''}" data-av="${a}">${a}</button>`).join('')}</div>
+    <div class="label">Make your character</div>
+    <div id="creator"></div>
     <div class="label">What are you naturally good at? Pick <b>2</b>.</div>
     <div class="talents">${Object.entries(SKILLS).map(([k, sk]) => `<button class="tal" data-t="${k}">${sk.icon} ${sk.name}</button>`).join('')}</div>
     <button class="btn primary big" id="startBtn">Start My Life ▶</button>
   </div>`;
-  let av = AVATARS[0];
+  const look = randomLook();
+  characterCreator($('#creator'), look);
   const tals = new Set();
-  s.querySelectorAll('.av').forEach(b => b.onclick = () => { s.querySelectorAll('.av').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); av = b.dataset.av; });
   s.querySelectorAll('.tal').forEach(b => b.onclick = () => {
     const t = b.dataset.t;
     if (tals.has(t)) { tals.delete(t); b.classList.remove('sel'); }
@@ -420,7 +432,7 @@ function showSetup() {
     s.classList.add('hidden');
     $('#app').classList.remove('hidden');
     tab = 'home';
-    newGame(name, av, [...tals]);
+    newGame(name, { ...look }, [...tals]);
     initMapOnce();
     render();
   };
@@ -444,6 +456,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (S.loc === undefined) S.loc = 'home';
     if (S.needs.bladder === undefined) S.needs = { food: S.needs.food, energy: S.needs.energy, hygiene: S.needs.hygiene, bladder: 70, fun: S.needs.fun, health: S.needs.health };
     if (S.handsDirty === undefined) S.handsDirty = false;
+    if (!S.look) S.look = randomLook();
+    ensureMoneyState();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();

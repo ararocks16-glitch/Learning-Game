@@ -101,11 +101,11 @@ function netWorth() {
   if (h.type === 'buy') w += h.price - (S.mortgage ? S.mortgage.balance : 0);
   if (has('car')) w += 3000;
   if (has('newcar')) w += 18000;
-  return w;
+  return w + moneyAssets();
 }
 
 // ---------- new game ----------
-function newGame(name, avatar, talents) {
+function newGame(name, look, talents) {
   const skills = {};
   for (const k in SKILLS) skills[k] = Math.round(rand(0, 9));
   talents.forEach(t => skills[t] += 25);
@@ -114,7 +114,7 @@ function newGame(name, avatar, talents) {
   for (const k in SPORTS) sports[k] = Math.round(rand(0, 6));
 
   S = {
-    name, avatar, day: 1, hour: 7,
+    name, look, day: 1, hour: 7,
     money: 300, savings: 0, loan: 0,
     needs: { food: 75, energy: 90, hygiene: 60, bladder: 55, fun: 70, health: 100 },
     skills, sports, edu: 1, eduProgress: { 2: 0, 3: 0 },
@@ -128,10 +128,11 @@ function newGame(name, avatar, talents) {
     week: { income: 0, expenses: 0, lines: [] },
     log: [],
   };
+  ensureMoneyState();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
-  showModal(`<h2>${avatar} Welcome to Life, ${esc(name)}!</h2>
+  showModal(`<div class="placehead">${avatarImg(look, 64, 'avatar big')}<h2>Welcome to Life, ${esc(name)}!</h2></div>
     <p>You just graduated high school. You live with your parents and have <b>$300</b>.</p>
     <ul class="tips">
       <li>💼 <b>Get a job</b> — tell the boss what you're good at.</li>
@@ -220,6 +221,7 @@ function newDay() {
 
   // --- start of the new day ---
   S.day++;
+  moneyNewDay();
   S.today = { worked: false, brushed: false, showered: false, sick: false };
   S.laundryDays++;
   if (weekday() === 0) weeklyBills();
@@ -527,6 +529,7 @@ function weeklyBills() {
     <p>You now have <b>${money(S.money)}</b>${S.savings > 0 ? ` and ${money(S.savings)} in savings` : ''}.</p>
     ${S.money < 0 ? '<p class="lesson">⚠️ You have negative money! Find work or cut spending fast.</p>' : ''}`);
   S.week = { income: 0, expenses: 0, lines: [] };
+  moneyWeekly();
 }
 
 // ---------- random events ----------
@@ -554,6 +557,7 @@ function dailyEvent() {
   if (!S.taxRefundDone && S.day > 40 && S.jobsWorked.length) ev.push({ w: 5, f: () => { S.taxRefundDone = true; earn(300, 'Tax refund'); return ['📬 Tax Refund', 'The government says you paid a little too much tax last year. Here\'s $300 back!', 'Each year people file a "tax return" to check if they paid the right amount.']; } });
   ev.push({ w: 2, f: () => { S.needs.fun = clamp(S.needs.fun + 10); addSkill('comm', 2); return ['🙋 Volunteering', 'You helped at the food bank. You feel good and made new friends.', 'Helping others is a big part of life too.']; } });
 
+  moneyEvents(ev);
   const total = ev.reduce((a, e) => a + e.w, 0);
   let r = Math.random() * total;
   for (const e of ev) {
@@ -768,6 +772,7 @@ function tournament(sp, tid) {
   if (prize) earn(prize, `${t.name} prize`);
   const medal = { 1: '🥇 1st place!', 2: '🥈 2nd place!', 3: '🥉 Made the semifinals', 5: 'Out in the first round' }[place];
   if (place === 1) {
+    sponsorChance(sp, tid);
     S.trophies.push({ sport: sp, t: tid, day: S.day });
     unlock('tourney');
     if (tid === 'national') unlock('national');
@@ -793,6 +798,7 @@ function buy(itemId) {
   else if (it.id === 'salad') { ateFood(40); S.needs.health = clamp(S.needs.health + 4); log('🥗 You ate a healthy lunch.'); }
   else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
   else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
+  else if (moneyBuy(it.id)) { /* side-money supplies */ }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
     S.owned[it.id] = true;
