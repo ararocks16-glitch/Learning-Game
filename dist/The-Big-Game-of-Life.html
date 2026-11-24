@@ -351,6 +351,19 @@ details.walls summary { cursor: pointer; }
 .bubble { position: relative; margin-top: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 1.02rem; line-height: 1.4; }
 .bubble::before { content: ''; position: absolute; left: -10px; top: 14px; border: 8px solid transparent; border-right-color: var(--line); border-left: 0; }
 @media (max-width: 600px) { .talk > img.avatar { width: 64px; height: 64px; } }
+.guestpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.guest { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--bg); border: 2px solid var(--line); border-radius: 12px; padding: 8px 4px; cursor: pointer; color: var(--ink); }
+.guest.sel { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--bg2)); }
+.guest img { width: 56px; height: 56px; }
+.action.sel { outline: 3px solid var(--primary); }
+.dinner { margin: 8px 0; text-align: center; }
+.seats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.seat { display: flex; flex-direction: column; align-items: center; }
+.seat img { width: 64px; height: 64px; }
+.dtable { margin: -6px auto 0; max-width: 360px; background: linear-gradient(#a0703f, #7a5230); border-radius: 50px; padding: 10px; font-size: 1.4rem; letter-spacing: 6px; box-shadow: 0 6px 0 #5a3b20; }
+.talk.small { margin: 6px 0; gap: 8px; }
+.talk.small > img.avatar { width: 40px; height: 40px; }
+.talk.small .bubble { margin-top: 2px; padding: 6px 10px; font-size: .92rem; }
 
 </style>
 </head>
@@ -1494,6 +1507,8 @@ const HOME_ACTIONS = [
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
   { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
     fn: () => drink('tap') },
+  { id: 'dinnerparty', icon: '🍽️', name: 'Invite Friends to Dinner', hint: () => S.friends && S.friends.length ? `5–9 PM · ${S.friends.length} friends to invite` : 'Make some friends first!',
+    fn: () => dinnerParty() },
   { id: 'recipe', icon: '👩‍🍳', name: 'Cook a Recipe', hint: () => `Real ingredients · ${S.fridgeFood.length} items in your kitchen`,
     fn: () => recipeModal() },
   { id: 'snack', icon: '🍿', name: 'Have a Snack', hint: () => `Fruit, chips, cereal, pizza · you have ${Object.values(S.pantry).reduce((a, v) => a + v, 0)}`,
@@ -8069,6 +8084,17 @@ function ensureSocialState() {
     };
   }
   if (!S.texts) S.texts = [];
+  S.friends.forEach(fr => { if (fr.age === undefined) fr.age = friendAge(); });
+  // you just finished high school, so you start with two classmates as friends
+  if (!S.schoolFriends && S.age !== undefined) {
+    S.schoolFriends = true;
+    for (let k = 0; k < 2 && S.friends.length < MAX_FRIENDS; k++) {
+      const used = new Set(S.friends.map(f => f.name));
+      const name = FIRST_NAMES.filter(n => !used.has(n))[Math.floor(Math.random() * 12)] || pickR(FIRST_NAMES);
+      const d = 1 + Math.floor(Math.random() * 360); let m = 0, doy = d; while (doy >= MDAYS[m]) { doy -= MDAYS[m]; m++; }
+      S.friends.push({ name, look: randomLook(), f: 60, bday: { m, d: doy + 1 }, where: 'school', met: S.day, age: S.age, classmate: true });
+    }
+  }
   if (!S.neighbors) S.neighbors = { names: [pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES), pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES)], complaints: 0 };
 }
 function text(from, msg) { S.texts.unshift({ day: S.day, hour: S.hour, from, msg }); if (S.texts.length > 30) S.texts.length = 30; S.unread = (S.unread || 0) + 1; }
@@ -8080,7 +8106,7 @@ function meetFriend(where) {
   const used = new Set(S.friends.map(f => f.name));
   const name = FIRST_NAMES.filter(n => !used.has(n))[Math.floor(Math.random() * 10)] || pickR(FIRST_NAMES);
   const d = 1 + Math.floor(Math.random() * 360); let m = 0, doy = d; while (doy >= MDAYS[m]) { doy -= MDAYS[m]; m++; }
-  const fr = { name, look: randomLook(), f: 30, bday: { m, d: doy + 1 }, where, met: S.day };
+  const fr = { name, look: randomLook(), f: 30, bday: { m, d: doy + 1 }, where, met: S.day, age: friendAge() };
   S.friends.push(fr);
   log(`👋 You met ${name} ${{ park: 'at the park', work: 'at work', diner: 'at the diner', school: 'in class', sports: 'at the Sports Park', volunteering: 'while volunteering' }[where] || 'in town'}. You're becoming friends!`, 'good');
   text(name, 'Hey! It was really nice meeting you 😊');
@@ -8109,7 +8135,7 @@ function socialNewDay() {
   ensureSocialState();
   S.friends.forEach(fr => {
     fr.f = clamp(fr.f - 1);
-    if (fr.bday && isDate(fr.bday.m, fr.bday.d)) { fr.bdayToday = S.day; log(`🎂 It's ${fr.name}'s birthday today! Text them or hang out!`); text('📅 Calendar', `It's ${fr.name}'s birthday 🎂`); }
+    if (fr.bday && isDate(fr.bday.m, fr.bday.d)) { fr.bdayToday = S.day; fr.age = (fr.age || S.age) + 1; log(`🎂 It's ${fr.name}'s birthday today! They're turning ${fr.age}. Text them or hang out!`); text('📅 Calendar', `It's ${fr.name}'s birthday 🎂`); }
     if (fr.bday && isDate(fr.bday.m, fr.bday.d, S.day - 1) && fr.wished !== S.day - 1) { fr.f = clamp(fr.f - 8); }
   });
   const lost = S.friends.filter(fr => fr.f <= 0);
@@ -8251,7 +8277,7 @@ function peopleCard() {
   ensureSocialState();
   return `<div class="card"><h3>👨‍👩‍👧 Family</h3><div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `❤️ Relationship ${Math.round(m.rel)}`, has('phone') ? b('📞 Call', `callFamily('${k}')`) : '')).join('')}</div>
     ${S.home !== 'parents' ? `<button class="btn sm ghost" onclick="travelTo('h_parents')">🏡 Visit your parents</button>` : ''}</div>
-    <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}`, b('Hang out', `hangOut(${i})`) + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}
+    <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Age ${fr.age}${fr.age === S.age ? ' (same as you!)' : ''} · Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}${fr.classmate ? ' · high school friend' : ''}`, b('Hang out', `hangOut(${i})`) + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}${S.friends.length ? '<button class="btn sm primary" onclick="dinnerParty()">🍽️ Invite friends over for dinner</button>' : ''}
     <p class="lesson">💡 Friendships fade if you never talk. Text, hang out and remember birthdays!</p></div>`;
 }
 
@@ -8363,6 +8389,90 @@ function neighborsCard() {
       `${NEIGHBOR_TYPES[p.kind].job} · ${'❤️'.repeat(Math.max(1, Math.round(p.rel / 20)))}${asleep ? ' · 😴 sleeping' : p.talkedDay === S.day ? ' · talked today' : ''}`,
       b('💬 Talk', `talkNeighbor(${i})`, 'primary', asleep))).join('')}</div>
     <p class="lesson">💡 Being friendly with your neighbors makes your street a nicer place to live!</p></div>`;
+}
+
+// pick a line nobody has said yet
+function pickNew(said, lines) { const left = lines.filter(l => !said.has(l)); const l = pickR(left.length ? left : lines); said.add(l); return l; }
+// friends are about your age (the same age, or a year older or younger)
+function friendAge() { const a = S.age || 18; return a + pickR([-1, 0, 0, 0, 1]); }
+
+// ---------- inviting friends over for dinner ----------
+let dinnerPick = { guests: [], menu: 'cook' };
+const DINNER_MENUS = {
+  cook:    { icon: '👩‍🍳', name: 'Cook dinner yourself', note: 'Uses food from your kitchen (1 item per person) · cheapest!' },
+  pizza:   { icon: '🍕', name: 'Order pizza', note: '$12 per person (tip included)' },
+  potluck: { icon: '🥗', name: 'Potluck', note: 'Everyone brings a dish! You make 1 item. Free.' },
+};
+function dinnerParty() {
+  ensureSocialState();
+  if (!S.friends.length) return nope('You don\'t have friends to invite yet. Meet people at the park, diner, sports park, at work or while volunteering!');
+  if (S.hour < 17 || S.hour >= 21) return nope('Dinner parties are from 5 PM to 9 PM. Use "Wait 1 Hour" or come back later!');
+  if (S.today.dinnerParty) return nope('You already had a dinner party today!');
+  if (!S.doorOpen) return nope('Go inside your home first.');
+  dinnerPick.guests = dinnerPick.guests.filter(i => S.friends[i]);
+  const people = dinnerPick.guests.length + 1;
+  const cost = dinnerPick.menu === 'pizza' ? 12 * people : 0;
+  const food = dinnerPick.menu === 'cook' ? people : dinnerPick.menu === 'potluck' ? 1 : 0;
+  showModal(`<h2>🍽️ Dinner Party</h2>
+    <p>Who do you want to invite? (Your table fits 4 guests.)</p>
+    <div class="guestpick">${S.friends.map((fr, i) => { const on = dinnerPick.guests.includes(i); return `<button class="guest ${on ? 'sel' : ''}" onclick="pickGuest(${i})"><img class="avatar" src="${avatarURL(fr.look, 56)}" alt=""><b>${esc(fr.name)}</b><small>Age ${fr.age} ${on ? '✅' : ''}</small></button>`; }).join('')}</div>
+    <p>What's for dinner?</p>
+    <div class="grid actions">${Object.entries(DINNER_MENUS).map(([k, m]) => `<button class="action ${dinnerPick.menu === k ? 'sel' : ''}" onclick="dinnerPick.menu='${k}';dinnerParty()"><span class="ic">${m.icon}</span><b>${m.name}</b><small>${m.note}</small></button>`).join('')}</div>
+    <p class="muted">${dinnerPick.guests.length ? `${people} people · ${cost ? money(cost) : 'no cost'}${food ? ` · uses ${food} food item${food > 1 ? 's' : ''} (you have ${S.fridgeFood.length})` : ''} · about 2½ hours` : 'Tap a friend to invite them!'}</p>`,
+    [{ label: 'Cancel', cls: 'ghost' }, { label: '🍽️ Start the dinner party', cls: 'primary', keepOpen: true, fn: hostDinner }]);
+}
+function pickGuest(i) {
+  const k = dinnerPick.guests.indexOf(i);
+  if (k >= 0) dinnerPick.guests.splice(k, 1);
+  else if (dinnerPick.guests.length >= 4) return toast('Your table only fits 4 guests!', 'bad');
+  else dinnerPick.guests.push(i);
+  dinnerParty();
+}
+function hostDinner() {
+  const guests = dinnerPick.guests.map(i => S.friends[i]).filter(Boolean);
+  if (!guests.length) return toast('Pick at least one friend to invite!', 'bad');
+  const people = guests.length + 1, menu = dinnerPick.menu;
+  const needFood = menu === 'cook' ? people : menu === 'potluck' ? 1 : 0;
+  if (S.fridgeFood.length < needFood) return toast(`You need ${needFood} food items in your kitchen. Buy groceries at the Supermarket, or order pizza!`, 'bad');
+  if (menu === 'cook' && S.powerOut) return toast('The power is out! The stove doesn\'t work. Order pizza instead.', 'bad');
+  if (menu === 'pizza' && S.money < 12 * people) return toast(`Pizza for ${people} costs ${money(12 * people)}. You don't have enough money.`, 'bad');
+  closeModal();
+  if (menu === 'pizza') spend(12 * people, `Pizza for ${people}`);
+  S.fridgeFood.sort((a, b) => a.exp - b.exp).splice(0, needFood);
+  // how did the food turn out?
+  let dish, burnt = false;
+  if (menu === 'pizza') dish = '🍕 hot pizza delivered to your door';
+  else if (menu === 'potluck') dish = '🥗 a potluck: ' + guests.map(g => `${g.name} brought ${pickR(['tacos 🌮', 'a salad 🥗', 'brownies 🍫', 'mac and cheese 🧀', 'cookies 🍪', 'fruit 🍉', 'garlic bread 🥖', 'soup 🍲'])}`).join(', ');
+  else {
+    burnt = S.skills.cook < 25 && Math.random() < 0.35;
+    dish = burnt ? '🔥 ...a burnt dinner! You all laughed and made sandwiches instead' : pickR(['🍝 spaghetti and meatballs', '🌮 homemade tacos', '🍛 a big pot of curry and rice', '🍲 warm soup and fresh bread', '🍗 roast chicken and veggies', '🥞 breakfast for dinner — pancakes!']);
+    addSkill('cook', 2);
+  }
+  pass(2.5, 'relax');
+  S.today.dinnerParty = true;
+  S.needs.food = clamp(S.needs.food + 60); fun2(25); addSkill('comm', 1.5);
+  S.dishes += people * 2; S.mess = clamp(S.mess + 4 * people); S.trash = clamp(S.trash + 5 * people);
+  guests.forEach(g => g.f = clamp(g.f + 20 + (menu === 'cook' && !burnt ? 5 : 0)));
+  if (S.hour >= 22 || S.hour < 6) S.lateNoise = true;
+  // what everybody talked about
+  const said = new Set();
+  const chat = guests.map(g => [g, pickNew(said, [
+    g.age === S.age ? `Can you believe we're both ${S.age} already?!` : g.age > S.age ? `I'm ${g.age}, so I'm a little older and wiser 😎` : `I'm only ${g.age} — you're older than me!`,
+    S.job ? `How's your job as a ${JOBS[S.job.id].name}?` : 'Have you found a job yet? I heard the Job Center is hiring.',
+    g.classmate ? 'Remember high school? Those were the days!' : 'I\'m so glad we met!',
+    `This is ${menu === 'pizza' ? 'the best pizza' : burnt ? 'the funniest dinner' : 'so yummy'}! Thanks for inviting me!`,
+    `What do you want to do this weekend?`,
+    S.pets && S.pets.length ? `${S.pets[0].name} is SO cute! Can I pet them?` : `Your place is really nice!`,
+  ])]);
+  guests.forEach(g => setTimeout(() => { text(g.name, pickR(['Thanks for dinner!! 😋', 'That was so fun! Let\'s do it again!', 'Best dinner party ever 🎉', 'Thank you for having me ❤️'])); }, 0));
+  log(`🍽️ You had ${guests.map(g => g.name).join(', ')} over for dinner: ${dish}.`, 'good');
+  queueModal(`<h2>🍽️ Dinner Party!</h2>
+    <div class="dinner"><div class="seats">${[['You', S.look], ...guests.map(g => [g.name, g.look])].map(([n, l]) => `<div class="seat"><img class="avatar" src="${avatarURL(l, 64)}" alt=""><small>${esc(n)}</small></div>`).join('')}</div><div class="dtable">${'🍽️'.repeat(people)}</div></div>
+    <p>You had ${dish}.</p>
+    ${chat.map(([g, line]) => `<div class="talk small"><img class="avatar" src="${avatarURL(g.look, 40)}" alt=""><div><b>${esc(g.name)}</b> <span class="muted small">age ${g.age}</span><div class="bubble">${esc(line)}</div></div></div>`).join('')}
+    <p>😄 Fun +25 · ❤️ Friendship +${menu === 'cook' && !burnt ? 25 : 20} with everyone · 🍽️ ${people * 2} dirty dishes to wash!</p>
+    <p class="lesson">💡 ${menu === 'pizza' ? 'Ordering food is easy but costs more. Cooking for friends saves money!' : menu === 'potluck' ? 'A potluck is a cheap way to have a party — everyone shares!' : 'Cooking at home for friends is cheaper than eating out, and it\'s fun!'}</p>`);
+  done();
 }
 
 </script>

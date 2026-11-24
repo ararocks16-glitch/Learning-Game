@@ -711,6 +711,8 @@ const HOME_ACTIONS = [
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
   { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
     fn: () => drink('tap') },
+  { id: 'dinnerparty', icon: '🍽️', name: 'Invite Friends to Dinner', hint: () => S.friends && S.friends.length ? `5–9 PM · ${S.friends.length} friends to invite` : 'Make some friends first!',
+    fn: () => dinnerParty() },
   { id: 'recipe', icon: '👩‍🍳', name: 'Cook a Recipe', hint: () => `Real ingredients · ${S.fridgeFood.length} items in your kitchen`,
     fn: () => recipeModal() },
   { id: 'snack', icon: '🍿', name: 'Have a Snack', hint: () => `Fruit, chips, cereal, pizza · you have ${Object.values(S.pantry).reduce((a, v) => a + v, 0)}`,

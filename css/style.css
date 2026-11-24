@@ -344,3 +344,16 @@ details.walls summary { cursor: pointer; }
 .bubble { position: relative; margin-top: 8px; background: var(--bg); border: 2px solid var(--line); border-radius: 16px; padding: 10px 14px; font-size: 1.02rem; line-height: 1.4; }
 .bubble::before { content: ''; position: absolute; left: -10px; top: 14px; border: 8px solid transparent; border-right-color: var(--line); border-left: 0; }
 @media (max-width: 600px) { .talk > img.avatar { width: 64px; height: 64px; } }
+.guestpick { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.guest { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--bg); border: 2px solid var(--line); border-radius: 12px; padding: 8px 4px; cursor: pointer; color: var(--ink); }
+.guest.sel { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, var(--bg2)); }
+.guest img { width: 56px; height: 56px; }
+.action.sel { outline: 3px solid var(--primary); }
+.dinner { margin: 8px 0; text-align: center; }
+.seats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.seat { display: flex; flex-direction: column; align-items: center; }
+.seat img { width: 64px; height: 64px; }
+.dtable { margin: -6px auto 0; max-width: 360px; background: linear-gradient(#a0703f, #7a5230); border-radius: 50px; padding: 10px; font-size: 1.4rem; letter-spacing: 6px; box-shadow: 0 6px 0 #5a3b20; }
+.talk.small { margin: 6px 0; gap: 8px; }
+.talk.small > img.avatar { width: 40px; height: 40px; }
+.talk.small .bubble { margin-top: 2px; padding: 6px 10px; font-size: .92rem; }
