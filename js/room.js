@@ -136,6 +136,15 @@ function book(c, x, y, w, h, col) {
   c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x + w - 0.8, y, 0.8, h);
 }
 
+// dishes, clothes on the floor, trash bags and ants when your home is messy
+function drawMess(c) {
+  if (S.dishes > 0) for (let k = 0; k < Math.min(6, S.dishes); k++) { const x = 500 + (k % 3) * 18, y = 258 - Math.floor(k / 3) * 5; c.fillStyle = '#f5f5f5'; c.beginPath(); c.ellipse(x, y, 9, 2.6, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(120,90,40,.6)'; c.lineWidth = 1; c.stroke(); }
+  if (S.mess > 45) { [[230, 330, '#1e88e5'], [520, 345, '#e53935'], [360, 352, '#43a047']].slice(0, S.mess > 70 ? 3 : 1).forEach(([x, y, col]) => { c.fillStyle = col; c.beginPath(); c.moveTo(x - 14, y); c.quadraticCurveTo(x - 6, y - 10, x + 4, y - 4); c.quadraticCurveTo(x + 16, y - 8, x + 14, y + 2); c.closePath(); c.fill(); }); }
+  if (S.trash > 70) { c.fillStyle = '#263238'; c.beginPath(); c.moveTo(752, 268); c.quadraticCurveTo(744, 236, 762, 230); c.quadraticCurveTo(782, 236, 774, 268); c.fill(); c.fillStyle = '#455a64'; c.fillRect(758, 226, 8, 6); }
+  if (S.bugs) { c.fillStyle = '#1a1a1a'; for (let k = 0; k < 18; k++) { c.beginPath(); c.arc(560 + k * 7 + Math.sin(k) * 3, 265 + Math.cos(k * 1.7) * 3, 1.2, 0, Math.PI * 2); c.fill(); } }
+  if (has('smokedetector')) { c.fillStyle = '#f5f5f5'; c.beginPath(); c.ellipse(640, 14, 12, 4, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e53935'; c.beginPath(); c.arc(646, 15, 1.2, 0, Math.PI * 2); c.fill(); }
+}
+
 function drawRoom(cv, fixedW) {
   const cssW = fixedW || cv.parentElement.clientWidth;
   const dpr = fixedW ? 1 : Math.min(2, window.devicePixelRatio || 1);
@@ -146,7 +155,7 @@ function drawRoom(cv, fixedW) {
   c.lineCap = 'round'; c.lineJoin = 'round';
   const night = S.hour < 6 || S.hour >= 20;
   const dusk = !night && (S.hour < 7.5 || S.hour > 18);
-  const rainy = S.weather === 'rainy';
+  const rainy = S.weather === 'rainy' || S.weather === 'snowy';
   const own = f => hasF(f);
   const BATH_X = 790;
   const ghost = (x, y, w, h, label) => {
@@ -245,10 +254,14 @@ function drawRoom(cv, fixedW) {
     const sg = c.createRadialGradient(WX + 30, WY + 28, 2, WX + 30, WY + 28, 30); sg.addColorStop(0, 'rgba(255,250,210,1)'); sg.addColorStop(0.35, 'rgba(255,240,170,.9)'); sg.addColorStop(1, 'rgba(255,240,170,0)');
     c.fillStyle = sg; c.beginPath(); c.arc(WX + 30, WY + 28, 30, 0, Math.PI * 2); c.fill();
     c.fillStyle = 'rgba(255,255,255,.85)'; [[WX + 70, WY + 30, 14], [WX + 84, WY + 26, 11], [WX + 96, WY + 32, 10]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); });
+  } else if (S.weather === 'snowy') {
+    c.fillStyle = '#fff'; for (let i = 0; i < 40; i++) { c.beginPath(); c.arc(WX + (i * 29) % WW, WY + (i * 47) % WH, 1.6, 0, Math.PI * 2); c.fill(); }
   } else {
     c.strokeStyle = 'rgba(230,240,255,.6)'; c.lineWidth = 1;
     for (let i = 0; i < 30; i++) { const x = WX + (i * 29) % WW, y = WY + (i * 47) % WH; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 9); c.stroke(); }
   }
+  if (seasonOf() === 'winter') { c.fillStyle = '#ffffff'; c.fillRect(WX, WY + WH * 0.74, WW, WH * 0.26); }
+  if (seasonOf() === 'fall') { c.fillStyle = 'rgba(214,110,40,.55)'; c.beginPath(); c.moveTo(WX, WY + WH); for (let i = 0; i <= 8; i++) c.lineTo(WX + WW * i / 8, WY + WH * 0.72 - Math.sin(i * 1.7) * 8 - (i % 3) * 3); c.lineTo(WX + WW, WY + WH); c.fill(); }
   glass(c, WX, WY, WW, WH, 'rgba(200,230,250,.12)');
   // frame with depth
   c.lineWidth = 8; c.strokeStyle = '#f4f2ec'; c.strokeRect(WX - 4, WY - 4, WW + 8, WH + 8);
@@ -602,6 +615,7 @@ function drawRoom(cv, fixedW) {
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
   drawPets(c);
+  drawMess(c);
 
   // ---------- you ----------
   if (atHome()) {
@@ -610,8 +624,13 @@ function drawRoom(cv, fixedW) {
   }
 
   // ---------- light & mood ----------
-  if (night) {
-    c.fillStyle = has('lamp') ? 'rgba(15,22,50,.28)' : 'rgba(12,18,45,.5)'; c.fillRect(0, 0, RW, RH);
+  if (S.powerOut || (night && !S.lightsOn)) {
+    c.fillStyle = has('lamp') && !S.powerOut ? 'rgba(15,22,50,.3)' : 'rgba(8,12,30,.62)'; c.fillRect(0, 0, RW, RH);
+    if (S.powerOut && has('flashlight')) { const g = c.createRadialGradient(300, 260, 5, 300, 260, 160); g.addColorStop(0, 'rgba(255,245,200,.35)'); g.addColorStop(1, 'rgba(255,245,200,0)'); c.fillStyle = g; c.fillRect(100, 100, 400, 280); }
+  } else if (night) {
+    c.fillStyle = 'rgba(30,30,40,.08)'; c.fillRect(0, 0, RW, RH);
+  }
+  if (false) {
     if (has('lamp')) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(178, 150, 5, 178, 200, 200); g.addColorStop(0, 'rgba(255,190,110,.22)'); g.addColorStop(1, 'rgba(255,190,110,0)'); c.fillStyle = g; c.fillRect(0, 0, 420, RH); c.restore(); }
   } else if (rainy) { c.fillStyle = 'rgba(60,70,90,.12)'; c.fillRect(0, 0, RW, RH); }
   else if (dusk) { c.fillStyle = 'rgba(255,150,80,.08)'; c.fillRect(0, 0, RW, RH); }

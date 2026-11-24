@@ -65,7 +65,7 @@ a { color: var(--primary); cursor: pointer; text-decoration: underline; }
 .cash .big { color: var(--good); }
 
 /* needs */
-#needs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 10px 0; }
+#needs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 10px 0; }
 .need { background: var(--bg2); border-radius: 10px; padding: 6px 10px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; font-size: .85rem; }
 .need .bar { grid-column: 1 / -1; grid-row: 2; }
 .need .num { grid-row: 1; grid-column: 2; font-weight: 700; }
@@ -228,7 +228,7 @@ table.stub .total td { font-weight: 700; border-top: 2px solid var(--ink); }
 @media (max-width: 600px) {
   #hud { grid-template-columns: 1fr 1fr; }
   .clock { grid-column: 1 / -1; grid-row: 2; }
-  #needs { grid-template-columns: repeat(3, 1fr); }
+  #needs { grid-template-columns: repeat(4, 1fr); }
   .placehead .pic { font-size: 2rem; }
   .need { font-size: .74rem; padding: 5px 8px; }
   .tab { min-width: 56px; padding: 6px 8px; }
@@ -312,3 +312,30 @@ details.walls summary { cursor: pointer; }
 .pbar { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 6px; font-size: .78rem; }
 .pbar .bar { margin: 0; }
 .petshopcard canvas.petpic { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; display: block; margin-bottom: 6px; }
+
+/* ---------- real life: phone, holidays, quizzes, budget ---------- */
+.phonebtn { position: relative; font-size: 1.6rem; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px; cursor: pointer; box-shadow: var(--shadow); }
+.phonebtn i, .apps i { position: absolute; top: -4px; right: -4px; background: var(--bad); color: #fff; font-style: normal; font-size: .7rem; border-radius: 99px; padding: 1px 6px; }
+.phone { max-width: 360px; margin: 0 auto; background: #10151f; color: #e8eef7; border-radius: 28px; padding: 14px; border: 6px solid #2b3446; }
+.phone .card { color: var(--ink); }
+.phonetop { display: flex; align-items: center; gap: 8px; justify-content: center; padding-bottom: 10px; border-bottom: 1px solid #2b3446; margin-bottom: 10px; }
+.apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.apps button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; color: #e8eef7; font-size: .72rem; cursor: pointer; }
+.apps button span { font-size: 1.6rem; background: #2b3446; border-radius: 14px; width: 52px; height: 52px; display: grid; place-items: center; }
+.msgs { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow: auto; }
+.msg { background: #2b3446; border-radius: 14px 14px 14px 4px; padding: 7px 10px; font-size: .88rem; align-self: flex-start; max-width: 90%; }
+.msg.me { background: #2f80ed; border-radius: 14px 14px 4px 14px; align-self: flex-end; }
+.phone .muted { color: #9fb0c8; }
+.holiday { background: linear-gradient(135deg, #fff6e0, #ffe6f0); border: 2px solid #f6c36b; }
+:root[data-theme="dark"] .holiday { background: linear-gradient(135deg, #3d3320, #3d2433); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .holiday { background: linear-gradient(135deg, #3d3320, #3d2433); } }
+.sortgrid { display: flex; flex-direction: column; gap: 6px; }
+.sortrow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; background: var(--bg); padding: 6px 10px; border-radius: 10px; }
+.sortrow label, .quiz label { margin-right: 10px; white-space: nowrap; cursor: pointer; }
+.quiz { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; padding: 8px 10px; background: var(--bg); border-radius: 10px; }
+.budgetedit { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0; }
+.budgetedit label { display: flex; flex-direction: column; font-size: .85rem; gap: 2px; }
+.budgetedit input { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); }
+.cand { display: flex; gap: 10px; align-items: flex-start; }
+.energy .pbar { margin: 4px 0; }
+.news li { margin: 4px 0; }

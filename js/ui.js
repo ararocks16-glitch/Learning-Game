@@ -32,7 +32,19 @@ function lvlBar(v) {
   return `<div class="bar small"><div class="fill skill" style="width:${v}%"></div></div>`;
 }
 function workDue() {
-  return S.job && !isWeekend() && !S.today.worked && !S.today.sick && S.day >= S.job.startDay && S.hour >= 5 && S.hour < 11;
+  if (!S.job || !worksToday() || S.today.worked || S.today.sick || S.day < S.job.startDay) return false;
+  const sh = shiftNow();
+  return S.hour >= sh.from - 1 && S.hour < sh.to;
+}
+
+// everything new about real life starts here for old and new saves
+function ensureRealLife() {
+  ensureCalendarState();
+  ensureLifeState();
+  ensureSocialState();
+  ensureWorkState();
+  ensureCarState();
+  ensureBuildState();
 }
 
 function render() {
@@ -42,14 +54,26 @@ function render() {
   document.body.classList.toggle('night', night);
 
   $('#hud').innerHTML = `
-    <div class="who">${avatarImg(S.look, 48)}<div><b>${esc(S.name)}</b><div class="muted">📍 ${esc(locName(S.loc))}</div></div></div>
-    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">Day ${S.day} · ${wd}${isWeekend() ? ' 🎉' : ''} · ${WEATHER[S.weather].icon} ${WEATHER[S.weather].name}</div></div>
+    <div class="who">${avatarImg(S.look, 48)}<div><b>${esc(S.name)}</b> <span class="muted">· age ${S.age}${isBirthday() ? ' 🎂' : ''}</span><div class="muted">📍 ${esc(locName(S.loc))}</div></div>${phoneButton()}</div>
+    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">${wd}, ${dateText()}${isWeekend() ? ' 🎉' : ''} · ${SEASONS[seasonOf()].icon} ${SEASONS[seasonOf()].name}</div><div class="muted">${weatherText()}${holidayToday() ? ` · ${holidayToday().icon} ${holidayToday().name}` : ''}${eventToday() ? ` · ${eventToday().icon} ${eventToday().name}` : ''}</div></div>
     <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
 
   $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
+  if (S.powerOut) warn.push(`<span class="chip warn">🔌 The power is out! (${Math.ceil(S.powerOut)} hrs left)</span>`);
+  if (S.needs.thirst < 25) warn.push(`<button class="chip warn" onclick="quickDrink()">💧 You're thirsty! (tap to drink water)</button>`);
+  if (S.ill) warn.push(`<button class="chip warn" onclick="takeMedicine()">${ILLNESS[S.ill.type].icon} You have ${ILLNESS[S.ill.type].name.toLowerCase()} (${S.ill.days}d) · tap for medicine</button>`);
+  const cc = coldChip(); if (cc) warn.push(cc);
+  const hc = hairChip(); if (hc) warn.push(hc);
+  if (weekday() === 1 && S.hour < 8 && S.bin > 0 && !S.today.binOut && S.home !== 'parents') warn.push(`<button class="chip warn" onclick="binsToCurb()">🚛 It's trash day! Put the bin at the curb before 8 AM (tap)</button>`);
+  if (S.trash >= 90) warn.push('<span class="chip warn">🗑️ Your trash is full! Take it out.</span>');
+  if (S.bugs) warn.push('<span class="chip warn">🐜 There are ants in your kitchen! Clean up.</span>');
+  if (hasCar() && S.fuel < 15) warn.push(`<span class="chip warn">⛽ Low on gas! Fill up at the Gas Station.</span>`);
+  if (hasCar() && S.car.miles - S.car.oilAt > 3000) warn.push(`<span class="chip warn">🛢️ Your car needs an oil change!</span>`);
+  if (S.car && S.car.flat) warn.push(`<span class="chip warn">🛞 You have a flat tire!</span>`);
+  if (S.invite && S.invite.day === S.day) warn.push(`<button class="chip warn" onclick="openPhone('msgs')">💬 ${esc(S.invite.name)} invited you to ${S.invite.plan}! (tap)</button>`);
   if (S.needs.bladder < 25) warn.push(`<button class="chip warn" onclick="quickToilet()">🚽 You really need the bathroom! (tap to go)</button>`);
   if (S.handsDirty) warn.push(`<button class="chip warn" onclick="washHands();done()">🧼 Wash your hands! (tap)</button>`);
   (S.pets || []).forEach(p => {
@@ -84,6 +108,8 @@ function render() {
   if (intCv) drawInterior(intCv, intCv.dataset.pid);
   const entCv = $('#entcv');
   if (entCv && !placeDoorAnim) drawEntrance(entCv, entCv.dataset.pid, 0);
+  const buildCv = $('#buildcv');
+  if (buildCv) drawBuildView(buildCv);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
 }
 
@@ -97,13 +123,16 @@ const PLACE_VIEWS = {
   mall: () => viewShopAt('mall'),
   diner: () => viewShopAt('diner'),
   cars: () => viewShopAt('cars'),
-  bank: () => viewBank(),
-  realestate: () => viewHousing(),
+  bank: () => viewBank() + `<div class="grid two">${creditCard()}<div class="card"><h3>📊 Weekly Budget</h3>${budgetHtml()}</div></div>`,
+  realestate: () => viewHousing() + viewLand(),
   hospital: () => viewHospital(),
-  park: () => viewPark(),
+  park: () => viewParkEvent() + viewPark(),
+  gasstation: () => viewGas(), salon: () => viewSalon(), dmv: () => viewDmv(), airport: () => viewAirport(),
+  h_parents: () => viewFamilyVisit(),
+  lot_country: () => viewLot('lot_country'), lot_river: () => viewLot('lot_river'), lot_sea: () => viewLot('lot_sea'),
   petshop: () => viewPetShop(),
   vet: () => viewVet(),
-  cityhall: () => viewWorkplace('cityhall'),
+  cityhall: () => viewCivic() + viewWorkplace('cityhall'),
   theater: () => viewWorkplace('theater'),
   beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
   campground: () => viewTrip('campground'), village: () => viewTrip('village'), zoo: () => viewTrip('zoo'),
@@ -121,7 +150,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -184,19 +213,24 @@ function jobCard() {
   const j = S.job, job = JOBS[j.id];
   const wp = workplaceOf(job);
   const c = travelInfo('home', wp);
-  const canWork = !isWeekend() && !S.today.worked && !S.today.sick && S.day >= j.startDay;
+  const sh = SHIFTS[shiftOf(job)];
+  const canWork = worksToday() && !S.today.worked && !S.today.sick && S.day >= j.startDay;
   let status;
   if (S.day < j.startDay) status = 'Your first day is tomorrow.';
-  else if (isWeekend()) status = 'Weekend — no work! 🎉';
+  else if (S.today.vacation) status = '🏖️ Vacation day — enjoy!';
+  else if (!worksToday()) status = S.snowDay ? '❄️ Snow day — work is closed!' : 'Day off — no work today! 🎉';
   else if (S.today.worked) status = '✅ You worked today.';
   else if (S.today.sick) status = '🤒 Called in sick today.';
-  else status = 'Leave between 6 and 9 AM to be on time.';
+  else status = `Be there by ${fmtTime(sh.late)} to be on time.`;
   return `<div class="card job">
     <h3>💼 ${job.name} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
     <p class="muted">${status} · Trip from home: ${c.icon} ${travelTime(c.hours)}${c.cost ? `, $${c.cost} bus each way` : ''}</p>
+    <p class="muted">🕐 ${sh.label}</p>
     <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
+    <p class="muted">🏖️ Vacation days: ${j.pto || 0} · 🤒 Paid sick days: ${j.sickDays || 0}${j.boss ? ` · 👔 Boss: ${esc(j.boss.name)} (${j.boss.style}) · 👥 Coworkers: ${j.coworkers.map(w => esc(w.name)).join(', ')}` : ''}</p>
     <div class="row">
       <button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goWork()">${c.icon} Go to Work (8 hrs)</button>
+      <button class="btn ghost" ${canWork && j.pto > 0 ? '' : 'disabled'} onclick="takeVacationDay()">🏖️ Take a Vacation Day</button>
       <button class="btn ghost" ${canWork ? '' : 'disabled'} onclick="callInSick()">📞 Call in Sick</button>
       <button class="btn ghost danger" onclick="quitJob()">Quit</button>
     </div></div>`;
@@ -218,13 +252,21 @@ function viewHome() {
       <span class="chip">🪥 Teeth: ${S.today.brushAM ? '✅' : '⬜'} morning ${S.today.brushPM ? '✅' : '⬜'} night</span>
       <span class="chip ${tc}">🦷 ${ti} ${tl}</span>
     </div>
-    <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span></div>
-    <h3>Things to do at home</h3><div class="grid actions">${acts}</div>`;
+    <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span>
+      <span class="chip ${S.mess > 60 ? 'warn' : ''}">🧹 Mess: ${Math.round(S.mess)}%</span><span class="chip ${S.dishes > 5 ? 'warn' : ''}">🍽️ ${S.dishes} dirty dishes</span><span class="chip ${S.trash > 80 ? 'warn' : ''}">🗑️ Trash ${Math.round(S.trash)}%</span>
+      ${S.home !== 'parents' ? `<button class="chip" onclick="binsToCurb()">🚛 Bin: ${S.bin ? S.bin + ' bags (trash day is Tuesday)' : 'empty'}</button>` : `<button class="chip" onclick="choreAllowance()">💵 Ask Mom for chore money</button>`}
+      ${S.bugs ? '<button class="chip warn" onclick="bugSpray()">🐜 Spray the ants</button>' : ''}</div>
+    <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
+    ${holidayCard()}
+    <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
+    ${energyCard()}${carCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);
+  if (S.powerOut && ['tv', 'games', 'laptop', 'computer', 'movie'].includes(id)) return nope('🔌 The power is out! That needs electricity.');
   const before = S.hour + S.day * 24;
   a.fn();
+  if (['tv', 'games', 'laptop', 'computer', 'movie', 'music'].includes(id)) { S.kwh += 0.3; if (S.hour >= 22 || S.hour < 6) S.lateNoise = true; }
   if (S.hour + S.day * 24 !== before) done(); else render();
 }
 
@@ -351,6 +393,10 @@ function viewHospital() {
       <div class="card"><h3>🦷 Dentist</h3><p>Teeth: <b>${teethStatus()[0]} ${teethStatus()[1]}</b></p>
         <p>A cleaning makes your teeth sparkling clean. Cost: <b>${insured ? '$15' : '$90'}</b></p>
         <button class="btn primary" onclick="dentistClean()">Get a teeth cleaning</button></div>
+      <div class="card"><h3>💉 Flu Shot</h3><p>Helps stop you from getting the flu this year.</p>
+        <p>Cost: <b>${insured ? 'Free' : '$25'}</b> ${S.fluShot === dateOf().year ? '· ✅ You got one this year' : ''}</p>
+        <button class="btn primary" ${S.fluShot === dateOf().year ? 'disabled' : ''} onclick="fluShot()">Get a flu shot</button>
+        ${S.ill ? `<p>Right now you have: <b>${ILLNESS[S.ill.type].icon} ${ILLNESS[S.ill.type].name}</b> (${S.ill.days} more days). ${ILLNESS[S.ill.type].about}</p>` : ''}</div>
       <div class="card"><h3>🚑 Emergency Room</h3><p>If your health reaches zero, an ambulance brings you here.</p>
         <p>Bill: <b>${insured ? '$300' : '$3,000'}</b></p>
         <p class="lesson">💡 Health insurance is sold at the 🏦 Bank. Some jobs give it to you for free.</p></div>
@@ -434,7 +480,9 @@ function viewMe() {
   const all = Object.keys(SKILLS).map(k => [k, S.skills[k]]).sort((a, b) => b[1] - a[1]);
   return `<div class="placehead">${avatarImg(S.look, 72, 'avatar big')}<h2>${esc(S.name)}</h2></div>
     <details class="card"><summary>✂️ Change your look (new haircut, new clothes!)</summary><div id="restyle"></div></details>
-    <p>🎓 ${EDU_NAMES[S.edu]} · Day ${S.day} of your life · Jobs held: ${S.jobsWorked.length}</p>
+    <p>🎂 Age ${S.age} (birthday ${MONTHS[S.bday.m]} ${S.bday.d}) · 🎓 ${EDU_NAMES[S.edu]} · ${dateText(S.day, true)} · Jobs held: ${S.jobsWorked.length}</p>
+    <p>${S.license ? '🪪 Driver\'s license ✅' : S.permit ? '📝 Learner\'s permit — take the road test at the 🪪 License Office' : '🪪 No driver\'s license yet'} · 📈 Credit ${S.credit} · 🗳️ ${S.registered ? 'Registered voter' : 'Not registered to vote'} · 🤝 Volunteered ${S.volunteerHours} hrs${S.age >= 65 ? ' · 👴 You can retire any time!' : ''}</p>
+    ${peopleCard()}
     <p class="muted">These are the things you can tell a boss in a job interview. They want a level that's high enough!</p>
     <h3>Skills</h3>
     <div class="grid skills">${all.map(([k, v]) => `<div class="card skill"><div class="jt"><b>${skillName(k)}</b><span>${Math.round(v)}</span></div>${lvlBar(v)}</div>`).join('')}</div>
@@ -514,6 +562,7 @@ window.addEventListener('DOMContentLoaded', () => {
     ensureHomeState();
     ensureTripState();
     ensurePetState();
+    ensureRealLife();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();

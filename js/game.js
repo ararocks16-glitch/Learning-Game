@@ -80,6 +80,7 @@ function spend(amount, label) {
   S.money -= amount;
   S.week.expenses += amount;
   S.week.lines.push({ label, amount: -amount });
+  trackSpend(label, amount);
   return true;
 }
 // Bills get charged even if you can't afford them
@@ -88,7 +89,9 @@ function charge(amount, label) {
   S.money -= amount;
   S.week.expenses += amount;
   S.week.lines.push({ label, amount: -amount });
+  trackSpend(label, amount);
   if (before >= 0 && S.money < 0) {
+    credit(-20, 'your account was overdrawn');
     S.money -= 35;
     S.week.expenses += 35;
     S.week.lines.push({ label: 'Overdraft fee (spent more than you had!)', amount: -35 });
@@ -133,6 +136,7 @@ function newGame(name, look, talents) {
   ensureHomeState();
   ensureTripState();
   ensurePetState();
+  ensureRealLife();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
@@ -141,7 +145,8 @@ function newGame(name, look, talents) {
     <ul class="tips">
       <li>💼 <b>Get a job</b> — tell the boss what you're good at.</li>
       <li>🗺️ <b>Click buildings on the town map</b> to go places. Walking is slow — a bike, the bus or a car is faster.</li>
-      <li>🚿 <b>Take care of yourself</b> — eat, sleep, use the toilet, wash your hands, shower, brush teeth.</li>
+      <li>🚿 <b>Take care of yourself</b> — eat, drink water, sleep, use the toilet, wash your hands, shower, brush teeth.</li>
+      <li>📅 <b>It's June 1st.</b> Seasons change, holidays come, and you get older every birthday!</li>
       <li>💵 <b>Paychecks come Friday night</b> — taxes come out first.</li>
       <li>🧾 <b>Bills are due every Monday.</b></li>
       <li>🏅 <b>Play sports</b>, pay coaches for lessons, and enter tournaments on weekends.</li>
@@ -186,6 +191,7 @@ function tick(h, mode) {
   }
   if (n.food <= 0) n.health -= 3 * h;
   petTick(h);
+  lifeTick(h, mode);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
   if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
@@ -208,7 +214,9 @@ function pass(hours, mode = 'awake') {
 function newDay() {
   // --- end of the old day ---
   const j = S.job;
-  if (j && weekday() < 5 && S.day >= j.startDay && !S.today.worked) {
+  const hol = holidayToday();
+  if (j && hol && hol.closed && shiftOf(JOBS[j.id]) === 'day' && weekday() < 5 && S.day >= j.startDay) { j.weekHours += 8; log(`${hol.icon} ${hol.name} is a paid holiday. You got paid without working!`, 'good'); }
+  if (j && worksToday() && S.day >= j.startDay && !S.today.worked) {
     if (S.today.sick) {
       log(`🤒 You called in sick to work.`);
     } else {
@@ -230,6 +238,13 @@ function newDay() {
   moneyNewDay();
   homeNewDay();
   petNewDay();
+  calendarNewDay();
+  lifeNewDay();
+  socialNewDay();
+  carsNewDay();
+  taxNewDay();
+  buildNewDay();
+  if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
   if (weekday() === 0) weeklyBills();
@@ -359,11 +374,15 @@ function doInterview(job, picks) {
     notes.push('📵 They wanted to hire you, but couldn\'t reach you because you don\'t have a phone!');
   }
 
+  score += interviewExtras(job, notes);
   const hired = score >= 60;
   if (hired) {
     const prev = S.job;
     if (prev) { if (prev.weekHours > 0) payday(true); log(`👋 You left ${JOBS[prev.id].name} for a new job.`); }
     S.job = { id: job.id, wage: job.pay, startDay: S.day + 1, daysWorked: 0, goodDays: 0, misses: 0, warnings: 0, lies, weekHours: 0 };
+    setupWorkplace(S.job); giveBenefits(S.job);
+    if (S.family) Object.values(S.family).forEach(m => m.rel = clamp(m.rel + 5));
+    text('👩 Mom', `A new job as a ${job.name}?! We're so proud of you! ❤️`);
     if (!S.jobsWorked.includes(job.id)) S.jobsWorked.push(job.id);
     log(`🎉 You got hired as a ${job.name} for ${money(job.pay)}/hour! Start tomorrow.`, 'good');
     unlock('first_job');
@@ -385,25 +404,31 @@ function doInterview(job, picks) {
 async function goWork() {
   const j = S.job; if (!j) return;
   const job = JOBS[j.id];
+  const sh = shiftNow();
   if (S.day < j.startDay) return nope('Your first day is tomorrow!');
-  if (isWeekend()) return nope('It\'s the weekend — no work today! 🎉');
+  if (!worksToday()) return nope(S.snowDay ? '❄️ Snow day! Work is closed today.' : holidayToday() && holidayToday().closed ? 'It\'s a holiday — work is closed!' : 'You don\'t work today. Enjoy your day off! 🎉');
   if (S.today.worked) return nope('You already worked today.');
   if (S.today.sick) return nope('You called in sick today. Rest up!');
-  if (S.hour < 5) return nope('It\'s too early. Work starts at 6 AM.');
-  if (S.hour >= 11) return nope('Too late — your shift already started. You could call in sick...');
+  if (S.hour < sh.from) return nope(`It's too early. Your shift starts at ${fmtTime(sh.from + 0.5)}.`);
+  if (S.hour >= sh.to) return nope('Too late — your shift already started. You could call in sick...');
   if (traveler) return;
 
   await travelTo(workplaceOf(job), { noDone: true, quiet: true });
-  const late = S.hour > 9.1;
+  const late = S.hour > sh.late;
   const n = S.needs;
   let perf = (n.energy + n.food + n.hygiene + n.health) / 4 + rand(-8, 10) + S.clothes * 2;
   if (late) perf -= 20;
   if (S.laundryDays > 7) perf -= 8;
   if (n.bladder < 20) perf -= 5;
+  if (n.thirst < 20) perf -= 5;
+  if (S.ill) perf -= ILLNESS[S.ill.type].perf;
+  if (!j.boss) setupWorkplace(j);
+  if (j.boss.style === 'strict') perf -= 4; else if (j.boss.style === 'nice') perf += 3;
+  S.today.worked = true;
   pass(8, 'work');
+  const extra = workEvent(j);
 
   j.weekHours += 8; j.daysWorked++;
-  S.today.worked = true;
   job.req.forEach(r => addSkill(r.s, 1.2));
 
   const msgs = [];
@@ -424,6 +449,7 @@ async function goWork() {
     msgs.push(`😠 You did a bad job. Boss warning ${j.warnings}/3.`);
     if (j.warnings >= 3) { log(`${job.name}: ${msgs.join(' ')}`, 'bad'); fire('You did poor work too many times. (Come to work rested, fed and clean!)'); fired = true; }
   } else msgs.push('An OK day at work.');
+  if (extra) msgs.push(extra);
 
   if (!fired) {
     // were you caught lying?
@@ -441,9 +467,10 @@ async function goWork() {
 
 function callInSick() {
   const j = S.job; if (!j) return;
-  if (isWeekend() || S.today.worked) return nope('You don\'t need to call in today.');
+  if (!worksToday() || S.today.worked) return nope('You don\'t need to call in today.');
   if (S.today.sick) return nope('You already called in.');
-  if (S.needs.health >= 70) {
+  if (useSickDay()) { S.today.sick = true; return done(); }
+  if (S.needs.health >= 70 && !S.ill) {
     j.warnings++;
     log(`📞 You called in sick, but you sounded fine. Your boss is suspicious. Warning ${j.warnings}/3.`, 'bad');
     if (j.warnings >= 3) fire('Too many warnings.');
@@ -460,6 +487,7 @@ function payday(final = false) {
   const gross = j.weekHours * j.wage;
   const fed = gross * 0.10, state = gross * 0.04, fica = gross * 0.0765;
   const net = gross - fed - state - fica;
+  S.taxYear.wages += gross; S.taxYear.withheld += fed + state;
   earn(net, `Paycheck from ${JOBS[j.id].name}`);
   log(`💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
   queueModal(`<h2>💵 ${final ? 'Final ' : ''}Paycheck</h2>
@@ -481,9 +509,9 @@ function weeklyBills() {
   const bills = [];
   // housing
   if (h.type === 'rent') {
-    if (S.money >= h.rent) { charge(h.rent, `Rent: ${h.name}`); bills.push([`Rent (${h.name})`, h.rent]); S.missedRent = 0; }
+    if (S.money >= h.rent) { charge(h.rent, `Rent: ${h.name}`); bills.push([`Rent (${h.name})`, h.rent]); S.missedRent = 0; credit(3, 'paid rent on time'); }
     else {
-      S.missedRent++;
+      S.missedRent++; credit(-50, 'missed a rent payment');
       bills.push([`Rent — COULDN'T PAY! (${S.missedRent}/2)`, 0]);
       log(`🏚️ You couldn't pay rent! The landlord is angry. (${S.missedRent}/2)`, 'bad');
       if (S.missedRent >= 2) {
@@ -492,25 +520,37 @@ function weeklyBills() {
         S.home = 'parents'; S.missedRent = 0;
       }
     }
-    if (S.home !== 'parents') { charge(h.utilities, 'Utilities (electric, water, internet)'); bills.push(['Utilities (electric, water, internet)', h.utilities]); }
-  } else if (h.type === 'buy') {
+    if (S.home !== 'parents') { const wi = Math.round(h.utilities * 0.6), el = electricBill(); charge(wi, 'Water & internet'); bills.push(['Water & internet', wi]); charge(el, 'Electric bill'); bills.push([`Electric bill (${S.kwh.toFixed(1)} kWh used)`, el]); }
+  }
+  if (h.type !== 'buy' && S.mortgage) {
+    const pay = Math.min(S.mortgage.weekly, S.mortgage.balance);
+    charge(pay, 'Construction loan payment'); bills.push(['Construction loan payment (for the house you are building)', pay]);
+    S.mortgage.balance -= pay; credit(2, 'paid your loan on time');
+    if (S.mortgage.balance <= 0.5) { S.mortgage = null; log('🎉 You paid off your loan!', 'good'); }
+  }
+  if (h.type === 'buy') {
     if (S.mortgage) {
       const pay = Math.min(S.mortgage.weekly, S.mortgage.balance);
       charge(pay, 'Mortgage payment'); bills.push(['Mortgage payment', pay]);
       S.mortgage.balance -= pay;
       if (S.mortgage.balance <= 0.5) { S.mortgage = null; log('🎉 You paid off your mortgage! You own your house completely!', 'good'); }
     }
-    charge(h.upkeep, 'Property tax & utilities'); bills.push(['Property tax & utilities', h.upkeep]);
+    charge(h.upkeep, 'Property tax, water & internet'); bills.push(['Property tax, water & internet', h.upkeep]);
+    const el = electricBill(); charge(el, 'Electric bill'); bills.push([`Electric bill (${S.kwh.toFixed(1)} kWh used)`, el]);
+    if (S.mortgage) credit(3, 'paid your mortgage on time');
   }
+  if (S.home === 'parents' && S.kwh > 25) log('👩 Mom says: "Turn off the lights when you leave a room! The electric bill was huge."');
+  S.kwh = 0;
   if (has('phone')) { charge(20, 'Phone bill'); bills.push(['Phone bill', 20]); }
-  if (has('car')) { charge(60, 'Car: gas & insurance'); bills.push(['Car: gas & insurance', 60]); }
-  if (has('newcar')) { charge(80, 'New car: gas & insurance'); bills.push(['New car: gas & insurance', 80]); }
+  if (has('car')) { charge(35, 'Car insurance'); bills.push(['Car insurance', 35]); }
+  if (has('newcar')) { charge(45, 'New car insurance'); bills.push(['New car insurance', 45]); }
   if (S.insurance && !(S.job && JOBS[S.job.id].insurance)) { charge(35, 'Health insurance'); bills.push(['Health insurance', 35]); }
   // bank
   if (S.loan > 0) {
-    const interest = S.loan * 0.02;
+    const interest = S.loan * loanRate();
+    credit(S.loan > loanLimit() * 0.6 ? -5 : 2, 'loan payments');
     S.loan += interest;
-    bills.push([`Loan interest added (2%) — you now owe ${money(S.loan)}`, 0]);
+    bills.push([`Loan interest added (${(loanRate() * 100).toFixed(1)}%, from your credit score) — you now owe ${money(S.loan)}`, 0]);
     const min = Math.min(S.loan, Math.max(20, S.loan * 0.05));
     charge(min, 'Loan minimum payment'); S.loan -= min;
     bills.push(['Loan minimum payment', min]);
@@ -535,8 +575,10 @@ function weeklyBills() {
       <tr><td>Money out (before these bills)</td><td class="minus">-${money(w.expenses - total)}</td></tr>
     </table>
     <p>You now have <b>${money(S.money)}</b>${S.savings > 0 ? ` and ${money(S.savings)} in savings` : ''}.</p>
-    ${S.money < 0 ? '<p class="lesson">⚠️ You have negative money! Find work or cut spending fast.</p>' : ''}`);
-  S.week = { income: 0, expenses: 0, lines: [] };
+    ${S.money < 0 ? '<p class="lesson">⚠️ You have negative money! Find work or cut spending fast.</p>' : ''}
+    ${budgetReport()}<p class="muted">📈 Credit score: ${S.credit} (${creditWord()})</p>`);
+  if (S.money >= 0) credit(2, 'all bills paid');
+  S.week = { income: 0, expenses: 0, lines: [], cats: {} };
   moneyWeekly();
 }
 
@@ -554,7 +596,7 @@ function dailyEvent() {
   if (Math.random() > 0.28) return;
   const ev = [];
   ev.push({ w: 3, f: () => { earn(20, 'Found money'); return ['💵 Lucky Day', 'You found $20 on the sidewalk!', '']; } });
-  ev.push({ w: S.needs.hygiene < 40 ? 5 : 2, f: () => { S.needs.health = clamp(S.needs.health - 30); return ['🤧 You Caught a Cold', 'You feel sick. Health -30. Rest, eat well and stay clean.', 'Washing up and sleeping enough helps you stay healthy.']; } });
+  ev.push({ w: S.needs.hygiene < 40 ? 5 : 2, f: () => { S.needs.fun = clamp(S.needs.fun + 4); return ['☀️ Nice Day', 'You took a deep breath of fresh air and felt great.', '']; } });
   ev.push({ w: 2, f: () => { earn(50, 'Birthday card from Grandma'); return ['💌 Card from Grandma', 'Grandma sent you a card with $50 inside!', '']; } });
   ev.push({ w: 2, f: () => { charge(60, 'Gift for friend\'s wedding'); return ['💒 Wedding Invite', 'Your friend is getting married. You bought a $60 gift.', 'Some expenses are surprises. That\'s why saving matters.']; } });
   ev.push({ w: 2, f: () => { S.needs.fun = clamp(S.needs.fun + 20); return ['🎉 Party!', 'Your friends threw a party. Fun +20!', '']; } });
@@ -588,6 +630,7 @@ function ateFood(amount) {
     S.needs.health = clamp(S.needs.health - 15);
     S.needs.fun = clamp(S.needs.fun - 10);
     log('🤢 You got a tummy ache. You ate without washing your hands after using the toilet!', 'bad');
+    if (Math.random() < 0.35) getSick('stomach');
     toast('🤢 Tummy ache! Wash your hands before eating.', 'bad');
   }
 }
@@ -614,6 +657,7 @@ function seeDoctor() {
   if (!spend(cost, 'Doctor visit')) return;
   pass(1.5);
   S.needs.health = clamp(S.needs.health + 45);
+  if (S.ill) { S.ill.days = Math.max(1, Math.ceil(S.ill.days / 2)); log(`🩺 The doctor checked your ${ILLNESS[S.ill.type].name.toLowerCase()} and gave you a plan to get better faster.`); }
   log(`🩺 The doctor checked you out and gave you medicine. Health +45. Cost: ${money(cost)}${insured ? ' (insurance helped!)' : ''}.`, 'good');
   done();
 }
@@ -665,6 +709,10 @@ const HOME_ACTIONS = [
     fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Supermarket.'); S.groceries--; pass(0.5); ateFood(40); if (hasF('table')) S.needs.fun = clamp(S.needs.fun + 3); log(hasF('table') ? '🍽️ You ate a meal at the table.' : '🍽️ You ate a meal sitting on the floor. (A table would be nice!)'); } },
   { id: 'cook', icon: '🍳', name: 'Cook a Meal', hint: 'Uses 1 meal · 1 hr · better food & cooking skill',
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
+  { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
+    fn: () => drink('tap') },
+  { id: 'recipe', icon: '👩‍🍳', name: 'Cook a Recipe', hint: () => `Real ingredients · ${S.fridgeFood.length} items in your kitchen`,
+    fn: () => recipeModal() },
   { id: 'snack', icon: '🍿', name: 'Have a Snack', hint: () => `Fruit, chips, cereal, pizza · you have ${Object.values(S.pantry).reduce((a, v) => a + v, 0)}`,
     fn: () => snackMenu() },
   { id: 'toilet', icon: '🚽', name: 'Use the Toilet', hint: () => hasF('toilet') ? '5 min · don\'t forget to flush!' : '⚠️ You don\'t have a toilet!',
@@ -683,8 +731,14 @@ const HOME_ACTIONS = [
     fn: () => { pass(2, 'sleep'); log('💤 You took a nap.'); } },
   { id: 'laundry', icon: '🧺', name: 'Do Laundry', hint: () => hasF('washer') ? 'Free at home · 1 hr' : 'Laundromat $8 · 2 hrs',
     fn: () => { if (!hasF('washer')) { if (!spend(8, 'Laundromat')) return; pass(2); } else pass(1); S.laundryDays = 0; log('🧺 Your clothes are clean!'); } },
-  { id: 'clean', icon: '🧹', name: 'Clean Up', hint: '1 hr · feel better',
-    fn: () => { pass(1); S.needs.fun = clamp(S.needs.fun + 6); S.needs.hygiene = clamp(S.needs.hygiene - 5); log(S.home === 'parents' ? '🧹 You cleaned your room. Mom is happy!' : '🧹 You cleaned your place. It looks great.'); } },
+  { id: 'clean', icon: '🧹', name: 'Vacuum & Tidy', hint: () => `45 min · mess: ${Math.round(S.mess)}%`,
+    fn: () => vacuum() },
+  { id: 'dishes', icon: '🍽️', name: 'Wash the Dishes', hint: () => `${S.dishes} dirty dishes`,
+    fn: () => doDishes() },
+  { id: 'trash', icon: '🗑️', name: 'Take Out the Trash', hint: () => `Trash is ${Math.round(S.trash)}% full · sort it!`,
+    fn: () => takeOutTrash() },
+  { id: 'meds', icon: '💊', name: 'Take Medicine', hint: () => S.ill ? `${S.medicine} doses · you're sick` : `${S.medicine} doses · only when sick`,
+    fn: () => takeMedicine() },
   { id: 'tv', icon: '📺', name: 'Watch TV', hint: '2 hrs · needs TV', need: 'tv',
     fn: () => { pass(2, 'relax'); log('📺 You watched TV and relaxed.'); } },
   { id: 'games', icon: '🎮', name: 'Play Video Games', hint: '2 hrs · needs console', need: 'console',
@@ -752,6 +806,7 @@ function sportReady(sp) {
   if (s.gear && !S.owned['gear_' + sp]) { nope(`You need a ${s.gear.name} first!`); return false; }
   if (S.hour < 6 || S.hour > 21) { nope('Sports places are open 6 AM to 10 PM.'); return false; }
   if (S.needs.energy < 20) { nope('You\'re too tired to play. Rest first!'); return false; }
+  if (S.ill && S.ill.type === 'arm') { nope('🦾 Your arm is in a cast. No sports until it heals!'); return false; }
   return true;
 }
 function trySport(sp) {
@@ -766,6 +821,7 @@ function practice(sp) {
   if (s.practiceFee && !spend(s.practiceFee, `${s.name}: ${s.practiceWhere}`)) return;
   pass(2, 'sport');
   const g = addSkill(sp, 1.8);
+  sportsInjury();
   addSkill('fit', 1);
   trySport(sp);
   log(`${s.icon} You practiced ${s.name} on your own. +${g.toFixed(1)}`);
@@ -779,6 +835,7 @@ function lesson(sp, pro) {
   if (!spend(price + (s.practiceFee || 0), `${s.name} ${pro ? 'pro coach' : 'lesson'}`)) return;
   pass(2, 'sport');
   const g = addSkill(sp, pro ? 6.5 : 4.5);
+  sportsInjury();
   addSkill('fit', 1.5);
   trySport(sp);
   log(`${s.icon} ${pro ? 'Your PRO coach' : 'Your coach'} taught you new ${s.name} skills! +${g.toFixed(1)}`, 'good');
@@ -809,6 +866,7 @@ function tournament(sp, tid) {
   }
   pass(5, 'sport');
   addSkill(sp, 1.5);
+  sportsInjury();
   let prize = 0;
   if (place === 1) prize = t.prize1; else if (place === 2) prize = t.prize2;
   if (prize) earn(prize, `${t.name} prize`);
@@ -832,7 +890,7 @@ function buy(itemId) {
   if (S.hour < 8 || S.hour > 22) return nope('Stores are open 8 AM to 10 PM.');
   if (it.clothes && S.clothes >= it.clothes) return nope('You already have clothes this nice.');
   if (!it.consumable && !it.clothes && has(it.id)) return nope('You already own this.');
-  if ((it.id === 'car' || it.id === 'newcar') && S.skills.drive < 20) return nope('You need Driving skill 20 to get a license! Take Driving classes at the 🎓 College.');
+  if ((it.id === 'car' || it.id === 'newcar') && !S.license) return nope('You need a driver\'s license first! Get one at the 🪪 License Office.');
   if (!spend(it.price, it.name)) return;
   pass(0.5);
   if (it.id === 'groceries') { S.groceries += 7; log('🛒 You bought groceries. 7 meals at home!'); }
@@ -841,11 +899,12 @@ function buy(itemId) {
   else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
   else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
   else if (moneyBuy(it.id) || homeBuy(it.id)) { /* supplies, snacks */ }
+  else if (it.id === 'gift') { S.giftsBought = (S.giftsBought || 0) + 1; log('🎁 You bought a gift and wrapped it with a bow.'); }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
     S.owned[it.id] = true;
     log(`${it.icon} You bought a ${it.name}!${it.bill ? ` (Bill: ${money(it.bill)}/week)` : ''}`, 'good');
-    if (it.id === 'car' || it.id === 'newcar') unlock('car');
+    if (it.id === 'car' || it.id === 'newcar') { unlock('car'); S.fuel = 100; S.car = { miles: it.id === 'newcar' ? 12 : 62000, oilAt: it.id === 'newcar' ? 12 : 62000, dirty: 0 }; }
   }
   afterBuyHome(it);
   done();
@@ -875,6 +934,7 @@ function moveTo(hid) {
   }
   if (h.type === 'rent') {
     const need = h.rent * 2.5;
+    if (S.credit < 500) return showModal(`<h2>🏢 Application Denied</h2><p>The landlord checked your credit score (<b>${S.credit}</b>) and said no.</p><p class="lesson">💡 Pay bills on time to raise your credit score. Landlords want to know you'll pay rent!</p>`, [{ label: 'OK' }]);
     if (weeklyIncome() < need && S.money + S.savings < h.rent * 12) {
       return showModal(`<h2>🏢 Application Denied</h2><p>The landlord says you need to earn at least <b>${money(need)}/week</b> after taxes, or have ${money(h.rent * 12)} saved.</p><p>You earn ${money(weeklyIncome())}/week.</p><p class="lesson">💡 Landlords check your income to make sure you can pay rent. Most want rent to be less than 1/3 of your pay.</p>`, [{ label: 'OK' }]);
     }
@@ -904,6 +964,7 @@ function moveTo(hid) {
     <p class="lesson">💡 Banks want your weekly payment to be less than 40% of your income. You earn ${money(weeklyIncome())}/week.</p>`,
     [{ label: 'Cancel', cls: 'ghost' },
      { label: 'Mortgage', fn: () => {
+        if (S.credit < 620) { queueModal(`<h2>🏦 Mortgage Denied</h2><p>Your credit score is <b>${S.credit}</b>. Banks want at least <b>620</b> for a home loan.</p><p class="lesson">💡 A good credit score comes from paying bills on time for a long time.</p>`); return done(); }
         if (weeklyIncome() * 0.4 < weekly) { queueModal(`<h2>🏦 Mortgage Denied</h2><p>The bank says your income is too low for a ${money(weekly)}/week payment. You need to earn at least ${money(weekly / 0.4)}/week.</p>`); return done(); }
         if (!spend(down, `Down payment: ${h.name}`)) return;
         S.mortgage = { balance: total, weekly };
@@ -929,7 +990,9 @@ function sellHouse() {
   const owe = S.mortgage ? S.mortgage.balance : 0;
   confirmModal(`Sell your ${h.name} for ${money(val)}? ${owe ? `You still owe ${money(owe)} on the mortgage, so you'd get ${money(val - owe)}.` : ''} You'll move back with your parents.`, () => {
     earn(val - owe, `Sold ${h.name}`);
-    S.mortgage = null; S.home = 'parents';
+    S.mortgage = null;
+    if (S.home === 'custom') { PLACES[S.build.lot].kind = 'land'; S.build = null; }
+    S.home = 'parents';
     log(`🏷️ You sold your house and moved back home.`);
     done();
   });

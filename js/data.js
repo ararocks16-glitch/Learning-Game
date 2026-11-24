@@ -81,6 +81,8 @@ const ITEMS = [
   // clothes
   { id: 'clothes1', place: 'mall', cat: 'Clothes', name: 'Basic Clothes', icon: '👕', price: 40, clothes: 1, desc: 'Jeans and t-shirts.' },
   { id: 'clothes2', place: 'mall', cat: 'Clothes', name: 'Nice Outfit', icon: '👔', price: 140, clothes: 2, desc: 'Look sharp for interviews.' },
+  { id: 'coat', place: 'mall', cat: 'Clothes', name: 'Winter Coat', icon: '🧥', price: 90, desc: 'Stay warm outside in winter. Without one you get cold and sick!' },
+  { id: 'costume', place: 'mall', cat: 'Clothes', name: 'Halloween Costume', icon: '🧛', price: 30, desc: 'Get way more candy trick-or-treating on Halloween!' },
   { id: 'clothes3', place: 'mall', cat: 'Clothes', name: 'Business Suit', icon: '🤵', price: 400, clothes: 3, desc: 'Big interviews need big style.' },
   // electronics
   { id: 'phone', place: 'mall', cat: 'Electronics', name: 'Phone', icon: '📱', price: 300, bill: 20,
@@ -94,6 +96,9 @@ const ITEMS = [
   { id: 'stove', place: 'mall', cat: 'Kitchen & Laundry', name: 'Stove & Oven', icon: '🍳', price: 450, desc: 'Lets you cook meals at home.' },
   { id: 'microwave', place: 'mall', cat: 'Kitchen & Laundry', name: 'Microwave', icon: '♨️', price: 120, desc: 'Heat up frozen pizza fast.' },
   { id: 'washer', place: 'mall', cat: 'Kitchen & Laundry', name: 'Washer & Dryer', icon: '🧺', price: 800, desc: 'Do laundry at home for free.' },
+  { id: 'smokedetector', place: 'mall', cat: 'Kitchen & Laundry', name: 'Smoke Detector', icon: '🚨', price: 25, desc: 'Beeps if there\'s smoke. Every home needs one!' },
+  { id: 'flashlight', place: 'mall', cat: 'Kitchen & Laundry', name: 'Flashlight', icon: '🔦', price: 10, desc: 'For power outages.' },
+  { id: 'ac', place: 'mall', cat: 'Kitchen & Laundry', name: 'Air Conditioner', icon: '❄️', price: 500, desc: 'Cool and comfy on hot days — but it uses lots of electricity!' },
   { id: 'fan', place: 'mall', cat: 'Kitchen & Laundry', name: 'Fan', icon: '🌀', price: 45, cozy: 1, desc: 'Stay cool on hot days.' },
   // bathroom
   { id: 'toilet', place: 'mall', cat: 'Bathroom', name: 'Toilet', icon: '🚽', price: 250, desc: 'Kind of important! Needs toilet paper too.' },
@@ -130,6 +135,9 @@ const ITEMS = [
     desc: '5 canvases and paints. Paint at home, sell at the Mall.' },
   { id: 'mower', place: 'mall', cat: 'Hobbies', name: 'Lawn Mower', icon: '🌱', price: 180, desc: 'Mow neighbors\' lawns for $20 each.' },
   { id: 'guitar', place: 'mall', cat: 'Hobbies', name: 'Guitar', icon: '🎸', price: 150, desc: 'Play for tips at the Park.' },
+  { id: 'bottle', place: 'mall', cat: 'Hobbies', name: 'Reusable Water Bottle', icon: '🧴', price: 8, desc: 'Drink water anywhere — and make less trash!' },
+  { id: 'suitcase', place: 'mall', cat: 'Hobbies', name: 'Suitcase', icon: '🧳', price: 60, desc: 'Pack for trips from the airport.' },
+  { id: 'gift', place: 'mall', cat: 'Hobbies', name: 'Wrapped Gift', icon: '🎁', price: 20, consumable: true, desc: 'Give gifts to family and friends on the Winter Holiday.' },
   { id: 'rod', place: 'mall', cat: 'Hobbies', name: 'Fishing Rod', icon: '🎣', price: 40, desc: 'Go fishing at Crystal Lake.' },
   { id: 'detector', place: 'mall', cat: 'Hobbies', name: 'Metal Detector', icon: '🔍', price: 120, desc: 'Hunt for treasure at the Park.' },
   // transport
@@ -364,6 +372,17 @@ const ACHIEVEMENTS = [
   { id: 'pet_owner',     icon: '🐾', name: 'Pet Owner',           desc: 'Get a pet.' },
   { id: 'zoo_keeper',    icon: '🦎', name: 'Animal Lover',        desc: 'Have 3 different kinds of animals at once.' },
   { id: 'happy_pet',     icon: '🐶', name: 'Best Friend',         desc: 'Keep a pet happy for 7 days in a row.' },
+  { id: 'voter',         icon: '🗳️', name: 'Voter',               desc: 'Vote in an election.' },
+  { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
+  { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },
+  { id: 'hero',          icon: '🦸', name: 'Real Hero',           desc: 'Call 911 to help someone who is hurt.' },
+  { id: 'popular',       icon: '🙂', name: 'Good Friend',         desc: 'Have 5 friends.' },
+  { id: 'credit',        icon: '📈', name: 'Great Credit',        desc: 'Reach a credit score of 740.' },
+  { id: 'taxes',         icon: '🧾', name: 'Tax Pro',             desc: 'File your taxes.' },
+  { id: 'budgeter',      icon: '📊', name: 'Budget Boss',         desc: 'Make a weekly budget.' },
+  { id: 'licensed',      icon: '🪪', name: 'Licensed Driver',     desc: 'Get your driver\'s license.' },
+  { id: 'jetsetter',     icon: '✈️', name: 'Jet Setter',          desc: 'Take a trip on an airplane.' },
+  { id: 'builder',       icon: '🏗️', name: 'Dream Builder',       desc: 'Build your own house.' },
   { id: 'sponsored',     icon: '🤝', name: 'Sponsored',           desc: 'Get a sponsor.' },
   { id: 'pro_athlete',   icon: '🌟', name: 'Going Pro',           desc: 'Get hired as a pro athlete.' },
 ];

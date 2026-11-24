@@ -80,6 +80,7 @@ function ensureMoneyState() {
 function sideEarn(amount, label) {
   earn(amount, label);
   S.sideTotal += amount;
+  if (S.taxYear && amount > 0) S.taxYear.side += amount;
 }
 
 function moneyAssets() {
@@ -236,7 +237,8 @@ function doGig() {
   const lvl = skillLevel(g.skill);
   const good = Math.random() < 0.5 + lvl / 100;
   const tip = good ? Math.round(g.pay * 0.2) : 0;
-  sideEarn(g.pay + tip, g.kind === 'pet' ? 'Pet sitting' : 'Babysitting');
+  sideEarn(g.pay + tip, g.kind === 'pet' ? 'Pet sitting' : g.kind === 'snow' ? 'Shoveling snow' : 'Babysitting');
+  if (g.kind === 'snow') { log(`🌨️ You shoveled ${g.name}'s driveway. They paid you ${money(g.pay)}! Your arms are tired.`, 'good'); S.gig = null; return done(); }
   addSkill(g.skill, 2);
   log(g.kind === 'pet'
     ? `🐾 You took care of ${g.name} for ${g.hours} hours. Earned ${money(g.pay)}${tip ? ` + ${money(tip)} tip` : ''}!`
@@ -711,7 +713,7 @@ function moneySection(t) {
   const pid = placeId(t);
   const rows = [];
   if (t === 'home') {
-    if (S.gig) rows.push(mrow(S.gig.kind === 'pet' ? '🐾' : '👶', S.gig.kind === 'pet' ? `Pet sit ${S.gig.name}` : `Babysit ${S.gig.name}`, `${S.gig.hours} hrs · pays ${money(S.gig.pay)} · today only`, b('Do it', 'doGig()')));
+    if (S.gig) rows.push(mrow(S.gig.kind === 'pet' ? '🐾' : S.gig.kind === 'snow' ? '🌨️' : '👶', S.gig.kind === 'pet' ? `Pet sit ${S.gig.name}` : S.gig.kind === 'snow' ? `Shovel ${S.gig.name}'s driveway` : `Babysit ${S.gig.name}`, `${S.gig.hours} hrs · pays ${money(S.gig.pay)} · today only`, b('Do it', 'doGig()')));
     rows.push(mrow('🌱', 'Mow neighbors\' lawns', has('mower') ? `$20 per lawn · ${S.weather === 'rainy' ? 'too wet today' : S.today.mowed ? 'done today' : '1 hr each'}` : 'Needs a lawn mower (Mall)', b('Mow', 'mowLawns()', 'primary', !has('mower') || S.today.mowed || S.weather === 'rainy')));
     rows.push(mrow('🍪', 'Bake treats to sell', `Uses 1 grocery meal · 2 hrs · you have ${S.inv.treats} treats`, b('Bake', 'bake()')));
     rows.push(mrow('🖼️', 'Paint a picture', `${S.inv.canvases} canvases · ${S.inv.paintings.length} paintings to sell`, b('Paint', 'paint()', 'primary', !S.inv.canvases)));

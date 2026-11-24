@@ -191,7 +191,7 @@ function carShape(c, x, y, col, horiz = true) {
 
 function house(c, x, y, w, h, wall, roof, rnd, opts = {}) {
   // yard
-  fillR(c, x, y, w, h, '#8fd17a', 4);
+  fillR(c, x, y, w, h, lawnCol('#8fd17a'), 4);
   flowers(c, x + 4, y + h - 14, w - 8, 10, rnd);
   const bw = w * 0.62, bh = h * 0.42, bx = x + (w - bw) / 2, by = y + h * 0.42;
   shadow(c, bx, by, bw, bh);
@@ -213,6 +213,13 @@ function house(c, x, y, w, h, wall, roof, rnd, opts = {}) {
   if (opts.mailbox) { fillR(c, x + 8, y + h - 18, 3, 12, '#555'); fillR(c, x + 5, y + h - 22, 10, 6, opts.mailbox, 2); }
 }
 
+// grass colors change with the seasons (white snow in winter, golden in fall)
+function lawnCol(hex) {
+  if (typeof SEASON_LAND === 'undefined' || !SEASON_LAND) return hex;
+  const [r, g, b, k] = SEASON_LAND, v = parseInt(hex.slice(1), 16);
+  const mix = (a, t) => Math.round(a + (t - a) * k).toString(16).padStart(2, '0');
+  return '#' + mix(v >> 16, r) + mix((v >> 8) & 255, g) + mix(v & 255, b);
+}
 function drawStatic(c) {
   WINDOWS.length = 0; LAMPS.length = 0; SHADE.length = 0;
   const rnd = seeded(42);
@@ -236,6 +243,8 @@ function drawStatic(c) {
     c.strokeStyle = rnd() < 0.55 ? `rgba(45,${100 + rnd() * 40 | 0},40,.35)` : `rgba(${180 + rnd() * 40 | 0},230,150,.3)`;
     c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + (rnd() - 0.5) * 2, by - 2 - rnd() * 2); c.stroke();
   }
+  // the season changes the color of the grass
+  if (typeof SEASON_LAND !== 'undefined' && SEASON_LAND) { const [r, g2, b2, k] = SEASON_LAND; c.fillStyle = `rgba(${r},${g2},${b2},${k})`; c.fillRect(0, 0, MAP_W, MAP_H); }
   // a few dirt spots and pebbles
   for (let i = 0; i < 25; i++) { const dx = rnd() * MAP_W, dy = rnd() * MAP_H; ell(c, dx, dy, 4 + rnd() * 7, 2 + rnd() * 3, 'rgba(150,120,80,.18)'); }
 
@@ -327,7 +336,7 @@ function drawStatic(c) {
   // ---------- buildings ----------
   const P = id => PLACES[id].r;
   let [x, y, w, h] = P('h_mansion');
-  fillR(c, x, y, w, h, '#9fdc85', 6);
+  fillR(c, x, y, w, h, lawnCol('#9fdc85'), 6);
   for (let i = 0; i < 12; i++) bush(c, x + 10 + i * 21, y + 8, 5, '#2f7a3a');
   fillR(c, x + 15, y + 70, 55, 38, '#7fd4f5', 4); strokeR(c, x + 15, y + 70, 55, 38, '#fff', 3, 4);
   c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1; for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(x + 20, y + 80 + k * 9); c.quadraticCurveTo(x + 42, y + 76 + k * 9, x + 65, y + 80 + k * 9); c.stroke(); }
@@ -394,7 +403,7 @@ function drawStatic(c) {
     house(c, hx, hy, hw, hh, walls[i], roofs[i], rnd, { attic: i % 2 === 0, mailbox: i < 2 ? '#2f6fd6' : null });
   });
   [x, y, w, h] = P('h_family');
-  fillR(c, x, y, w, h, '#93d47e', 5);
+  fillR(c, x, y, w, h, lawnCol('#93d47e'), 5);
   flowers(c, x + 5, y + h - 15, w - 10, 10, rnd);
   shadow(c, x + 60, y + 35, 150, 50);
   fillR(c, x + 60, y + 35, 150, 50, '#fff3d6');
@@ -422,7 +431,7 @@ function drawStatic(c) {
   bush(c, x + 40, y + 180, 6); bush(c, x + 170, y + 180, 6);
 
   [x, y, w, h] = P('park');
-  fillR(c, x, y, w, h, '#9edb7e', 8);
+  fillR(c, x, y, w, h, lawnCol('#9edb7e'), 8);
   c.strokeStyle = '#e2cf9e'; c.lineWidth = 7; c.beginPath(); c.moveTo(x + w / 2 + 5, y + h); c.bezierCurveTo(x + w / 2 + 50, y + 140, x + 30, y + 120, x + 40, y + 30); c.stroke();
   c.beginPath(); c.moveTo(x + 90, y + 150); c.quadraticCurveTo(x + 150, y + 160, x + w - 5, y + 120); c.stroke();
   ell(c, x + 135, y + 70, 58, 38, '#3b8fd6'); ell(c, x + 135, y + 70, 50, 31, '#62b0ef');
@@ -490,7 +499,7 @@ function drawStatic(c) {
   signBoard(c, x + w / 2 - 18, y + 34, 36, 10, '#2e7d32', '#fff', 'BANK', 7);
 
   [x, y, w, h] = P('realestate');
-  fillR(c, x, y, w, h, '#9fd987', 4);
+  fillR(c, x, y, w, h, lawnCol('#9fd987'), 4);
   shadow(c, x + 12, y + 30, w - 24, 55);
   fillR(c, x + 12, y + 30, w - 24, 55, '#fff8e1');
   fillR(c, x + 8, y + 24, w - 16, 8, '#00897b');
@@ -554,7 +563,7 @@ function drawStatic(c) {
   strokeR(c, x + 276, y + 45, 14, 25, '#fff', 1.2); strokeR(c, x + 396, y + 45, 14, 25, '#fff', 1.2);
   // golf
   fillR(c, x + 420, y + 20, 82, 75, '#66bb6a', 3);
-  ell(c, x + 465, y + 55, 28, 20, '#8bd17c'); ell(c, x + 435, y + 82, 12, 6, '#f2dfa1');
+  ell(c, x + 465, y + 55, 28, 20, lawnCol('#8bd17c')); ell(c, x + 435, y + 82, 12, 6, '#f2dfa1');
   fillR(c, x + 470, y + 35, 1.5, 20, '#555'); tri(c, [[x + 471.5, y + 35], [x + 484, y + 39], [x + 471.5, y + 43]], '#e53935'); circ(c, x + 471, y + 55, 2, '#222');
   // running track hint
   c.strokeStyle = '#c0573e'; c.lineWidth = 3; rr(c, x + 3, y + 16, w - 6, h - 19, 10); c.stroke();
@@ -640,9 +649,10 @@ function finishLighting(c, rnd) {
 
 // ---------- travel ----------
 function transportFor(len) {
-  if ((has('car') || has('newcar')) && S.skills.drive >= 20) return { how: 'drove', icon: '🚙', speed: 3000, cost: 0, wait: 0 };
+  if (canDrive(len)) return { how: 'drove', icon: '🚙', speed: 3000, cost: 0, wait: 0 };
   if (has('bike')) return { how: 'biked', icon: '🚲', speed: 1500, cost: 0, wait: 0 };
-  const fare = len > 2500 ? 8 : 2;
+  let fare = len > 2500 ? 8 : 2;
+  if (perk('busfare')) fare = Math.ceil(fare / 2);
   if (len > 350 && S.money >= fare) return { how: 'took the bus', icon: '🚌', speed: len > 2500 ? 2800 : 2200, cost: fare, wait: 0.15 };
   return { how: 'walked', icon: '🚶', speed: 800, cost: 0, wait: 0 };
 }
@@ -650,8 +660,11 @@ function travelInfo(fromLoc, toLoc) {
   const path = findPath(fromLoc, toLoc);
   const len = pathLength(path);
   const tr = transportFor(len);
-  const hours = len < 5 ? 0 : Math.max(0.1, len / tr.speed + tr.wait);
-  return { path, len, hours, ...tr };
+  let hours = len < 5 ? 0 : Math.max(0.1, len / tr.speed + tr.wait);
+  let rush = false;
+  if (isRush() && (tr.icon === '🚙' || tr.icon === '🚌')) { hours *= 1.6; rush = true; }
+  if (perk('roads')) hours *= 0.9;
+  return { path, len, hours, rush, ...tr };
 }
 function travelTime(h) { const m = Math.round(h * 60); return m >= 60 ? `${Math.floor(m / 60)} hr ${m % 60 ? (m % 60) + ' min' : ''}` : `${m} min`; }
 
@@ -669,7 +682,9 @@ function travelTo(dest, opts = {}) {
       if (dest === 'home') S.doorOpen = false;   // you arrive outside your front door
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
-      if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).`);
+      afterDrive(info);
+      if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
+      if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
       if (!opts.keepTab) tab = dest;
       if (!opts.noDone) done();
       resolve(true);

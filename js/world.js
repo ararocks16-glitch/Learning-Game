@@ -443,7 +443,12 @@ function renderChunk(cx, cy, lod) {
   const img = tctx.createImageData(n, n);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const wx = x0 + (i + 0.5) * LOD_CELL[lod], wy = y0 + (j + 0.5) * LOD_CELL[lod];
-    const col = biomeColor(wx, wy, biome(wx, wy));
+    const bb = biome(wx, wy);
+    let col = biomeColor(wx, wy, bb);
+    if (SEASON_LAND && (bb === B.GRASS || bb === B.HILL || bb === B.FARM || bb === B.FOREST)) {
+      const [tr, tg, tb, k] = SEASON_LAND;
+      col = [col[0] + (tr - col[0]) * k, col[1] + (tg - col[1]) * k, col[2] + (tb - col[2]) * k];
+    }
     const o = (j * n + i) * 4;
     img.data[o] = col[0]; img.data[o + 1] = col[1]; img.data[o + 2] = col[2]; img.data[o + 3] = 255;
   }
@@ -461,7 +466,7 @@ function renderChunk(cx, cy, lod) {
       const bx = x0 + rnd() * CHUNK, by = y0 + rnd() * CHUNK;
       const b = biome(bx, by);
       if (b !== B.GRASS && b !== B.HILL && b !== B.FARM && b !== B.FOREST) continue;
-      c.strokeStyle = rnd() < 0.55 ? 'rgba(45,110,40,.35)' : 'rgba(200,235,160,.3)';
+      c.strokeStyle = SEASON_LAND && SEASON_LAND[3] > 0.5 ? (rnd() < 0.5 ? 'rgba(160,175,190,.35)' : 'rgba(255,255,255,.5)') : rnd() < 0.55 ? 'rgba(45,110,40,.35)' : 'rgba(200,235,160,.3)';
       c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + (rnd() - 0.5) * 2, by - 3); c.stroke();
     }
   }
@@ -652,7 +657,8 @@ function drawDynamic(t, dt) {
   // cars
   const dkk = darkness();
   cars.forEach((car, i) => {
-    stepMover(car, dt, i < 12);
+    if (!(i < 12 && carMustStop(car, t))) stepMover(car, dt, i < 12);
+    if (i >= 12 && i % 2 && !isRush()) return;
     const P0 = NODES[car.from], P1 = NODES[car.to];
     const horiz = P0[1] === P1[1];
     const dir = horiz ? Math.sign(P1[0] - P0[0]) : Math.sign(P1[1] - P0[1]);
@@ -665,6 +671,9 @@ function drawDynamic(t, dt) {
     if (dkk > 0.25) { c.fillStyle = 'rgba(255,240,170,.35)'; c.beginPath(); c.arc(horiz ? dir * 18 : 0, horiz ? 0 : dir * 18, 9, 0, Math.PI * 2); c.fill(); }
     c.restore();
   });
+  if (detail) drawTrafficLights(c, t, inView);
+  if (townVisible && detail) drawParkEvent(c, t);
+  { const ap = PLACES.airport.r; if (inView(ap[0] + 300, ap[1] + 250, 600) && detail) { const ph = (t / 9000) % 1; const px = ap[0] + 160 + ph * 700, py = ap[1] + 253 - Math.max(0, ph - 0.45) * 500; drawPlane(c, px, py, 0.9 + Math.max(0, ph - 0.45), -Math.max(0, ph - 0.45) * 1.2); } }
   // people walking in town
   if (detail) walkers.forEach((w, i) => {
     stepMover(w, dt, true);
@@ -729,6 +738,7 @@ function drawDynamic(t, dt) {
     [[0, 0, 22], [20, -6, 18], [38, 2, 16], [-18, 4, 14]].forEach(([ox, oy, r]) => circ(c, cl.x + ox * cl.s, cl.y + oy * cl.s, r * cl.s, `rgba(255,255,255,${ca})`));
   });
 
+  drawSeasonFx(c, t, dt, vx0, vy0, vw, vh);
   // labels
   const myHome = HOME_PLACE[S.home];
   const myWork = S.job ? workplaceOf(JOBS[S.job.id]) : null;
@@ -940,6 +950,7 @@ function clickPlace(id) {
   const p = PLACES[id];
   if (p.kind === 'home') {
     if (id === HOME_PLACE[S.home]) return travelTo('home');
+    if (id === 'h_parents') return travelTo('h_parents');
     toast(`${p.icon} That's the ${p.name}. Visit 🔑 Real Estate to live there.`);
     return;
   }

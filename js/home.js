@@ -101,8 +101,9 @@ function takeBath() {
 // ---------- pantry ----------
 function snackMenu() {
   const items = Object.entries(PANTRY).filter(([k]) => S.pantry[k] > 0);
-  if (!items.length) return nope('No snacks at home. Buy some at the 🛒 Supermarket.');
-  showModal(`<h2>🍿 What do you want to eat?</h2><div class="grid actions">${items.map(([k, p]) => `<button class="action" onclick="eatSnack('${k}')"><span class="ic">${p.icon}</span><b>${p.name}</b><small>You have ${S.pantry[k]}${p.hot ? ' · needs a stove or microwave' : ''}</small></button>`).join('')}</div>`,
+  const fresh = Object.keys(FOODS).filter(k => FOODS[k].snack && countFood(k) > 0);
+  if (!items.length && !fresh.length) return nope('No snacks at home. Buy some at the 🛒 Supermarket.');
+  showModal(`<h2>🍿 What do you want to eat?</h2><div class="grid actions">${items.map(([k, p]) => `<button class="action" onclick="eatSnack('${k}')"><span class="ic">${p.icon}</span><b>${p.name}</b><small>You have ${S.pantry[k]}${p.hot ? ' · needs a stove or microwave' : ''}</small></button>`).join('')}${fresh.map(k => `<button class="action" onclick="eatFresh('${k}')"><span class="ic">${FOODS[k].icon}</span><b>${FOODS[k].name}</b><small>You have ${countFood(k)}</small></button>`).join('')}</div>`,
     [{ label: 'Never mind', cls: 'ghost' }]);
 }
 function eatSnack(k) {

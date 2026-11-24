@@ -72,7 +72,7 @@ a { color: var(--primary); cursor: pointer; text-decoration: underline; }
 .cash .big { color: var(--good); }
 
 /* needs */
-#needs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 10px 0; }
+#needs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 10px 0; }
 .need { background: var(--bg2); border-radius: 10px; padding: 6px 10px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; font-size: .85rem; }
 .need .bar { grid-column: 1 / -1; grid-row: 2; }
 .need .num { grid-row: 1; grid-column: 2; font-weight: 700; }
@@ -235,7 +235,7 @@ table.stub .total td { font-weight: 700; border-top: 2px solid var(--ink); }
 @media (max-width: 600px) {
   #hud { grid-template-columns: 1fr 1fr; }
   .clock { grid-column: 1 / -1; grid-row: 2; }
-  #needs { grid-template-columns: repeat(3, 1fr); }
+  #needs { grid-template-columns: repeat(4, 1fr); }
   .placehead .pic { font-size: 2rem; }
   .need { font-size: .74rem; padding: 5px 8px; }
   .tab { min-width: 56px; padding: 6px 8px; }
@@ -319,6 +319,33 @@ details.walls summary { cursor: pointer; }
 .pbar { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 6px; font-size: .78rem; }
 .pbar .bar { margin: 0; }
 .petshopcard canvas.petpic { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 8px; display: block; margin-bottom: 6px; }
+
+/* ---------- real life: phone, holidays, quizzes, budget ---------- */
+.phonebtn { position: relative; font-size: 1.6rem; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 4px 10px; cursor: pointer; box-shadow: var(--shadow); }
+.phonebtn i, .apps i { position: absolute; top: -4px; right: -4px; background: var(--bad); color: #fff; font-style: normal; font-size: .7rem; border-radius: 99px; padding: 1px 6px; }
+.phone { max-width: 360px; margin: 0 auto; background: #10151f; color: #e8eef7; border-radius: 28px; padding: 14px; border: 6px solid #2b3446; }
+.phone .card { color: var(--ink); }
+.phonetop { display: flex; align-items: center; gap: 8px; justify-content: center; padding-bottom: 10px; border-bottom: 1px solid #2b3446; margin-bottom: 10px; }
+.apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.apps button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; color: #e8eef7; font-size: .72rem; cursor: pointer; }
+.apps button span { font-size: 1.6rem; background: #2b3446; border-radius: 14px; width: 52px; height: 52px; display: grid; place-items: center; }
+.msgs { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow: auto; }
+.msg { background: #2b3446; border-radius: 14px 14px 14px 4px; padding: 7px 10px; font-size: .88rem; align-self: flex-start; max-width: 90%; }
+.msg.me { background: #2f80ed; border-radius: 14px 14px 4px 14px; align-self: flex-end; }
+.phone .muted { color: #9fb0c8; }
+.holiday { background: linear-gradient(135deg, #fff6e0, #ffe6f0); border: 2px solid #f6c36b; }
+:root[data-theme="dark"] .holiday { background: linear-gradient(135deg, #3d3320, #3d2433); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .holiday { background: linear-gradient(135deg, #3d3320, #3d2433); } }
+.sortgrid { display: flex; flex-direction: column; gap: 6px; }
+.sortrow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; background: var(--bg); padding: 6px 10px; border-radius: 10px; }
+.sortrow label, .quiz label { margin-right: 10px; white-space: nowrap; cursor: pointer; }
+.quiz { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; padding: 8px 10px; background: var(--bg); border-radius: 10px; }
+.budgetedit { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0; }
+.budgetedit label { display: flex; flex-direction: column; font-size: .85rem; gap: 2px; }
+.budgetedit input { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); }
+.cand { display: flex; gap: 10px; align-items: flex-start; }
+.energy .pbar { margin: 4px 0; }
+.news li { margin: 4px 0; }
 
 </style>
 </head>
@@ -440,6 +467,8 @@ const ITEMS = [
   // clothes
   { id: 'clothes1', place: 'mall', cat: 'Clothes', name: 'Basic Clothes', icon: '👕', price: 40, clothes: 1, desc: 'Jeans and t-shirts.' },
   { id: 'clothes2', place: 'mall', cat: 'Clothes', name: 'Nice Outfit', icon: '👔', price: 140, clothes: 2, desc: 'Look sharp for interviews.' },
+  { id: 'coat', place: 'mall', cat: 'Clothes', name: 'Winter Coat', icon: '🧥', price: 90, desc: 'Stay warm outside in winter. Without one you get cold and sick!' },
+  { id: 'costume', place: 'mall', cat: 'Clothes', name: 'Halloween Costume', icon: '🧛', price: 30, desc: 'Get way more candy trick-or-treating on Halloween!' },
   { id: 'clothes3', place: 'mall', cat: 'Clothes', name: 'Business Suit', icon: '🤵', price: 400, clothes: 3, desc: 'Big interviews need big style.' },
   // electronics
   { id: 'phone', place: 'mall', cat: 'Electronics', name: 'Phone', icon: '📱', price: 300, bill: 20,
@@ -453,6 +482,9 @@ const ITEMS = [
   { id: 'stove', place: 'mall', cat: 'Kitchen & Laundry', name: 'Stove & Oven', icon: '🍳', price: 450, desc: 'Lets you cook meals at home.' },
   { id: 'microwave', place: 'mall', cat: 'Kitchen & Laundry', name: 'Microwave', icon: '♨️', price: 120, desc: 'Heat up frozen pizza fast.' },
   { id: 'washer', place: 'mall', cat: 'Kitchen & Laundry', name: 'Washer & Dryer', icon: '🧺', price: 800, desc: 'Do laundry at home for free.' },
+  { id: 'smokedetector', place: 'mall', cat: 'Kitchen & Laundry', name: 'Smoke Detector', icon: '🚨', price: 25, desc: 'Beeps if there\'s smoke. Every home needs one!' },
+  { id: 'flashlight', place: 'mall', cat: 'Kitchen & Laundry', name: 'Flashlight', icon: '🔦', price: 10, desc: 'For power outages.' },
+  { id: 'ac', place: 'mall', cat: 'Kitchen & Laundry', name: 'Air Conditioner', icon: '❄️', price: 500, desc: 'Cool and comfy on hot days — but it uses lots of electricity!' },
   { id: 'fan', place: 'mall', cat: 'Kitchen & Laundry', name: 'Fan', icon: '🌀', price: 45, cozy: 1, desc: 'Stay cool on hot days.' },
   // bathroom
   { id: 'toilet', place: 'mall', cat: 'Bathroom', name: 'Toilet', icon: '🚽', price: 250, desc: 'Kind of important! Needs toilet paper too.' },
@@ -489,6 +521,9 @@ const ITEMS = [
     desc: '5 canvases and paints. Paint at home, sell at the Mall.' },
   { id: 'mower', place: 'mall', cat: 'Hobbies', name: 'Lawn Mower', icon: '🌱', price: 180, desc: 'Mow neighbors\' lawns for $20 each.' },
   { id: 'guitar', place: 'mall', cat: 'Hobbies', name: 'Guitar', icon: '🎸', price: 150, desc: 'Play for tips at the Park.' },
+  { id: 'bottle', place: 'mall', cat: 'Hobbies', name: 'Reusable Water Bottle', icon: '🧴', price: 8, desc: 'Drink water anywhere — and make less trash!' },
+  { id: 'suitcase', place: 'mall', cat: 'Hobbies', name: 'Suitcase', icon: '🧳', price: 60, desc: 'Pack for trips from the airport.' },
+  { id: 'gift', place: 'mall', cat: 'Hobbies', name: 'Wrapped Gift', icon: '🎁', price: 20, consumable: true, desc: 'Give gifts to family and friends on the Winter Holiday.' },
   { id: 'rod', place: 'mall', cat: 'Hobbies', name: 'Fishing Rod', icon: '🎣', price: 40, desc: 'Go fishing at Crystal Lake.' },
   { id: 'detector', place: 'mall', cat: 'Hobbies', name: 'Metal Detector', icon: '🔍', price: 120, desc: 'Hunt for treasure at the Park.' },
   // transport
@@ -723,6 +758,17 @@ const ACHIEVEMENTS = [
   { id: 'pet_owner',     icon: '🐾', name: 'Pet Owner',           desc: 'Get a pet.' },
   { id: 'zoo_keeper',    icon: '🦎', name: 'Animal Lover',        desc: 'Have 3 different kinds of animals at once.' },
   { id: 'happy_pet',     icon: '🐶', name: 'Best Friend',         desc: 'Keep a pet happy for 7 days in a row.' },
+  { id: 'voter',         icon: '🗳️', name: 'Voter',               desc: 'Vote in an election.' },
+  { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
+  { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },
+  { id: 'hero',          icon: '🦸', name: 'Real Hero',           desc: 'Call 911 to help someone who is hurt.' },
+  { id: 'popular',       icon: '🙂', name: 'Good Friend',         desc: 'Have 5 friends.' },
+  { id: 'credit',        icon: '📈', name: 'Great Credit',        desc: 'Reach a credit score of 740.' },
+  { id: 'taxes',         icon: '🧾', name: 'Tax Pro',             desc: 'File your taxes.' },
+  { id: 'budgeter',      icon: '📊', name: 'Budget Boss',         desc: 'Make a weekly budget.' },
+  { id: 'licensed',      icon: '🪪', name: 'Licensed Driver',     desc: 'Get your driver\'s license.' },
+  { id: 'jetsetter',     icon: '✈️', name: 'Jet Setter',          desc: 'Take a trip on an airplane.' },
+  { id: 'builder',       icon: '🏗️', name: 'Dream Builder',       desc: 'Build your own house.' },
   { id: 'sponsored',     icon: '🤝', name: 'Sponsored',           desc: 'Get a sponsor.' },
   { id: 'pro_athlete',   icon: '🌟', name: 'Going Pro',           desc: 'Get hired as a pro athlete.' },
 ];
@@ -811,6 +857,7 @@ function spend(amount, label) {
   S.money -= amount;
   S.week.expenses += amount;
   S.week.lines.push({ label, amount: -amount });
+  trackSpend(label, amount);
   return true;
 }
 // Bills get charged even if you can't afford them
@@ -819,7 +866,9 @@ function charge(amount, label) {
   S.money -= amount;
   S.week.expenses += amount;
   S.week.lines.push({ label, amount: -amount });
+  trackSpend(label, amount);
   if (before >= 0 && S.money < 0) {
+    credit(-20, 'your account was overdrawn');
     S.money -= 35;
     S.week.expenses += 35;
     S.week.lines.push({ label: 'Overdraft fee (spent more than you had!)', amount: -35 });
@@ -864,6 +913,7 @@ function newGame(name, look, talents) {
   ensureHomeState();
   ensureTripState();
   ensurePetState();
+  ensureRealLife();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
@@ -872,7 +922,8 @@ function newGame(name, look, talents) {
     <ul class="tips">
       <li>💼 <b>Get a job</b> — tell the boss what you're good at.</li>
       <li>🗺️ <b>Click buildings on the town map</b> to go places. Walking is slow — a bike, the bus or a car is faster.</li>
-      <li>🚿 <b>Take care of yourself</b> — eat, sleep, use the toilet, wash your hands, shower, brush teeth.</li>
+      <li>🚿 <b>Take care of yourself</b> — eat, drink water, sleep, use the toilet, wash your hands, shower, brush teeth.</li>
+      <li>📅 <b>It's June 1st.</b> Seasons change, holidays come, and you get older every birthday!</li>
       <li>💵 <b>Paychecks come Friday night</b> — taxes come out first.</li>
       <li>🧾 <b>Bills are due every Monday.</b></li>
       <li>🏅 <b>Play sports</b>, pay coaches for lessons, and enter tournaments on weekends.</li>
@@ -917,6 +968,7 @@ function tick(h, mode) {
   }
   if (n.food <= 0) n.health -= 3 * h;
   petTick(h);
+  lifeTick(h, mode);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
   if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
@@ -939,7 +991,9 @@ function pass(hours, mode = 'awake') {
 function newDay() {
   // --- end of the old day ---
   const j = S.job;
-  if (j && weekday() < 5 && S.day >= j.startDay && !S.today.worked) {
+  const hol = holidayToday();
+  if (j && hol && hol.closed && shiftOf(JOBS[j.id]) === 'day' && weekday() < 5 && S.day >= j.startDay) { j.weekHours += 8; log(`${hol.icon} ${hol.name} is a paid holiday. You got paid without working!`, 'good'); }
+  if (j && worksToday() && S.day >= j.startDay && !S.today.worked) {
     if (S.today.sick) {
       log(`🤒 You called in sick to work.`);
     } else {
@@ -961,6 +1015,13 @@ function newDay() {
   moneyNewDay();
   homeNewDay();
   petNewDay();
+  calendarNewDay();
+  lifeNewDay();
+  socialNewDay();
+  carsNewDay();
+  taxNewDay();
+  buildNewDay();
+  if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
   if (weekday() === 0) weeklyBills();
@@ -1090,11 +1151,15 @@ function doInterview(job, picks) {
     notes.push('📵 They wanted to hire you, but couldn\'t reach you because you don\'t have a phone!');
   }
 
+  score += interviewExtras(job, notes);
   const hired = score >= 60;
   if (hired) {
     const prev = S.job;
     if (prev) { if (prev.weekHours > 0) payday(true); log(`👋 You left ${JOBS[prev.id].name} for a new job.`); }
     S.job = { id: job.id, wage: job.pay, startDay: S.day + 1, daysWorked: 0, goodDays: 0, misses: 0, warnings: 0, lies, weekHours: 0 };
+    setupWorkplace(S.job); giveBenefits(S.job);
+    if (S.family) Object.values(S.family).forEach(m => m.rel = clamp(m.rel + 5));
+    text('👩 Mom', `A new job as a ${job.name}?! We're so proud of you! ❤️`);
     if (!S.jobsWorked.includes(job.id)) S.jobsWorked.push(job.id);
     log(`🎉 You got hired as a ${job.name} for ${money(job.pay)}/hour! Start tomorrow.`, 'good');
     unlock('first_job');
@@ -1116,25 +1181,31 @@ function doInterview(job, picks) {
 async function goWork() {
   const j = S.job; if (!j) return;
   const job = JOBS[j.id];
+  const sh = shiftNow();
   if (S.day < j.startDay) return nope('Your first day is tomorrow!');
-  if (isWeekend()) return nope('It\'s the weekend — no work today! 🎉');
+  if (!worksToday()) return nope(S.snowDay ? '❄️ Snow day! Work is closed today.' : holidayToday() && holidayToday().closed ? 'It\'s a holiday — work is closed!' : 'You don\'t work today. Enjoy your day off! 🎉');
   if (S.today.worked) return nope('You already worked today.');
   if (S.today.sick) return nope('You called in sick today. Rest up!');
-  if (S.hour < 5) return nope('It\'s too early. Work starts at 6 AM.');
-  if (S.hour >= 11) return nope('Too late — your shift already started. You could call in sick...');
+  if (S.hour < sh.from) return nope(`It's too early. Your shift starts at ${fmtTime(sh.from + 0.5)}.`);
+  if (S.hour >= sh.to) return nope('Too late — your shift already started. You could call in sick...');
   if (traveler) return;
 
   await travelTo(workplaceOf(job), { noDone: true, quiet: true });
-  const late = S.hour > 9.1;
+  const late = S.hour > sh.late;
   const n = S.needs;
   let perf = (n.energy + n.food + n.hygiene + n.health) / 4 + rand(-8, 10) + S.clothes * 2;
   if (late) perf -= 20;
   if (S.laundryDays > 7) perf -= 8;
   if (n.bladder < 20) perf -= 5;
+  if (n.thirst < 20) perf -= 5;
+  if (S.ill) perf -= ILLNESS[S.ill.type].perf;
+  if (!j.boss) setupWorkplace(j);
+  if (j.boss.style === 'strict') perf -= 4; else if (j.boss.style === 'nice') perf += 3;
+  S.today.worked = true;
   pass(8, 'work');
+  const extra = workEvent(j);
 
   j.weekHours += 8; j.daysWorked++;
-  S.today.worked = true;
   job.req.forEach(r => addSkill(r.s, 1.2));
 
   const msgs = [];
@@ -1155,6 +1226,7 @@ async function goWork() {
     msgs.push(`😠 You did a bad job. Boss warning ${j.warnings}/3.`);
     if (j.warnings >= 3) { log(`${job.name}: ${msgs.join(' ')}`, 'bad'); fire('You did poor work too many times. (Come to work rested, fed and clean!)'); fired = true; }
   } else msgs.push('An OK day at work.');
+  if (extra) msgs.push(extra);
 
   if (!fired) {
     // were you caught lying?
@@ -1172,9 +1244,10 @@ async function goWork() {
 
 function callInSick() {
   const j = S.job; if (!j) return;
-  if (isWeekend() || S.today.worked) return nope('You don\'t need to call in today.');
+  if (!worksToday() || S.today.worked) return nope('You don\'t need to call in today.');
   if (S.today.sick) return nope('You already called in.');
-  if (S.needs.health >= 70) {
+  if (useSickDay()) { S.today.sick = true; return done(); }
+  if (S.needs.health >= 70 && !S.ill) {
     j.warnings++;
     log(`📞 You called in sick, but you sounded fine. Your boss is suspicious. Warning ${j.warnings}/3.`, 'bad');
     if (j.warnings >= 3) fire('Too many warnings.');
@@ -1191,6 +1264,7 @@ function payday(final = false) {
   const gross = j.weekHours * j.wage;
   const fed = gross * 0.10, state = gross * 0.04, fica = gross * 0.0765;
   const net = gross - fed - state - fica;
+  S.taxYear.wages += gross; S.taxYear.withheld += fed + state;
   earn(net, `Paycheck from ${JOBS[j.id].name}`);
   log(`💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
   queueModal(`<h2>💵 ${final ? 'Final ' : ''}Paycheck</h2>
@@ -1212,9 +1286,9 @@ function weeklyBills() {
   const bills = [];
   // housing
   if (h.type === 'rent') {
-    if (S.money >= h.rent) { charge(h.rent, `Rent: ${h.name}`); bills.push([`Rent (${h.name})`, h.rent]); S.missedRent = 0; }
+    if (S.money >= h.rent) { charge(h.rent, `Rent: ${h.name}`); bills.push([`Rent (${h.name})`, h.rent]); S.missedRent = 0; credit(3, 'paid rent on time'); }
     else {
-      S.missedRent++;
+      S.missedRent++; credit(-50, 'missed a rent payment');
       bills.push([`Rent — COULDN'T PAY! (${S.missedRent}/2)`, 0]);
       log(`🏚️ You couldn't pay rent! The landlord is angry. (${S.missedRent}/2)`, 'bad');
       if (S.missedRent >= 2) {
@@ -1223,25 +1297,37 @@ function weeklyBills() {
         S.home = 'parents'; S.missedRent = 0;
       }
     }
-    if (S.home !== 'parents') { charge(h.utilities, 'Utilities (electric, water, internet)'); bills.push(['Utilities (electric, water, internet)', h.utilities]); }
-  } else if (h.type === 'buy') {
+    if (S.home !== 'parents') { const wi = Math.round(h.utilities * 0.6), el = electricBill(); charge(wi, 'Water & internet'); bills.push(['Water & internet', wi]); charge(el, 'Electric bill'); bills.push([`Electric bill (${S.kwh.toFixed(1)} kWh used)`, el]); }
+  }
+  if (h.type !== 'buy' && S.mortgage) {
+    const pay = Math.min(S.mortgage.weekly, S.mortgage.balance);
+    charge(pay, 'Construction loan payment'); bills.push(['Construction loan payment (for the house you are building)', pay]);
+    S.mortgage.balance -= pay; credit(2, 'paid your loan on time');
+    if (S.mortgage.balance <= 0.5) { S.mortgage = null; log('🎉 You paid off your loan!', 'good'); }
+  }
+  if (h.type === 'buy') {
     if (S.mortgage) {
       const pay = Math.min(S.mortgage.weekly, S.mortgage.balance);
       charge(pay, 'Mortgage payment'); bills.push(['Mortgage payment', pay]);
       S.mortgage.balance -= pay;
       if (S.mortgage.balance <= 0.5) { S.mortgage = null; log('🎉 You paid off your mortgage! You own your house completely!', 'good'); }
     }
-    charge(h.upkeep, 'Property tax & utilities'); bills.push(['Property tax & utilities', h.upkeep]);
+    charge(h.upkeep, 'Property tax, water & internet'); bills.push(['Property tax, water & internet', h.upkeep]);
+    const el = electricBill(); charge(el, 'Electric bill'); bills.push([`Electric bill (${S.kwh.toFixed(1)} kWh used)`, el]);
+    if (S.mortgage) credit(3, 'paid your mortgage on time');
   }
+  if (S.home === 'parents' && S.kwh > 25) log('👩 Mom says: "Turn off the lights when you leave a room! The electric bill was huge."');
+  S.kwh = 0;
   if (has('phone')) { charge(20, 'Phone bill'); bills.push(['Phone bill', 20]); }
-  if (has('car')) { charge(60, 'Car: gas & insurance'); bills.push(['Car: gas & insurance', 60]); }
-  if (has('newcar')) { charge(80, 'New car: gas & insurance'); bills.push(['New car: gas & insurance', 80]); }
+  if (has('car')) { charge(35, 'Car insurance'); bills.push(['Car insurance', 35]); }
+  if (has('newcar')) { charge(45, 'New car insurance'); bills.push(['New car insurance', 45]); }
   if (S.insurance && !(S.job && JOBS[S.job.id].insurance)) { charge(35, 'Health insurance'); bills.push(['Health insurance', 35]); }
   // bank
   if (S.loan > 0) {
-    const interest = S.loan * 0.02;
+    const interest = S.loan * loanRate();
+    credit(S.loan > loanLimit() * 0.6 ? -5 : 2, 'loan payments');
     S.loan += interest;
-    bills.push([`Loan interest added (2%) — you now owe ${money(S.loan)}`, 0]);
+    bills.push([`Loan interest added (${(loanRate() * 100).toFixed(1)}%, from your credit score) — you now owe ${money(S.loan)}`, 0]);
     const min = Math.min(S.loan, Math.max(20, S.loan * 0.05));
     charge(min, 'Loan minimum payment'); S.loan -= min;
     bills.push(['Loan minimum payment', min]);
@@ -1266,8 +1352,10 @@ function weeklyBills() {
       <tr><td>Money out (before these bills)</td><td class="minus">-${money(w.expenses - total)}</td></tr>
     </table>
     <p>You now have <b>${money(S.money)}</b>${S.savings > 0 ? ` and ${money(S.savings)} in savings` : ''}.</p>
-    ${S.money < 0 ? '<p class="lesson">⚠️ You have negative money! Find work or cut spending fast.</p>' : ''}`);
-  S.week = { income: 0, expenses: 0, lines: [] };
+    ${S.money < 0 ? '<p class="lesson">⚠️ You have negative money! Find work or cut spending fast.</p>' : ''}
+    ${budgetReport()}<p class="muted">📈 Credit score: ${S.credit} (${creditWord()})</p>`);
+  if (S.money >= 0) credit(2, 'all bills paid');
+  S.week = { income: 0, expenses: 0, lines: [], cats: {} };
   moneyWeekly();
 }
 
@@ -1285,7 +1373,7 @@ function dailyEvent() {
   if (Math.random() > 0.28) return;
   const ev = [];
   ev.push({ w: 3, f: () => { earn(20, 'Found money'); return ['💵 Lucky Day', 'You found $20 on the sidewalk!', '']; } });
-  ev.push({ w: S.needs.hygiene < 40 ? 5 : 2, f: () => { S.needs.health = clamp(S.needs.health - 30); return ['🤧 You Caught a Cold', 'You feel sick. Health -30. Rest, eat well and stay clean.', 'Washing up and sleeping enough helps you stay healthy.']; } });
+  ev.push({ w: S.needs.hygiene < 40 ? 5 : 2, f: () => { S.needs.fun = clamp(S.needs.fun + 4); return ['☀️ Nice Day', 'You took a deep breath of fresh air and felt great.', '']; } });
   ev.push({ w: 2, f: () => { earn(50, 'Birthday card from Grandma'); return ['💌 Card from Grandma', 'Grandma sent you a card with $50 inside!', '']; } });
   ev.push({ w: 2, f: () => { charge(60, 'Gift for friend\'s wedding'); return ['💒 Wedding Invite', 'Your friend is getting married. You bought a $60 gift.', 'Some expenses are surprises. That\'s why saving matters.']; } });
   ev.push({ w: 2, f: () => { S.needs.fun = clamp(S.needs.fun + 20); return ['🎉 Party!', 'Your friends threw a party. Fun +20!', '']; } });
@@ -1319,6 +1407,7 @@ function ateFood(amount) {
     S.needs.health = clamp(S.needs.health - 15);
     S.needs.fun = clamp(S.needs.fun - 10);
     log('🤢 You got a tummy ache. You ate without washing your hands after using the toilet!', 'bad');
+    if (Math.random() < 0.35) getSick('stomach');
     toast('🤢 Tummy ache! Wash your hands before eating.', 'bad');
   }
 }
@@ -1345,6 +1434,7 @@ function seeDoctor() {
   if (!spend(cost, 'Doctor visit')) return;
   pass(1.5);
   S.needs.health = clamp(S.needs.health + 45);
+  if (S.ill) { S.ill.days = Math.max(1, Math.ceil(S.ill.days / 2)); log(`🩺 The doctor checked your ${ILLNESS[S.ill.type].name.toLowerCase()} and gave you a plan to get better faster.`); }
   log(`🩺 The doctor checked you out and gave you medicine. Health +45. Cost: ${money(cost)}${insured ? ' (insurance helped!)' : ''}.`, 'good');
   done();
 }
@@ -1396,6 +1486,10 @@ const HOME_ACTIONS = [
     fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Supermarket.'); S.groceries--; pass(0.5); ateFood(40); if (hasF('table')) S.needs.fun = clamp(S.needs.fun + 3); log(hasF('table') ? '🍽️ You ate a meal at the table.' : '🍽️ You ate a meal sitting on the floor. (A table would be nice!)'); } },
   { id: 'cook', icon: '🍳', name: 'Cook a Meal', hint: 'Uses 1 meal · 1 hr · better food & cooking skill',
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
+  { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
+    fn: () => drink('tap') },
+  { id: 'recipe', icon: '👩‍🍳', name: 'Cook a Recipe', hint: () => `Real ingredients · ${S.fridgeFood.length} items in your kitchen`,
+    fn: () => recipeModal() },
   { id: 'snack', icon: '🍿', name: 'Have a Snack', hint: () => `Fruit, chips, cereal, pizza · you have ${Object.values(S.pantry).reduce((a, v) => a + v, 0)}`,
     fn: () => snackMenu() },
   { id: 'toilet', icon: '🚽', name: 'Use the Toilet', hint: () => hasF('toilet') ? '5 min · don\'t forget to flush!' : '⚠️ You don\'t have a toilet!',
@@ -1414,8 +1508,14 @@ const HOME_ACTIONS = [
     fn: () => { pass(2, 'sleep'); log('💤 You took a nap.'); } },
   { id: 'laundry', icon: '🧺', name: 'Do Laundry', hint: () => hasF('washer') ? 'Free at home · 1 hr' : 'Laundromat $8 · 2 hrs',
     fn: () => { if (!hasF('washer')) { if (!spend(8, 'Laundromat')) return; pass(2); } else pass(1); S.laundryDays = 0; log('🧺 Your clothes are clean!'); } },
-  { id: 'clean', icon: '🧹', name: 'Clean Up', hint: '1 hr · feel better',
-    fn: () => { pass(1); S.needs.fun = clamp(S.needs.fun + 6); S.needs.hygiene = clamp(S.needs.hygiene - 5); log(S.home === 'parents' ? '🧹 You cleaned your room. Mom is happy!' : '🧹 You cleaned your place. It looks great.'); } },
+  { id: 'clean', icon: '🧹', name: 'Vacuum & Tidy', hint: () => `45 min · mess: ${Math.round(S.mess)}%`,
+    fn: () => vacuum() },
+  { id: 'dishes', icon: '🍽️', name: 'Wash the Dishes', hint: () => `${S.dishes} dirty dishes`,
+    fn: () => doDishes() },
+  { id: 'trash', icon: '🗑️', name: 'Take Out the Trash', hint: () => `Trash is ${Math.round(S.trash)}% full · sort it!`,
+    fn: () => takeOutTrash() },
+  { id: 'meds', icon: '💊', name: 'Take Medicine', hint: () => S.ill ? `${S.medicine} doses · you're sick` : `${S.medicine} doses · only when sick`,
+    fn: () => takeMedicine() },
   { id: 'tv', icon: '📺', name: 'Watch TV', hint: '2 hrs · needs TV', need: 'tv',
     fn: () => { pass(2, 'relax'); log('📺 You watched TV and relaxed.'); } },
   { id: 'games', icon: '🎮', name: 'Play Video Games', hint: '2 hrs · needs console', need: 'console',
@@ -1483,6 +1583,7 @@ function sportReady(sp) {
   if (s.gear && !S.owned['gear_' + sp]) { nope(`You need a ${s.gear.name} first!`); return false; }
   if (S.hour < 6 || S.hour > 21) { nope('Sports places are open 6 AM to 10 PM.'); return false; }
   if (S.needs.energy < 20) { nope('You\'re too tired to play. Rest first!'); return false; }
+  if (S.ill && S.ill.type === 'arm') { nope('🦾 Your arm is in a cast. No sports until it heals!'); return false; }
   return true;
 }
 function trySport(sp) {
@@ -1497,6 +1598,7 @@ function practice(sp) {
   if (s.practiceFee && !spend(s.practiceFee, `${s.name}: ${s.practiceWhere}`)) return;
   pass(2, 'sport');
   const g = addSkill(sp, 1.8);
+  sportsInjury();
   addSkill('fit', 1);
   trySport(sp);
   log(`${s.icon} You practiced ${s.name} on your own. +${g.toFixed(1)}`);
@@ -1510,6 +1612,7 @@ function lesson(sp, pro) {
   if (!spend(price + (s.practiceFee || 0), `${s.name} ${pro ? 'pro coach' : 'lesson'}`)) return;
   pass(2, 'sport');
   const g = addSkill(sp, pro ? 6.5 : 4.5);
+  sportsInjury();
   addSkill('fit', 1.5);
   trySport(sp);
   log(`${s.icon} ${pro ? 'Your PRO coach' : 'Your coach'} taught you new ${s.name} skills! +${g.toFixed(1)}`, 'good');
@@ -1540,6 +1643,7 @@ function tournament(sp, tid) {
   }
   pass(5, 'sport');
   addSkill(sp, 1.5);
+  sportsInjury();
   let prize = 0;
   if (place === 1) prize = t.prize1; else if (place === 2) prize = t.prize2;
   if (prize) earn(prize, `${t.name} prize`);
@@ -1563,7 +1667,7 @@ function buy(itemId) {
   if (S.hour < 8 || S.hour > 22) return nope('Stores are open 8 AM to 10 PM.');
   if (it.clothes && S.clothes >= it.clothes) return nope('You already have clothes this nice.');
   if (!it.consumable && !it.clothes && has(it.id)) return nope('You already own this.');
-  if ((it.id === 'car' || it.id === 'newcar') && S.skills.drive < 20) return nope('You need Driving skill 20 to get a license! Take Driving classes at the 🎓 College.');
+  if ((it.id === 'car' || it.id === 'newcar') && !S.license) return nope('You need a driver\'s license first! Get one at the 🪪 License Office.');
   if (!spend(it.price, it.name)) return;
   pass(0.5);
   if (it.id === 'groceries') { S.groceries += 7; log('🛒 You bought groceries. 7 meals at home!'); }
@@ -1572,11 +1676,12 @@ function buy(itemId) {
   else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
   else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
   else if (moneyBuy(it.id) || homeBuy(it.id)) { /* supplies, snacks */ }
+  else if (it.id === 'gift') { S.giftsBought = (S.giftsBought || 0) + 1; log('🎁 You bought a gift and wrapped it with a bow.'); }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
     S.owned[it.id] = true;
     log(`${it.icon} You bought a ${it.name}!${it.bill ? ` (Bill: ${money(it.bill)}/week)` : ''}`, 'good');
-    if (it.id === 'car' || it.id === 'newcar') unlock('car');
+    if (it.id === 'car' || it.id === 'newcar') { unlock('car'); S.fuel = 100; S.car = { miles: it.id === 'newcar' ? 12 : 62000, oilAt: it.id === 'newcar' ? 12 : 62000, dirty: 0 }; }
   }
   afterBuyHome(it);
   done();
@@ -1606,6 +1711,7 @@ function moveTo(hid) {
   }
   if (h.type === 'rent') {
     const need = h.rent * 2.5;
+    if (S.credit < 500) return showModal(`<h2>🏢 Application Denied</h2><p>The landlord checked your credit score (<b>${S.credit}</b>) and said no.</p><p class="lesson">💡 Pay bills on time to raise your credit score. Landlords want to know you'll pay rent!</p>`, [{ label: 'OK' }]);
     if (weeklyIncome() < need && S.money + S.savings < h.rent * 12) {
       return showModal(`<h2>🏢 Application Denied</h2><p>The landlord says you need to earn at least <b>${money(need)}/week</b> after taxes, or have ${money(h.rent * 12)} saved.</p><p>You earn ${money(weeklyIncome())}/week.</p><p class="lesson">💡 Landlords check your income to make sure you can pay rent. Most want rent to be less than 1/3 of your pay.</p>`, [{ label: 'OK' }]);
     }
@@ -1635,6 +1741,7 @@ function moveTo(hid) {
     <p class="lesson">💡 Banks want your weekly payment to be less than 40% of your income. You earn ${money(weeklyIncome())}/week.</p>`,
     [{ label: 'Cancel', cls: 'ghost' },
      { label: 'Mortgage', fn: () => {
+        if (S.credit < 620) { queueModal(`<h2>🏦 Mortgage Denied</h2><p>Your credit score is <b>${S.credit}</b>. Banks want at least <b>620</b> for a home loan.</p><p class="lesson">💡 A good credit score comes from paying bills on time for a long time.</p>`); return done(); }
         if (weeklyIncome() * 0.4 < weekly) { queueModal(`<h2>🏦 Mortgage Denied</h2><p>The bank says your income is too low for a ${money(weekly)}/week payment. You need to earn at least ${money(weekly / 0.4)}/week.</p>`); return done(); }
         if (!spend(down, `Down payment: ${h.name}`)) return;
         S.mortgage = { balance: total, weekly };
@@ -1660,7 +1767,9 @@ function sellHouse() {
   const owe = S.mortgage ? S.mortgage.balance : 0;
   confirmModal(`Sell your ${h.name} for ${money(val)}? ${owe ? `You still owe ${money(owe)} on the mortgage, so you'd get ${money(val - owe)}.` : ''} You'll move back with your parents.`, () => {
     earn(val - owe, `Sold ${h.name}`);
-    S.mortgage = null; S.home = 'parents';
+    S.mortgage = null;
+    if (S.home === 'custom') { PLACES[S.build.lot].kind = 'land'; S.build = null; }
+    S.home = 'parents';
     log(`🏷️ You sold your house and moved back home.`);
     done();
   });
@@ -2171,7 +2280,7 @@ function carShape(c, x, y, col, horiz = true) {
 
 function house(c, x, y, w, h, wall, roof, rnd, opts = {}) {
   // yard
-  fillR(c, x, y, w, h, '#8fd17a', 4);
+  fillR(c, x, y, w, h, lawnCol('#8fd17a'), 4);
   flowers(c, x + 4, y + h - 14, w - 8, 10, rnd);
   const bw = w * 0.62, bh = h * 0.42, bx = x + (w - bw) / 2, by = y + h * 0.42;
   shadow(c, bx, by, bw, bh);
@@ -2193,6 +2302,13 @@ function house(c, x, y, w, h, wall, roof, rnd, opts = {}) {
   if (opts.mailbox) { fillR(c, x + 8, y + h - 18, 3, 12, '#555'); fillR(c, x + 5, y + h - 22, 10, 6, opts.mailbox, 2); }
 }
 
+// grass colors change with the seasons (white snow in winter, golden in fall)
+function lawnCol(hex) {
+  if (typeof SEASON_LAND === 'undefined' || !SEASON_LAND) return hex;
+  const [r, g, b, k] = SEASON_LAND, v = parseInt(hex.slice(1), 16);
+  const mix = (a, t) => Math.round(a + (t - a) * k).toString(16).padStart(2, '0');
+  return '#' + mix(v >> 16, r) + mix((v >> 8) & 255, g) + mix(v & 255, b);
+}
 function drawStatic(c) {
   WINDOWS.length = 0; LAMPS.length = 0; SHADE.length = 0;
   const rnd = seeded(42);
@@ -2216,6 +2332,8 @@ function drawStatic(c) {
     c.strokeStyle = rnd() < 0.55 ? `rgba(45,${100 + rnd() * 40 | 0},40,.35)` : `rgba(${180 + rnd() * 40 | 0},230,150,.3)`;
     c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + (rnd() - 0.5) * 2, by - 2 - rnd() * 2); c.stroke();
   }
+  // the season changes the color of the grass
+  if (typeof SEASON_LAND !== 'undefined' && SEASON_LAND) { const [r, g2, b2, k] = SEASON_LAND; c.fillStyle = `rgba(${r},${g2},${b2},${k})`; c.fillRect(0, 0, MAP_W, MAP_H); }
   // a few dirt spots and pebbles
   for (let i = 0; i < 25; i++) { const dx = rnd() * MAP_W, dy = rnd() * MAP_H; ell(c, dx, dy, 4 + rnd() * 7, 2 + rnd() * 3, 'rgba(150,120,80,.18)'); }
 
@@ -2307,7 +2425,7 @@ function drawStatic(c) {
   // ---------- buildings ----------
   const P = id => PLACES[id].r;
   let [x, y, w, h] = P('h_mansion');
-  fillR(c, x, y, w, h, '#9fdc85', 6);
+  fillR(c, x, y, w, h, lawnCol('#9fdc85'), 6);
   for (let i = 0; i < 12; i++) bush(c, x + 10 + i * 21, y + 8, 5, '#2f7a3a');
   fillR(c, x + 15, y + 70, 55, 38, '#7fd4f5', 4); strokeR(c, x + 15, y + 70, 55, 38, '#fff', 3, 4);
   c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 1; for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(x + 20, y + 80 + k * 9); c.quadraticCurveTo(x + 42, y + 76 + k * 9, x + 65, y + 80 + k * 9); c.stroke(); }
@@ -2374,7 +2492,7 @@ function drawStatic(c) {
     house(c, hx, hy, hw, hh, walls[i], roofs[i], rnd, { attic: i % 2 === 0, mailbox: i < 2 ? '#2f6fd6' : null });
   });
   [x, y, w, h] = P('h_family');
-  fillR(c, x, y, w, h, '#93d47e', 5);
+  fillR(c, x, y, w, h, lawnCol('#93d47e'), 5);
   flowers(c, x + 5, y + h - 15, w - 10, 10, rnd);
   shadow(c, x + 60, y + 35, 150, 50);
   fillR(c, x + 60, y + 35, 150, 50, '#fff3d6');
@@ -2402,7 +2520,7 @@ function drawStatic(c) {
   bush(c, x + 40, y + 180, 6); bush(c, x + 170, y + 180, 6);
 
   [x, y, w, h] = P('park');
-  fillR(c, x, y, w, h, '#9edb7e', 8);
+  fillR(c, x, y, w, h, lawnCol('#9edb7e'), 8);
   c.strokeStyle = '#e2cf9e'; c.lineWidth = 7; c.beginPath(); c.moveTo(x + w / 2 + 5, y + h); c.bezierCurveTo(x + w / 2 + 50, y + 140, x + 30, y + 120, x + 40, y + 30); c.stroke();
   c.beginPath(); c.moveTo(x + 90, y + 150); c.quadraticCurveTo(x + 150, y + 160, x + w - 5, y + 120); c.stroke();
   ell(c, x + 135, y + 70, 58, 38, '#3b8fd6'); ell(c, x + 135, y + 70, 50, 31, '#62b0ef');
@@ -2470,7 +2588,7 @@ function drawStatic(c) {
   signBoard(c, x + w / 2 - 18, y + 34, 36, 10, '#2e7d32', '#fff', 'BANK', 7);
 
   [x, y, w, h] = P('realestate');
-  fillR(c, x, y, w, h, '#9fd987', 4);
+  fillR(c, x, y, w, h, lawnCol('#9fd987'), 4);
   shadow(c, x + 12, y + 30, w - 24, 55);
   fillR(c, x + 12, y + 30, w - 24, 55, '#fff8e1');
   fillR(c, x + 8, y + 24, w - 16, 8, '#00897b');
@@ -2534,7 +2652,7 @@ function drawStatic(c) {
   strokeR(c, x + 276, y + 45, 14, 25, '#fff', 1.2); strokeR(c, x + 396, y + 45, 14, 25, '#fff', 1.2);
   // golf
   fillR(c, x + 420, y + 20, 82, 75, '#66bb6a', 3);
-  ell(c, x + 465, y + 55, 28, 20, '#8bd17c'); ell(c, x + 435, y + 82, 12, 6, '#f2dfa1');
+  ell(c, x + 465, y + 55, 28, 20, lawnCol('#8bd17c')); ell(c, x + 435, y + 82, 12, 6, '#f2dfa1');
   fillR(c, x + 470, y + 35, 1.5, 20, '#555'); tri(c, [[x + 471.5, y + 35], [x + 484, y + 39], [x + 471.5, y + 43]], '#e53935'); circ(c, x + 471, y + 55, 2, '#222');
   // running track hint
   c.strokeStyle = '#c0573e'; c.lineWidth = 3; rr(c, x + 3, y + 16, w - 6, h - 19, 10); c.stroke();
@@ -2620,9 +2738,10 @@ function finishLighting(c, rnd) {
 
 // ---------- travel ----------
 function transportFor(len) {
-  if ((has('car') || has('newcar')) && S.skills.drive >= 20) return { how: 'drove', icon: '🚙', speed: 3000, cost: 0, wait: 0 };
+  if (canDrive(len)) return { how: 'drove', icon: '🚙', speed: 3000, cost: 0, wait: 0 };
   if (has('bike')) return { how: 'biked', icon: '🚲', speed: 1500, cost: 0, wait: 0 };
-  const fare = len > 2500 ? 8 : 2;
+  let fare = len > 2500 ? 8 : 2;
+  if (perk('busfare')) fare = Math.ceil(fare / 2);
   if (len > 350 && S.money >= fare) return { how: 'took the bus', icon: '🚌', speed: len > 2500 ? 2800 : 2200, cost: fare, wait: 0.15 };
   return { how: 'walked', icon: '🚶', speed: 800, cost: 0, wait: 0 };
 }
@@ -2630,8 +2749,11 @@ function travelInfo(fromLoc, toLoc) {
   const path = findPath(fromLoc, toLoc);
   const len = pathLength(path);
   const tr = transportFor(len);
-  const hours = len < 5 ? 0 : Math.max(0.1, len / tr.speed + tr.wait);
-  return { path, len, hours, ...tr };
+  let hours = len < 5 ? 0 : Math.max(0.1, len / tr.speed + tr.wait);
+  let rush = false;
+  if (isRush() && (tr.icon === '🚙' || tr.icon === '🚌')) { hours *= 1.6; rush = true; }
+  if (perk('roads')) hours *= 0.9;
+  return { path, len, hours, rush, ...tr };
 }
 function travelTime(h) { const m = Math.round(h * 60); return m >= 60 ? `${Math.floor(m / 60)} hr ${m % 60 ? (m % 60) + ' min' : ''}` : `${m} min`; }
 
@@ -2649,7 +2771,9 @@ function travelTo(dest, opts = {}) {
       if (dest === 'home') S.doorOpen = false;   // you arrive outside your front door
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
-      if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).`);
+      afterDrive(info);
+      if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
+      if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
       if (!opts.keepTab) tab = dest;
       if (!opts.noDone) done();
       resolve(true);
@@ -3104,7 +3228,12 @@ function renderChunk(cx, cy, lod) {
   const img = tctx.createImageData(n, n);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const wx = x0 + (i + 0.5) * LOD_CELL[lod], wy = y0 + (j + 0.5) * LOD_CELL[lod];
-    const col = biomeColor(wx, wy, biome(wx, wy));
+    const bb = biome(wx, wy);
+    let col = biomeColor(wx, wy, bb);
+    if (SEASON_LAND && (bb === B.GRASS || bb === B.HILL || bb === B.FARM || bb === B.FOREST)) {
+      const [tr, tg, tb, k] = SEASON_LAND;
+      col = [col[0] + (tr - col[0]) * k, col[1] + (tg - col[1]) * k, col[2] + (tb - col[2]) * k];
+    }
     const o = (j * n + i) * 4;
     img.data[o] = col[0]; img.data[o + 1] = col[1]; img.data[o + 2] = col[2]; img.data[o + 3] = 255;
   }
@@ -3122,7 +3251,7 @@ function renderChunk(cx, cy, lod) {
       const bx = x0 + rnd() * CHUNK, by = y0 + rnd() * CHUNK;
       const b = biome(bx, by);
       if (b !== B.GRASS && b !== B.HILL && b !== B.FARM && b !== B.FOREST) continue;
-      c.strokeStyle = rnd() < 0.55 ? 'rgba(45,110,40,.35)' : 'rgba(200,235,160,.3)';
+      c.strokeStyle = SEASON_LAND && SEASON_LAND[3] > 0.5 ? (rnd() < 0.5 ? 'rgba(160,175,190,.35)' : 'rgba(255,255,255,.5)') : rnd() < 0.55 ? 'rgba(45,110,40,.35)' : 'rgba(200,235,160,.3)';
       c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + (rnd() - 0.5) * 2, by - 3); c.stroke();
     }
   }
@@ -3313,7 +3442,8 @@ function drawDynamic(t, dt) {
   // cars
   const dkk = darkness();
   cars.forEach((car, i) => {
-    stepMover(car, dt, i < 12);
+    if (!(i < 12 && carMustStop(car, t))) stepMover(car, dt, i < 12);
+    if (i >= 12 && i % 2 && !isRush()) return;
     const P0 = NODES[car.from], P1 = NODES[car.to];
     const horiz = P0[1] === P1[1];
     const dir = horiz ? Math.sign(P1[0] - P0[0]) : Math.sign(P1[1] - P0[1]);
@@ -3326,6 +3456,9 @@ function drawDynamic(t, dt) {
     if (dkk > 0.25) { c.fillStyle = 'rgba(255,240,170,.35)'; c.beginPath(); c.arc(horiz ? dir * 18 : 0, horiz ? 0 : dir * 18, 9, 0, Math.PI * 2); c.fill(); }
     c.restore();
   });
+  if (detail) drawTrafficLights(c, t, inView);
+  if (townVisible && detail) drawParkEvent(c, t);
+  { const ap = PLACES.airport.r; if (inView(ap[0] + 300, ap[1] + 250, 600) && detail) { const ph = (t / 9000) % 1; const px = ap[0] + 160 + ph * 700, py = ap[1] + 253 - Math.max(0, ph - 0.45) * 500; drawPlane(c, px, py, 0.9 + Math.max(0, ph - 0.45), -Math.max(0, ph - 0.45) * 1.2); } }
   // people walking in town
   if (detail) walkers.forEach((w, i) => {
     stepMover(w, dt, true);
@@ -3390,6 +3523,7 @@ function drawDynamic(t, dt) {
     [[0, 0, 22], [20, -6, 18], [38, 2, 16], [-18, 4, 14]].forEach(([ox, oy, r]) => circ(c, cl.x + ox * cl.s, cl.y + oy * cl.s, r * cl.s, `rgba(255,255,255,${ca})`));
   });
 
+  drawSeasonFx(c, t, dt, vx0, vy0, vw, vh);
   // labels
   const myHome = HOME_PLACE[S.home];
   const myWork = S.job ? workplaceOf(JOBS[S.job.id]) : null;
@@ -3601,6 +3735,7 @@ function clickPlace(id) {
   const p = PLACES[id];
   if (p.kind === 'home') {
     if (id === HOME_PLACE[S.home]) return travelTo('home');
+    if (id === 'h_parents') return travelTo('h_parents');
     toast(`${p.icon} That's the ${p.name}. Visit 🔑 Real Estate to live there.`);
     return;
   }
@@ -3692,6 +3827,7 @@ function ensureMoneyState() {
 function sideEarn(amount, label) {
   earn(amount, label);
   S.sideTotal += amount;
+  if (S.taxYear && amount > 0) S.taxYear.side += amount;
 }
 
 function moneyAssets() {
@@ -3848,7 +3984,8 @@ function doGig() {
   const lvl = skillLevel(g.skill);
   const good = Math.random() < 0.5 + lvl / 100;
   const tip = good ? Math.round(g.pay * 0.2) : 0;
-  sideEarn(g.pay + tip, g.kind === 'pet' ? 'Pet sitting' : 'Babysitting');
+  sideEarn(g.pay + tip, g.kind === 'pet' ? 'Pet sitting' : g.kind === 'snow' ? 'Shoveling snow' : 'Babysitting');
+  if (g.kind === 'snow') { log(`🌨️ You shoveled ${g.name}'s driveway. They paid you ${money(g.pay)}! Your arms are tired.`, 'good'); S.gig = null; return done(); }
   addSkill(g.skill, 2);
   log(g.kind === 'pet'
     ? `🐾 You took care of ${g.name} for ${g.hours} hours. Earned ${money(g.pay)}${tip ? ` + ${money(tip)} tip` : ''}!`
@@ -4323,7 +4460,7 @@ function moneySection(t) {
   const pid = placeId(t);
   const rows = [];
   if (t === 'home') {
-    if (S.gig) rows.push(mrow(S.gig.kind === 'pet' ? '🐾' : '👶', S.gig.kind === 'pet' ? `Pet sit ${S.gig.name}` : `Babysit ${S.gig.name}`, `${S.gig.hours} hrs · pays ${money(S.gig.pay)} · today only`, b('Do it', 'doGig()')));
+    if (S.gig) rows.push(mrow(S.gig.kind === 'pet' ? '🐾' : S.gig.kind === 'snow' ? '🌨️' : '👶', S.gig.kind === 'pet' ? `Pet sit ${S.gig.name}` : S.gig.kind === 'snow' ? `Shovel ${S.gig.name}'s driveway` : `Babysit ${S.gig.name}`, `${S.gig.hours} hrs · pays ${money(S.gig.pay)} · today only`, b('Do it', 'doGig()')));
     rows.push(mrow('🌱', 'Mow neighbors\' lawns', has('mower') ? `$20 per lawn · ${S.weather === 'rainy' ? 'too wet today' : S.today.mowed ? 'done today' : '1 hr each'}` : 'Needs a lawn mower (Mall)', b('Mow', 'mowLawns()', 'primary', !has('mower') || S.today.mowed || S.weather === 'rainy')));
     rows.push(mrow('🍪', 'Bake treats to sell', `Uses 1 grocery meal · 2 hrs · you have ${S.inv.treats} treats`, b('Bake', 'bake()')));
     rows.push(mrow('🖼️', 'Paint a picture', `${S.inv.canvases} canvases · ${S.inv.paintings.length} paintings to sell`, b('Paint', 'paint()', 'primary', !S.inv.canvases)));
@@ -4538,8 +4675,9 @@ function takeBath() {
 // ---------- pantry ----------
 function snackMenu() {
   const items = Object.entries(PANTRY).filter(([k]) => S.pantry[k] > 0);
-  if (!items.length) return nope('No snacks at home. Buy some at the 🛒 Supermarket.');
-  showModal(`<h2>🍿 What do you want to eat?</h2><div class="grid actions">${items.map(([k, p]) => `<button class="action" onclick="eatSnack('${k}')"><span class="ic">${p.icon}</span><b>${p.name}</b><small>You have ${S.pantry[k]}${p.hot ? ' · needs a stove or microwave' : ''}</small></button>`).join('')}</div>`,
+  const fresh = Object.keys(FOODS).filter(k => FOODS[k].snack && countFood(k) > 0);
+  if (!items.length && !fresh.length) return nope('No snacks at home. Buy some at the 🛒 Supermarket.');
+  showModal(`<h2>🍿 What do you want to eat?</h2><div class="grid actions">${items.map(([k, p]) => `<button class="action" onclick="eatSnack('${k}')"><span class="ic">${p.icon}</span><b>${p.name}</b><small>You have ${S.pantry[k]}${p.hot ? ' · needs a stove or microwave' : ''}</small></button>`).join('')}${fresh.map(k => `<button class="action" onclick="eatFresh('${k}')"><span class="ic">${FOODS[k].icon}</span><b>${FOODS[k].name}</b><small>You have ${countFood(k)}</small></button>`).join('')}</div>`,
     [{ label: 'Never mind', cls: 'ghost' }]);
 }
 function eatSnack(k) {
@@ -4829,6 +4967,15 @@ function book(c, x, y, w, h, col) {
   c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x + w - 0.8, y, 0.8, h);
 }
 
+// dishes, clothes on the floor, trash bags and ants when your home is messy
+function drawMess(c) {
+  if (S.dishes > 0) for (let k = 0; k < Math.min(6, S.dishes); k++) { const x = 500 + (k % 3) * 18, y = 258 - Math.floor(k / 3) * 5; c.fillStyle = '#f5f5f5'; c.beginPath(); c.ellipse(x, y, 9, 2.6, 0, 0, Math.PI * 2); c.fill(); c.strokeStyle = 'rgba(120,90,40,.6)'; c.lineWidth = 1; c.stroke(); }
+  if (S.mess > 45) { [[230, 330, '#1e88e5'], [520, 345, '#e53935'], [360, 352, '#43a047']].slice(0, S.mess > 70 ? 3 : 1).forEach(([x, y, col]) => { c.fillStyle = col; c.beginPath(); c.moveTo(x - 14, y); c.quadraticCurveTo(x - 6, y - 10, x + 4, y - 4); c.quadraticCurveTo(x + 16, y - 8, x + 14, y + 2); c.closePath(); c.fill(); }); }
+  if (S.trash > 70) { c.fillStyle = '#263238'; c.beginPath(); c.moveTo(752, 268); c.quadraticCurveTo(744, 236, 762, 230); c.quadraticCurveTo(782, 236, 774, 268); c.fill(); c.fillStyle = '#455a64'; c.fillRect(758, 226, 8, 6); }
+  if (S.bugs) { c.fillStyle = '#1a1a1a'; for (let k = 0; k < 18; k++) { c.beginPath(); c.arc(560 + k * 7 + Math.sin(k) * 3, 265 + Math.cos(k * 1.7) * 3, 1.2, 0, Math.PI * 2); c.fill(); } }
+  if (has('smokedetector')) { c.fillStyle = '#f5f5f5'; c.beginPath(); c.ellipse(640, 14, 12, 4, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e53935'; c.beginPath(); c.arc(646, 15, 1.2, 0, Math.PI * 2); c.fill(); }
+}
+
 function drawRoom(cv, fixedW) {
   const cssW = fixedW || cv.parentElement.clientWidth;
   const dpr = fixedW ? 1 : Math.min(2, window.devicePixelRatio || 1);
@@ -4839,7 +4986,7 @@ function drawRoom(cv, fixedW) {
   c.lineCap = 'round'; c.lineJoin = 'round';
   const night = S.hour < 6 || S.hour >= 20;
   const dusk = !night && (S.hour < 7.5 || S.hour > 18);
-  const rainy = S.weather === 'rainy';
+  const rainy = S.weather === 'rainy' || S.weather === 'snowy';
   const own = f => hasF(f);
   const BATH_X = 790;
   const ghost = (x, y, w, h, label) => {
@@ -4938,10 +5085,14 @@ function drawRoom(cv, fixedW) {
     const sg = c.createRadialGradient(WX + 30, WY + 28, 2, WX + 30, WY + 28, 30); sg.addColorStop(0, 'rgba(255,250,210,1)'); sg.addColorStop(0.35, 'rgba(255,240,170,.9)'); sg.addColorStop(1, 'rgba(255,240,170,0)');
     c.fillStyle = sg; c.beginPath(); c.arc(WX + 30, WY + 28, 30, 0, Math.PI * 2); c.fill();
     c.fillStyle = 'rgba(255,255,255,.85)'; [[WX + 70, WY + 30, 14], [WX + 84, WY + 26, 11], [WX + 96, WY + 32, 10]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); });
+  } else if (S.weather === 'snowy') {
+    c.fillStyle = '#fff'; for (let i = 0; i < 40; i++) { c.beginPath(); c.arc(WX + (i * 29) % WW, WY + (i * 47) % WH, 1.6, 0, Math.PI * 2); c.fill(); }
   } else {
     c.strokeStyle = 'rgba(230,240,255,.6)'; c.lineWidth = 1;
     for (let i = 0; i < 30; i++) { const x = WX + (i * 29) % WW, y = WY + (i * 47) % WH; c.beginPath(); c.moveTo(x, y); c.lineTo(x - 3, y + 9); c.stroke(); }
   }
+  if (seasonOf() === 'winter') { c.fillStyle = '#ffffff'; c.fillRect(WX, WY + WH * 0.74, WW, WH * 0.26); }
+  if (seasonOf() === 'fall') { c.fillStyle = 'rgba(214,110,40,.55)'; c.beginPath(); c.moveTo(WX, WY + WH); for (let i = 0; i <= 8; i++) c.lineTo(WX + WW * i / 8, WY + WH * 0.72 - Math.sin(i * 1.7) * 8 - (i % 3) * 3); c.lineTo(WX + WW, WY + WH); c.fill(); }
   glass(c, WX, WY, WW, WH, 'rgba(200,230,250,.12)');
   // frame with depth
   c.lineWidth = 8; c.strokeStyle = '#f4f2ec'; c.strokeRect(WX - 4, WY - 4, WW + 8, WH + 8);
@@ -5295,6 +5446,7 @@ function drawRoom(cv, fixedW) {
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
   drawPets(c);
+  drawMess(c);
 
   // ---------- you ----------
   if (atHome()) {
@@ -5303,8 +5455,13 @@ function drawRoom(cv, fixedW) {
   }
 
   // ---------- light & mood ----------
-  if (night) {
-    c.fillStyle = has('lamp') ? 'rgba(15,22,50,.28)' : 'rgba(12,18,45,.5)'; c.fillRect(0, 0, RW, RH);
+  if (S.powerOut || (night && !S.lightsOn)) {
+    c.fillStyle = has('lamp') && !S.powerOut ? 'rgba(15,22,50,.3)' : 'rgba(8,12,30,.62)'; c.fillRect(0, 0, RW, RH);
+    if (S.powerOut && has('flashlight')) { const g = c.createRadialGradient(300, 260, 5, 300, 260, 160); g.addColorStop(0, 'rgba(255,245,200,.35)'); g.addColorStop(1, 'rgba(255,245,200,0)'); c.fillStyle = g; c.fillRect(100, 100, 400, 280); }
+  } else if (night) {
+    c.fillStyle = 'rgba(30,30,40,.08)'; c.fillRect(0, 0, RW, RH);
+  }
+  if (false) {
     if (has('lamp')) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(178, 150, 5, 178, 200, 200); g.addColorStop(0, 'rgba(255,190,110,.22)'); g.addColorStop(1, 'rgba(255,190,110,0)'); c.fillStyle = g; c.fillRect(0, 0, 420, RH); c.restore(); }
   } else if (rainy) { c.fillStyle = 'rgba(60,70,90,.12)'; c.fillRect(0, 0, RW, RH); }
   else if (dusk) { c.fillStyle = 'rgba(255,150,80,.08)'; c.fillRect(0, 0, RW, RH); }
@@ -7212,6 +7369,1574 @@ INTERIORS.vet = c => {
 
 </script>
   <script>
+// ===================== CALENDAR, SEASONS, HOLIDAYS, EVENTS, VOTING, NEWS =====================
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MDAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const START_DOY = 151;   // Day 1 of the game is June 1st (right after graduation)
+const SEASONS = {
+  winter: { name: 'Winter', icon: '❄️' }, spring: { name: 'Spring', icon: '🌷' },
+  summer: { name: 'Summer', icon: '☀️' }, fall: { name: 'Fall', icon: '🍂' },
+};
+WEATHER.snowy = { name: 'Snowy', icon: '🌨️' };
+
+function dateOf(day = S.day) {
+  const total = START_DOY + day - 1;
+  let doy = total % 365, m = 0;
+  while (doy >= MDAYS[m]) { doy -= MDAYS[m]; m++; }
+  return { m, d: doy + 1, year: 2026 + Math.floor(total / 365) };
+}
+function dateText(day = S.day, long) { const { m, d } = dateOf(day); return `${long ? MONTHS[m] : MONTHS[m].slice(0, 3)} ${d}`; }
+// how the land looks this season: [red, green, blue, how much]
+let SEASON_LAND = null;
+function updateSeasonLand() {
+  const se = typeof S !== 'undefined' && S ? seasonOf() : 'summer';
+  const next = se === 'winter' ? [236, 242, 248, 0.82] : se === 'fall' ? [196, 150, 70, 0.38] : se === 'spring' ? [140, 210, 110, 0.12] : null;
+  if (JSON.stringify(next) !== JSON.stringify(SEASON_LAND)) { SEASON_LAND = next; if (typeof chunkCache !== 'undefined') chunkCache.forEach(m => m.clear()); if (typeof townCanvas !== 'undefined' && townCanvas) buildTown(); }
+}
+function seasonOf(day = S.day) { const m = dateOf(day).m; return m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'fall'; }
+const isDate = (m, d, day = S.day) => { const t = dateOf(day); return t.m === m && t.d === d; };
+function weatherText() { return S.storm ? '⛈️ Thunderstorm' : `${WEATHER[S.weather].icon} ${WEATHER[S.weather].name}`; }
+
+// ---------- holidays ----------
+const HOLIDAYS = [
+  { m: 0, d: 1, name: "New Year's Day", icon: '🎆', about: 'A brand new year! Fireworks light up the sky tonight.', closed: true },
+  { m: 1, d: 14, name: "Valentine's Day", icon: '💝', about: 'Send cards to the people you care about.' },
+  { m: 3, d: 22, name: 'Earth Day', icon: '🌍', about: 'A day to take care of our planet. Help clean up the park!' },
+  { m: 6, d: 4, name: 'Independence Day', icon: '🎇', about: 'A parade in Maple Town and fireworks at night!', closed: true },
+  { m: 9, d: 31, name: 'Halloween', icon: '🎃', about: 'Wear a costume and go trick-or-treating tonight!' },
+  { m: 10, d: 26, name: 'Thanksgiving', icon: '🦃', about: 'A big family dinner at your parents\' house.', closed: true },
+  { m: 11, d: 25, name: 'Winter Holiday', icon: '🎁', about: 'Give gifts to family and friends!', closed: true },
+];
+function holidayToday(day = S.day) { return HOLIDAYS.find(h => isDate(h.m, h.d, day)) || null; }
+function isBirthday(day = S.day) { return S.bday && isDate(S.bday.m, S.bday.d, day); }
+
+// ---------- town events at Lakeside Park ----------
+const TOWN_EVENTS = [
+  { id: 'springfair', name: 'Spring Fair', icon: '🌷', m: 3, from: 18, to: 19 },
+  { id: 'parade', name: 'Independence Day Parade', icon: '🎺', m: 6, from: 4, to: 4 },
+  { id: 'summerfair', name: 'Summer Fair', icon: '🎡', m: 6, from: 10, to: 12 },
+  { id: 'fallfest', name: 'Fall Festival & Pumpkin Patch', icon: '🎃', m: 9, from: 10, to: 11 },
+  { id: 'lights', name: 'Winter Lights & Ice Rink', icon: '⛸️', m: 11, from: 15, to: 24 },
+];
+function eventToday(day = S.day) { const { m, d } = dateOf(day); return TOWN_EVENTS.find(e => e.m === m && d >= e.from && d <= e.to) || null; }
+function fireworksNow() { const h = holidayToday(); return h && (h.m === 0 || h.m === 6) && S.hour >= 20.5 && S.hour < 23.5; }
+const EVENT_ACTIONS = {
+  ride: ['🎡', 'Ride the Ferris Wheel', '$5 · 30 min', () => { if (!spend(5, 'Ferris wheel')) return; pass(0.5, 'relax'); fun2(15); log('🎡 From the top of the Ferris wheel you could see the whole town!'); }],
+  games: ['🎯', 'Carnival Games', '$3 · win a prize?', () => { if (!spend(3, 'Carnival game')) return; pass(0.3, 'relax'); fun2(6); if (Math.random() < 0.35) { log('🧸 You won a giant teddy bear!', 'good'); fun2(10); } else log('🎯 So close! You didn\'t win this time.'); }],
+  cotton: ['🍭', 'Cotton Candy', '$4', () => { if (!spend(4, 'Cotton candy')) return; S.needs.food = clamp(S.needs.food + 8); fun2(8); S.plaque = (S.plaque || 0) + 0.3; log('🍭 Sweet, fluffy cotton candy! (Brush your teeth later.)'); }],
+  pumpkin: ['🎃', 'Carve a Pumpkin', '$8 · 1 hr · Art', () => { if (!spend(8, 'Pumpkin')) return; pass(1, 'relax'); addSkill('art', 2); fun2(12); log('🎃 You carved a spooky jack-o\'-lantern!'); }],
+  hayride: ['🚜', 'Hayride', '$5', () => { if (!spend(5, 'Hayride')) return; pass(0.5, 'relax'); fun2(12); log('🚜 A bumpy hayride through the pumpkin patch!'); }],
+  skate: ['⛸️', 'Ice Skating', '$6 · 1 hr', () => { if (!spend(6, 'Ice skating')) return; pass(1, 'sport'); addSkill('fit', 1); fun2(15); log(Math.random() < 0.4 ? '⛸️ You fell on the ice... then got right back up!' : '⛸️ You glided around the rink under the twinkly lights.'); }],
+  parade: ['🎺', 'Watch the Parade', 'free · 1 hr', () => { pass(1, 'relax'); fun2(14); log('🎺 Marching bands, floats and a giant flag went by!'); }],
+  flowers: ['🌷', 'Flower Show', 'free · 1 hr', () => { pass(1, 'relax'); fun2(8); addSkill('art', 0.5); log('🌷 You saw tulips in every color.'); }],
+};
+const EVENT_LIST = { springfair: ['flowers', 'ride', 'games', 'cotton'], parade: ['parade', 'cotton'], summerfair: ['ride', 'games', 'cotton'], fallfest: ['pumpkin', 'hayride', 'games'], lights: ['skate', 'cotton'] };
+function fun2(n) { S.needs.fun = clamp(S.needs.fun + n); }
+
+// ---------- elections ----------
+const PROMISES = {
+  busfare: 'Cut the bus fare in half', roads: 'Fix the roads so trips are faster', park: 'Build a new playground and splash pad',
+  library: 'Give the library more books and tutors', safety: 'Hire more police so fewer bad things happen', jobs: 'Bring new businesses so jobs pay more',
+};
+const CANDIDATE_NAMES = ['Maria Lopez', 'James Carter', 'Aisha Khan', 'Tom Nguyen', 'Grace Okafor', 'Ben Miller', 'Sofia Rossi', 'David Kim'];
+function electionDay(day = S.day) { return isDate(10, 3, day) || isDate(4, 5, day); }
+function nextElectionDays() { for (let k = 0; k < 400; k++) if (electionDay(S.day + k)) return k; return 999; }
+function setupElection() {
+  const r = Math.random;
+  const names = [...CANDIDATE_NAMES].sort(() => r() - 0.5).slice(0, 3);
+  const prom = Object.keys(PROMISES).sort(() => r() - 0.5).slice(0, 3);
+  S.election = { day: S.day + nextElectionDays(), candidates: names.map((n, i) => ({ name: n, promise: prom[i], look: randomLook(seeded(n.length * 31 + i)) })), voted: null };
+}
+function vote(i) {
+  if (!S.registered) return nope('You need to register to vote first!');
+  if (!electionDay()) return nope('Voting only happens on Election Day.');
+  if (S.hour < 7 || S.hour > 20) return nope('The polls are open 7 AM to 8 PM.');
+  if (S.election.voted != null) return nope('You already voted. One person, one vote!');
+  S.election.voted = i;
+  pass(0.5);
+  unlock('voter');
+  log(`🗳️ You voted for ${S.election.candidates[i].name}. You got an "I Voted" sticker!`, 'good');
+  done();
+}
+function countVotes() {
+  const e = S.election; if (!e) return;
+  const votes = e.candidates.map(() => 3000 + Math.floor(Math.random() * 3000));
+  if (e.voted != null) votes[e.voted] += 1;
+  const win = votes.indexOf(Math.max(...votes));
+  S.mayor = { name: e.candidates[win].name, perk: e.candidates[win].promise };
+  const close = Math.abs(votes[0] - votes[1]) < 400;
+  queueModal(`<h2>🗳️ Election Results</h2>
+    <table class="stub">${e.candidates.map((c2, i) => `<tr class="${i === win ? 'plus' : ''}"><td>${i === win ? '🏆 ' : ''}${c2.name} — "${PROMISES[c2.promise]}"</td><td>${votes[i].toLocaleString()} votes</td></tr>`).join('')}</table>
+    <p><b>${S.mayor.name}</b> is the new mayor! Their promise: <b>${PROMISES[S.mayor.perk]}</b>.</p>
+    ${e.voted == null ? '<p class="lesson">💡 You didn\'t vote this time. Every vote counts — some elections are won by just a few votes!</p>' : `<p class="lesson">💡 You voted! ${close ? 'This one was really close — every vote mattered.' : 'Voting is how people choose their leaders.'}</p>`}`);
+  log(`🗳️ ${S.mayor.name} won the election for mayor.`, 'good');
+  addNews(`🗳️ ${S.mayor.name} wins mayor race, promises to "${PROMISES[S.mayor.perk].toLowerCase()}"`);
+  S.election = null;
+}
+const perk = p => S.mayor && S.mayor.perk === p;
+
+// ---------- news ----------
+function addNews(h) { S.news = S.news || []; S.news.unshift({ day: S.day, text: h }); if (S.news.length > 25) S.news.length = 25; }
+function makeForecast() {
+  S.forecast = [];
+  for (let k = 1; k <= 3; k++) S.forecast.push({ day: S.day + k, w: rollWeather(seasonOf(S.day + k)) });
+}
+const TOWN_NEWS = [
+  'New bike lanes coming to Main Street', 'Lakeside Park ducks have 6 new ducklings', 'Library reading challenge starts this month',
+  'Riverside Bakery wins "Best Bread" award', 'Seaside Bay lighthouse turns 135 years old', 'Snowpeak ski lifts get a new paint job',
+  'Pinecrest Lumber Mill plants 500 new trees', 'Maple Town College adds coding classes', 'Wildlife Park welcomes a baby giraffe',
+  'Farmers say this year\'s pumpkins are HUGE', 'Fire station holds a pancake breakfast fundraiser', 'Scientists say: drink more water!',
+];
+
+// ---------- every new day ----------
+function rollWeather(se) {
+  const r = Math.random();
+  if (se === 'winter') return r < 0.35 ? 'snowy' : r < 0.7 ? 'cloudy' : 'sunny';
+  if (se === 'summer') return r < 0.45 ? 'sunny' : r < 0.75 ? 'hot' : r < 0.88 ? 'cloudy' : 'rainy';
+  if (se === 'spring') return r < 0.4 ? 'sunny' : r < 0.68 ? 'cloudy' : 'rainy';
+  return r < 0.35 ? 'sunny' : r < 0.68 ? 'cloudy' : 'rainy';
+}
+function ensureCalendarState() {
+  if (S.age === undefined) S.age = 18;
+  if (!S.bday) { const d = 1 + Math.floor(Math.random() * 360); const t = { m: 0, d: 0 }; let doy = d; while (doy >= MDAYS[t.m]) { doy -= MDAYS[t.m]; t.m++; } t.d = doy + 1; S.bday = t; }
+  if (!S.news) S.news = [];
+  if (!S.forecast) makeForecast();
+  if (S.registered === undefined) S.registered = false;
+  if (!S.election) setupElection();
+  updateSeasonLand();
+}
+function calendarNewDay() {
+  ensureCalendarState();
+  const se = seasonOf(), prevSe = seasonOf(S.day - 1);
+  const wasRain = S.weather === 'rainy';
+  // weather from yesterday's forecast
+  const f = (S.forecast || []).find(x => x.day === S.day);
+  S.weather = f ? f.w : rollWeather(se);
+  makeForecast();
+  S.storm = S.weather === 'rainy' && Math.random() < (se === 'summer' ? 0.5 : 0.25);
+  S.rainbow = wasRain && S.weather === 'sunny' && Math.random() < 0.25;
+  S.snowDay = S.weather === 'snowy' && Math.random() < 0.35;
+  if (se !== prevSe) {
+    updateSeasonLand();
+    queueModal(`<h2>${SEASONS[se].icon} It's ${SEASONS[se].name}!</h2><p>${{
+      winter: 'Snow is coming! Wear a warm coat when you go outside, or you\'ll get cold and sick.',
+      spring: 'Flowers are blooming and it rains a lot. Bring an umbrella!',
+      summer: 'Hot sunny days! Drink lots of water and watch out for sunburn.',
+      fall: 'Leaves are turning orange and red. It\'s getting colder.' }[se]}</p>`);
+    addNews(`${SEASONS[se].icon} ${SEASONS[se].name} is officially here`);
+  }
+  if (S.weather === 'hot') { S.hotStreak = (S.hotStreak || 0) + 1; if (S.hotStreak === 3) { addNews('🥵 Heat wave! Stay inside, drink water'); log('🥵 It\'s a heat wave! Drink lots of water.', 'bad'); } } else S.hotStreak = 0;
+  if (S.snowDay) { log('❄️ SNOW DAY! Schools and many offices are closed today.', 'good'); addNews('❄️ Snow day! Schools closed'); }
+  if (S.rainbow) log('🌈 Look! A rainbow after yesterday\'s rain.');
+  if (S.storm) { addNews('⛈️ Thunderstorms today — stay safe indoors'); if (Math.random() < 0.3) startPowerOutage(); }
+  // birthday
+  if (isBirthday()) {
+    S.age++;
+    const gift = 25 + Math.floor(Math.random() * 50);
+    earn(gift, 'Birthday money from family');
+    fun2(25);
+    const friends = (S.friends || []).filter(fr => fr.f > 40);
+    queueModal(`<h2>🎂 Happy Birthday, ${esc(S.name)}!</h2><p>You are <b>${S.age}</b> years old today!</p><p>🎁 Your family sent you <b>${money(gift)}</b>.</p>${friends.length ? `<p>🥳 ${friends.slice(0, 3).map(fr => esc(fr.name)).join(', ')} wished you a happy birthday!</p>` : ''}`);
+    log(`🎂 Happy birthday! You're ${S.age} now.`, 'good');
+    if (S.age === 40 && !S.grayHair) { S.grayHair = true; S.look.hair = '#b8b2aa'; log('👴 You found your first gray hairs!'); }
+    if (S.age === 65) queueModal(`<h2>🎉 You can retire!</h2><p>At 65 you can stop working and live on your savings and a pension. Look for the Retire button on the Me screen.</p>`);
+  }
+  // holidays & events
+  const h = holidayToday();
+  if (h) {
+    queueModal(`<h2>${h.icon} Happy ${h.name}!</h2><p>${h.about}</p>${h.closed ? '<p class="muted">Many offices are closed today. People with day jobs get a paid holiday!</p>' : ''}`);
+    addNews(`${h.icon} Happy ${h.name}!`);
+    if (h.m === 11) giftExchange();
+  }
+  const ev = eventToday();
+  if (ev && dateOf().d === ev.from) { addNews(`${ev.icon} The ${ev.name} opens today at Lakeside Park!`); log(`${ev.icon} The ${ev.name} is at Lakeside Park!`, 'good'); }
+  // elections
+  if (S.election && S.day > S.election.day) countVotes();
+  if (!S.election) setupElection();
+  if (S.election && S.election.day - S.day === 7) addNews(`🗳️ Election for mayor in one week! Register at City Hall`);
+  if (electionDay()) { addNews('🗳️ It\'s Election Day! Polls open 7 AM – 8 PM at City Hall'); log('🗳️ It\'s Election Day! Vote at City Hall.'); }
+  // a bit of town news
+  if (Math.random() < 0.5) addNews('🗞️ ' + TOWN_NEWS[Math.floor(Math.random() * TOWN_NEWS.length)]);
+  const fw = S.forecast[0];
+  addNews(`🌦️ Tomorrow: ${WEATHER[fw.w].icon} ${WEATHER[fw.w].name}`);
+  if (dateOf().m === 3 && dateOf().d === 1) addNews('🧾 Reminder: taxes are due April 15!');
+}
+
+function giftExchange() {
+  const gave = S.giftsBought || 0;
+  const got = 2 + Math.floor(Math.random() * 3);
+  earn(20 * got, 'Holiday gift cards');
+  fun2(20);
+  queueModal(`<h2>🎁 Gift Time!</h2><p>You opened <b>${got}</b> presents (including ${money(20 * got)} in gift cards)!</p>${gave ? `<p>You gave ${gave} gift${gave > 1 ? 's' : ''}. Everyone loved them! ❤️</p>` : '<p class="lesson">💡 Next year, buy gifts at the Mall before the holiday. Giving feels great too!</p>'}`);
+  (S.friends || []).forEach(f => f.f = clamp(f.f + (gave ? 15 : 0)));
+  if (S.family) Object.values(S.family).forEach(m => m.rel = clamp(m.rel + (gave ? 15 : 0)));
+  S.giftsBought = 0;
+}
+
+// ---------- holiday things to do ----------
+function holidayCard() {
+  const h = holidayToday(), bd = isBirthday();
+  const acts = [];
+  if (h && h.m === 1) acts.push(['💌', 'Send Valentine cards', '$3 each to friends & family', 'sendCards()']);
+  if (h && h.m === 9) { acts.push(['🧛', has('costume') ? 'You have a costume ✅' : 'Buy a costume at the Mall', '', '']); if (S.hour >= 17.5 && S.hour < 21.5) acts.push(['🍬', 'Go trick-or-treating', '2 hrs · candy!', 'trickOrTreat()']); }
+  if (h && h.m === 10) acts.push(['🦃', 'Thanksgiving dinner', 'at your parents\' house', "travelTo(S.home === 'parents' ? 'home' : 'h_parents')"]);
+  if (h && (h.m === 0 || h.m === 6) && S.hour >= 18) acts.push(['🎆', 'Watch the fireworks', 'after 8:30 PM · free', 'watchFireworks()']);
+  if (h && h.m === 3) acts.push(['🌍', 'Earth Day park cleanup', 'at Lakeside Park', "setTab('park')"]);
+  if (!h && !bd) {
+    const { m, d } = dateOf();
+    if (m === 11 && d < 25) acts.push(['🎁', 'Buy holiday gifts', '$20 each at the Mall', "setTab('mall')"]);
+    if (!acts.length) return '';
+  }
+  return `<div class="card holiday"><h3>${bd ? '🎂 It\'s your birthday!' : h ? `${h.icon} ${h.name}` : '🎁 Holidays are coming!'}</h3>
+    ${h ? `<p class="muted">${h.about}</p>` : ''}
+    <div class="row">${acts.map(a => a[3] ? `<button class="btn sm primary" onclick="${a[3]}">${a[0]} ${a[1]}</button>` : `<span class="chip">${a[0]} ${a[1]}</span>`).join('')}</div></div>`;
+}
+function sendCards() {
+  const n = (S.friends || []).length + 3;
+  if (!spend(3 * n, 'Valentine cards')) return;
+  pass(0.5); (S.friends || []).forEach(f => f.f = clamp(f.f + 10)); if (S.family) Object.values(S.family).forEach(m => m.rel = clamp(m.rel + 10));
+  log(`💌 You sent ${n} Valentine cards. Everyone felt loved!`, 'good'); fun2(8); done();
+}
+function trickOrTreat() {
+  if (S.today.tricked) return nope('You already went trick-or-treating!');
+  S.today.tricked = true;
+  pass(2, 'awake');
+  const candy = has('costume') ? 30 + Math.floor(Math.random() * 20) : 8;
+  S.candy = (S.candy || 0) + candy; S.plaque = (S.plaque || 0) + 2; fun2(has('costume') ? 25 : 8);
+  log(has('costume') ? `🎃 Trick or treat! You got ${candy} pieces of candy. Your costume was a hit!` : `🎃 Without a costume, people only gave you ${candy} candies.`, 'good');
+  done();
+}
+function watchFireworks() {
+  if (!fireworksNow()) return nope('The fireworks start at 8:30 PM.');
+  pass(1, 'relax'); fun2(20); log('🎆 Boom! Crackle! The fireworks were amazing!', 'good'); done();
+}
+function viewParkEvent() {
+  const ev = eventToday(); if (!ev) return '';
+  return `<div class="card holiday"><h3>${ev.icon} ${ev.name}</h3><p class="muted">It's happening right now here at Lakeside Park!</p>
+    <div class="grid actions">${EVENT_LIST[ev.id].map(k => { const a = EVENT_ACTIONS[k]; return `<button class="action" onclick="eventAct('${k}')"><span class="ic">${a[0]}</span><b>${a[1]}</b><small>${a[2]}</small></button>`; }).join('')}</div></div>`;
+}
+function eventAct(k) { const before = S.money + S.hour; EVENT_ACTIONS[k][3](); if (S.money + S.hour !== before) done(); else render(); }
+
+// ---------- City Hall: voting and taxes ----------
+function viewCivic() {
+  const e = S.election;
+  const days = nextElectionDays();
+  return `<div class="card money"><h3>🗳️ Elections</h3>
+    ${S.mayor ? `<p>Current mayor: <b>${S.mayor.name}</b> · Promise: <i>${PROMISES[S.mayor.perk]}</i></p>` : '<p>The town will choose a new mayor soon.</p>'}
+    <p>${electionDay() ? '<b>🗳️ Today is Election Day!</b> Polls are open 7 AM – 8 PM.' : `Next Election Day: <b>${dateText(S.day + days, true)}</b> (${days} days).`}</p>
+    ${!S.registered ? `<button class="btn primary sm" onclick="registerVote()">📝 Register to vote</button>` : '<span class="chip good">✅ You are registered to vote</span>'}
+    ${e ? `<div class="grid two" style="margin-top:8px">${e.candidates.map((c2, i) => `<div class="card cand"><img class="avatar" src="${avatarURL(c2.look, 48)}" alt=""><div><b>${c2.name}</b><p class="muted small">"I will ${PROMISES[c2.promise].toLowerCase()}!"</p>
+      ${electionDay() && S.registered && e.voted == null ? `<button class="btn primary sm" onclick="vote(${i})">Vote</button>` : e.voted === i ? '<span class="chip good">✅ Your vote</span>' : ''}</div></div>`).join('')}</div>` : ''}
+    <p class="lesson">💡 In a democracy, people vote to choose their leaders. You have to register first!</p></div>
+    ${taxCard()}`;
+}
+function registerVote() { S.registered = true; pass(0.25); log('📝 You registered to vote. Now you can vote on Election Day!', 'good'); done(); }
+
+// ---------- drawing seasons, weather and fireworks on the map ----------
+const leaves = [];
+function drawSeasonFx(c, t, dt, vx0, vy0, vw, vh) {
+  const se = seasonOf();
+  if (se === 'winter') { c.fillStyle = 'rgba(245,250,255,.12)'; c.fillRect(vx0, vy0, vw, vh); }
+  if (se === 'fall') { c.fillStyle = 'rgba(220,120,40,.05)'; c.fillRect(vx0, vy0, vw, vh); }
+  if (se === 'spring') { c.fillStyle = 'rgba(255,210,235,.05)'; c.fillRect(vx0, vy0, vw, vh); }
+  c.save(); c.setTransform(dprNow, 0, 0, dprNow, 0, 0);
+  if (S.weather === 'snowy') {
+    c.fillStyle = 'rgba(255,255,255,.85)';
+    for (let i = 0; i < 160; i++) { const x = (i * 83.7 + Math.sin(t / 900 + i) * 20 + t * 0.01) % (cssW + 20), y = (i * 47.3 + t * (0.03 + (i % 5) * 0.008)) % (cssH + 20); c.beginPath(); c.arc(x, y, 1.2 + (i % 3) * 0.6, 0, Math.PI * 2); c.fill(); }
+  }
+  if (se === 'fall') {
+    for (let i = 0; i < 26; i++) { const x = (i * 131 + t * 0.02 + Math.sin(t / 700 + i) * 30) % (cssW + 20), y = (i * 61 + t * 0.025) % (cssH + 20); c.fillStyle = ['#d9622b', '#e8a33a', '#b5432a'][i % 3]; c.beginPath(); c.ellipse(x, y, 4, 2, t / 400 + i, 0, Math.PI * 2); c.fill(); }
+  }
+  if (S.storm && Math.sin(t / 1300) > 0.985) { c.fillStyle = 'rgba(255,255,255,.45)'; c.fillRect(0, 0, cssW, cssH); }
+  if (S.rainbow && S.hour < 13 && darkness() < 0.2) {
+    const cx = cssW * 0.5, cy = cssH * 1.15, r = cssH * 0.95;
+    ['#ff0000', '#ff8c00', '#ffee00', '#00c000', '#0080ff', '#4b0082', '#8f00ff'].forEach((col, k) => { c.strokeStyle = col; c.globalAlpha = 0.18; c.lineWidth = 9; c.beginPath(); c.arc(cx, cy, r - k * 9, Math.PI * 1.08, Math.PI * 1.92); c.stroke(); });
+    c.globalAlpha = 1;
+  }
+  if (fireworksNow()) {
+    for (let k = 0; k < 4; k++) {
+      const ph = ((t / 1600) + k * 0.27) % 1, bx = cssW * (0.2 + k * 0.2), by = cssH * (0.18 + (k % 2) * 0.12);
+      const col = ['#ff4d6d', '#ffd23f', '#4dd2ff', '#9b5de5'][k];
+      if (ph < 0.3) { c.fillStyle = col; c.beginPath(); c.arc(bx, cssH - ph / 0.3 * (cssH - by), 2, 0, Math.PI * 2); c.fill(); }
+      else { const rr2 = (ph - 0.3) * 120; c.globalAlpha = 1 - (ph - 0.3) / 0.7; for (let a = 0; a < 16; a++) { c.fillStyle = col; c.beginPath(); c.arc(bx + Math.cos(a / 16 * Math.PI * 2) * rr2, by + Math.sin(a / 16 * Math.PI * 2) * rr2 + (ph - 0.3) * 20, 2.2, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; }
+    }
+  }
+  c.restore();
+}
+// fair rides and decorations in the park during events
+function drawParkEvent(c, t) {
+  const ev = eventToday(); if (!ev) return;
+  const [x, y] = [PLACES.park.r[0], PLACES.park.r[1]];
+  if (ev.id === 'summerfair' || ev.id === 'springfair') {
+    const cx = x + 40, cy = y + 60;
+    c.strokeStyle = '#555'; c.lineWidth = 2; c.beginPath(); c.moveTo(cx - 14, cy + 40); c.lineTo(cx, cy); c.lineTo(cx + 14, cy + 40); c.stroke();
+    c.strokeStyle = '#e53935'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, 30, 0, Math.PI * 2); c.stroke();
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + t / 3000; c.strokeStyle = '#bbb'; c.lineWidth = 1; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * 30, cy + Math.sin(a) * 30); c.stroke(); fillR(c, cx + Math.cos(a) * 30 - 4, cy + Math.sin(a) * 30, 8, 6, ['#ffd23f', '#4dd2ff', '#ff4d6d', '#7ed957'][k % 4], 2); }
+  }
+  [[90, 140], [120, 150], [150, 140]].forEach(([dx, dy], k) => { tri(c, [[x + dx - 12, y + dy], [x + dx, y + dy - 16], [x + dx + 12, y + dy]], ['#e53935', '#1e88e5', '#ffd23f'][k]); fillR(c, x + dx - 12, y + dy, 24, 12, '#fff'); });
+  if (ev.id === 'fallfest') for (let k = 0; k < 10; k++) circ(c, x + 20 + k * 17, y + 170, 5, '#ef7d1a');
+  if (ev.id === 'lights') { fillR(c, x + 20, y + 120, 90, 50, 'rgba(200,235,255,.9)', 20); for (let k = 0; k < 20; k++) circ(c, x + 10 + k * 10, y + 10 + (k % 2) * 4, 2, ['#ff4d6d', '#ffd23f', '#4dd2ff', '#7ed957'][k % 4]); }
+  if (ev.id === 'parade') for (let k = 0; k < 4; k++) { const px = ((t / 30 + k * 120) % 1200); fillR(c, px, 392, 40, 16, ['#e53935', '#1e88e5', '#ffffff', '#ffd23f'][k], 4); }
+}
+
+</script>
+  <script>
+// ===================== EVERYDAY REAL LIFE =====================
+// Water, getting sick, the cold, chores & trash day, real groceries & recipes,
+// haircuts, emergencies (smoke alarm, power outage, 911) and volunteering.
+
+NEEDS.thirst = { name: 'Water', icon: '💧' };
+
+function ensureLifeState() {
+  const n = S.needs;
+  if (n.thirst === undefined) { S.needs = { food: n.food, thirst: 80, energy: n.energy, hygiene: n.hygiene, bladder: n.bladder, fun: n.fun, health: n.health }; }
+  if (S.mess === undefined) { S.mess = 10; S.dishes = 0; S.trash = 10; S.bin = 0; S.eco = 0; }
+  if (!S.fridgeFood) S.fridgeFood = [];
+  if (S.hairDays === undefined) S.hairDays = 10;
+  if (S.lightsOn === undefined) S.lightsOn = true;
+  if (S.volunteerHours === undefined) S.volunteerHours = 0;
+  if (S.medicine === undefined) S.medicine = 0;
+  if (S.taxRefundDone === false) S.taxRefundDone = true;   // replaced by yearly taxes
+}
+
+// ---------- every hour ----------
+const THIRST = { awake: 5, work: 5.5, study: 5, sport: 11, relax: 4, sleep: 1.4 };
+function lifeTick(h, mode) {
+  const n = S.needs;
+  n.thirst = clamp(n.thirst - THIRST[mode] * h * (S.weather === 'hot' ? 1.5 : 1));
+  if (n.thirst <= 0) { n.health -= 2 * h; n.energy -= 1 * h; }
+  // being sick
+  const ill = S.ill && ILLNESS[S.ill.type];
+  if (ill && mode !== 'sleep') { n.energy -= ill.energy * h; n.fun -= ill.fun * h; if (mode === 'sport') n.health -= 2 * h; }
+  // cold outside in winter without a coat
+  if (seasonOf() === 'winter' && mode !== 'sleep' && !atHome() && !S.insideOf && !has('coat')) {
+    n.health -= 1.2 * h; n.fun -= 1.5 * h; S.gotCold = (S.gotCold || 0) + h;
+  }
+  // a messy home is no fun
+  if (atHome() && mode !== 'sleep' && S.mess > 60) n.fun -= 0.6 * h;
+  // electricity
+  useKwh(h, mode);
+}
+
+// ---------- every day ----------
+function lifeNewDay() {
+  ensureLifeState();
+  S.hairDays++;
+  // chores pile up
+  const pets = (S.pets || []).length;
+  S.mess = clamp(S.mess + 6 + pets * 3);
+  S.trash = clamp(S.trash + 12);
+  if (S.trash >= 100) { S.mess = clamp(S.mess + 10); }
+  if ((S.mess > 85 || S.dishes > 10) && !S.bugs && Math.random() < 0.4) { S.bugs = true; log('🐜 Ants found the dirty dishes and crumbs! Clean up and buy bug spray at the Supermarket.', 'bad'); queueModal('<h2>🐜 Ants in the Kitchen!</h2><p>Dirty dishes and crumbs attracted ants. Gross!</p><p class="lesson">💡 Wash dishes and take out the trash so bugs don\'t move in. Bug spray from the Supermarket gets rid of them.</p>'); }
+  if (S.bin > 4) { log('🦨 Your outside trash bin is overflowing and smelly! Put it at the curb on Tuesday morning.', 'bad'); }
+  // trash day happened yesterday?
+  // food goes bad
+  const spoiled = S.fridgeFood.filter(f => f.exp <= S.day);
+  if (spoiled.length) {
+    const names = [...new Set(spoiled.map(f => FOODS[f.id].name.toLowerCase()))];
+    log(`🤢 Some food went bad: ${names.join(', ')}. Throw it out! (Eat fresh food before it expires.)`, 'bad');
+    S.fridgeFood = S.fridgeFood.filter(f => f.exp > S.day);
+    S.trash = clamp(S.trash + 5);
+  }
+  if (!hasF('fridge')) S.fridgeFood = S.fridgeFood.filter(f => !FOODS[f.id].cold);
+  // getting sick
+  if (S.ill) {
+    S.ill.days--;
+    if (S.ill.days <= 0) { log(`😊 You're all better! No more ${ILLNESS[S.ill.type].name.toLowerCase()}.`, 'good'); S.ill = null; }
+  } else {
+    const se = seasonOf();
+    let cold = 0.025 + (se === 'winter' ? 0.04 : se === 'fall' ? 0.015 : 0) + (S.needs.hygiene < 30 ? 0.04 : 0) + (S.gotCold > 2 ? 0.1 : 0);
+    let flu = se === 'winter' && S.fluShot !== dateOf().year ? 0.025 : 0;
+    if (perk('safety')) cold *= 0.9;
+    if (Math.random() < flu) getSick('flu');
+    else if (Math.random() < cold) getSick('cold');
+  }
+  S.gotCold = 0;
+  if (S.powerOut) { S.powerOut -= 24; if (S.powerOut <= 0) S.powerOut = 0; }
+}
+
+// ---------- water & drinks ----------
+function drink(where) {
+  pass(2 / 60);
+  S.needs.thirst = clamp(S.needs.thirst + (where === 'fountain' ? 40 : 60));
+  S.needs.bladder = clamp(S.needs.bladder - 10);
+  log(where === 'fountain' ? '🚰 You drank from the water fountain.' : where === 'bottle' ? '🥤 You drank from your water bottle.' : '💧 You drank a big glass of water. Refreshing!');
+}
+function quickDrink() {
+  if (atHome() && S.doorOpen) drink('tap');
+  else if (S.insideOf) drink('fountain');
+  else if (has('bottle')) drink('bottle');
+  else return nope('There\'s no water here! Go inside somewhere, or buy a reusable water bottle at the Mall.');
+  done();
+}
+function drinkSoda() {
+  if (!spend(2, 'Soda')) return;
+  S.needs.thirst = clamp(S.needs.thirst + 30); S.needs.bladder = clamp(S.needs.bladder - 10); fun2(5); S.needs.health = clamp(S.needs.health - 1); S.plaque = (S.plaque || 0) + 0.4;
+  log('🥤 You drank a soda. Sweet and fizzy... but water is healthier for your body and teeth!'); done();
+}
+
+// ---------- getting sick ----------
+const ILLNESS = {
+  cold:    { name: 'Cold', icon: '🤧', days: 5, energy: 0.8, fun: 0.8, perf: 10, about: 'A runny nose, sneezing and a sore throat.' },
+  flu:     { name: 'Flu', icon: '🤒', days: 8, energy: 1.6, fun: 1.2, perf: 25, about: 'A fever, aches and feeling super tired.' },
+  stomach: { name: 'Stomach Bug', icon: '🤢', days: 2, energy: 1, fun: 1.5, perf: 20, about: 'A tummy ache from germs. Wash your hands!' },
+  arm:     { name: 'Broken Arm', icon: '🦾', days: 21, energy: 0, fun: 0.5, perf: 15, about: 'Your arm is in a cast. No sports until it heals!' },
+};
+function getSick(type) {
+  if (S.ill) return;
+  const t = ILLNESS[type];
+  S.ill = { type, days: t.days };
+  log(`${t.icon} You got a ${t.name.toLowerCase()}. ${t.about}`, 'bad');
+  queueModal(`<h2>${t.icon} You Have a ${t.name}</h2><p>${t.about}</p>
+    <ul class="notes"><li>😴 Rest and sleep a lot</li><li>💊 Take medicine (from the Supermarket)</li><li>🩺 A doctor can help you get better faster</li>${type !== 'arm' ? '<li>📞 You can call in sick to work</li>' : '<li>🚫 No sports until your cast comes off</li>'}<li>💧 Drink lots of water</li></ul>
+    <p class="muted">It should take about ${t.days} days to get better.</p>`);
+}
+function takeMedicine() {
+  if (!S.ill) return nope('You\'re not sick. Only take medicine when you need it!');
+  if (S.ill.type === 'arm') return nope('Medicine won\'t fix a broken arm. It needs time to heal.');
+  if (S.medicine < 1) return nope('You don\'t have any medicine. Buy some at the Supermarket.');
+  if (S.today.tookMeds) return nope('You already took medicine today. Always follow the directions on the box!');
+  S.medicine--; S.today.tookMeds = true; S.ill.days = Math.max(0, S.ill.days - 1); S.needs.health = clamp(S.needs.health + 6);
+  log('💊 You took your medicine with a glass of water. You feel a little better.'); done();
+}
+function sportsInjury() {
+  if (S.ill || Math.random() > 0.02) return false;
+  S.ill = { type: 'arm', days: 21 };
+  const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
+  const bill = insured ? 150 : 1200;
+  charge(bill, 'Emergency room: broken arm');
+  log(`🦾 Ouch! You fell and broke your arm. The emergency room put on a cast. Bill: ${money(bill)}.`, 'bad');
+  queueModal(`<h2>🦾 You Broke Your Arm!</h2><p>You fell while playing. The emergency room took an X-ray and put your arm in a cast.</p><p>Bill: <b>${money(bill)}</b>${insured ? ' (insurance paid most of it)' : ''}</p><p>No sports for 3 weeks while it heals.</p><p class="lesson">💡 Accidents happen. This is why health insurance matters.</p>`);
+  return true;
+}
+function fluShot() {
+  if (S.fluShot === dateOf().year) return nope('You already got your flu shot this year.');
+  const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
+  if (!spend(insured ? 0 : 25, 'Flu shot')) return;
+  pass(0.5); S.fluShot = dateOf().year;
+  log('💉 You got a flu shot. Much less chance of getting the flu this winter!', 'good'); done();
+}
+
+// ---------- chores ----------
+function doDishes() {
+  if (!S.dishes) return nope('No dirty dishes. Nice!');
+  pass(Math.min(1, S.dishes * 0.08)); S.dishes = 0; S.mess = clamp(S.mess - 10); S.handsDirty = false;
+  if (S.bugs && S.mess < 40) { S.bugs = false; log('🐜 The ants left once the kitchen was clean.'); }
+  log('🍽️ You washed all the dishes. Sparkly!'); choreAllowance(); done();
+}
+function vacuum() {
+  pass(0.75); S.mess = clamp(S.mess - 45); fun2(3);
+  log('🧹 You vacuumed and tidied up. Your place looks great!'); choreAllowance(); done();
+}
+function choreAllowance() {
+  if (S.home === 'parents' && !S.today.allowance) { S.today.allowance = true; earn(5, 'Chore money from Mom'); log('👩 Mom gave you $5 for helping with chores!'); }
+}
+const SORT_ITEMS = [
+  ['🥫', 'Empty soup can', 'recycle'], ['📰', 'Old newspaper', 'recycle'], ['🍾', 'Glass bottle', 'recycle'], ['📦', 'Cardboard box (flattened)', 'recycle'],
+  ['🍌', 'Banana peel', 'compost'], ['🍎', 'Apple core', 'compost'], ['☕', 'Coffee grounds', 'compost'], ['🥚', 'Egg shells', 'compost'],
+  ['🍫', 'Candy wrapper', 'trash'], ['🧻', 'Used tissue', 'trash'], ['🍕', 'Greasy pizza box', 'trash'], ['🥤', 'Chip bag', 'trash'],
+];
+function takeOutTrash() {
+  if (S.trash < 10) return nope('The trash is almost empty.');
+  const pick = [...SORT_ITEMS].sort(() => Math.random() - 0.5).slice(0, 4);
+  showModal(`<h2>🗑️ Sort the Trash</h2><p>Before you take it out, put each thing in the right bin!</p>
+    <div class="sortgrid">${pick.map((it, i) => `<div class="sortrow"><span>${it[0]} ${it[1]}</span><div><label><input type="radio" name="s${i}" value="trash">🗑️ Trash</label><label><input type="radio" name="s${i}" value="recycle">♻️ Recycle</label><label><input type="radio" name="s${i}" value="compost">🍂 Compost</label></div></div>`).join('')}</div>`,
+    [{ label: 'Done sorting', cls: 'primary', keepOpen: true, fn: () => {
+      let right = 0; const notes = [];
+      pick.forEach((it, i) => { const v = (document.querySelector(`input[name="s${i}"]:checked`) || {}).value; if (v === it[2]) right++; else notes.push(`${it[0]} ${it[1]} goes in <b>${{ trash: '🗑️ trash', recycle: '♻️ recycling', compost: '🍂 compost' }[it[2]]}</b>.`); });
+      closeModal();
+      pass(0.2); S.trash = 0; S.bin += 1; S.eco += right; S.mess = clamp(S.mess - 5);
+      if (S.eco >= 20) unlock('eco');
+      log(`🗑️ You took out the trash and sorted it: ${right}/4 right.`, right === 4 ? 'good' : '');
+      showModal(`<h2>${right === 4 ? '🌍 Perfect sorting!' : `♻️ ${right} out of 4`}</h2>${notes.length ? `<ul class="notes">${notes.map(n => `<li>${n}</li>`).join('')}</ul>` : '<p>Everything went in the right bin. The planet thanks you!</p>'}
+        <p class="lesson">💡 Recycling turns old things into new things. Compost turns food scraps into dirt for gardens. Trash goes to a landfill.</p>
+        <p class="muted">The trash truck comes on <b>Tuesday mornings</b>. Roll your bin to the curb before 8 AM!</p>`, [{ label: 'OK' }]);
+      done(false);
+    } }]);
+}
+function binsToCurb() {
+  if (weekday() !== 1 || S.hour >= 8) return nope('Trash day is Tuesday. Put the bin out before 8 AM!');
+  if (!S.bin) return nope('Your outside bin is already empty.');
+  S.today.binOut = true; pass(0.1);
+  log('🚛 You rolled the bin to the curb. The garbage truck will pick it up this morning!');
+  S.bin = 0; done();
+}
+function bugSpray() {
+  if (!S.bugs) return nope('No bugs right now!');
+  if (!S.bugSpray) return nope('You need bug spray from the Supermarket.');
+  S.bugSpray--; S.bugs = false; pass(0.2); log('🐜 You sprayed the ants. They\'re gone! Now keep the kitchen clean so they don\'t come back.'); done();
+}
+
+// ---------- real groceries & recipes ----------
+const FOODS = {
+  milk:    { name: 'Milk', icon: '🥛', price: 4, units: 4, shelf: 7, cold: true, snack: [10, 20] },
+  eggs:    { name: 'Eggs', icon: '🥚', price: 5, units: 6, shelf: 21, cold: true },
+  bread:   { name: 'Bread', icon: '🍞', price: 3, units: 4, shelf: 5 },
+  cheese:  { name: 'Cheese', icon: '🧀', price: 6, units: 4, shelf: 20, cold: true, snack: [10, 0] },
+  apples:  { name: 'Apples', icon: '🍎', price: 4, units: 4, shelf: 12, snack: [12, 5] },
+  bananas: { name: 'Bananas', icon: '🍌', price: 3, units: 5, shelf: 6, snack: [12, 0] },
+  chicken: { name: 'Chicken', icon: '🍗', price: 9, units: 2, shelf: 3, cold: true },
+  veggies: { name: 'Veggies', icon: '🥦', price: 5, units: 4, shelf: 6, cold: true },
+  pasta:   { name: 'Pasta', icon: '🍝', price: 2, units: 4, shelf: 365 },
+  sauce:   { name: 'Tomato Sauce', icon: '🥫', price: 3, units: 3, shelf: 365 },
+  rice:    { name: 'Rice', icon: '🍚', price: 3, units: 5, shelf: 365 },
+  tortillas: { name: 'Tortillas', icon: '🫓', price: 3, units: 4, shelf: 10 },
+};
+const RECIPES = [
+  { id: 'spaghetti', name: 'Spaghetti', icon: '🍝', needs: ['pasta', 'sauce'], extra: 'cheese', food: 55, hours: 0.75 },
+  { id: 'pancakes', name: 'Pancakes', icon: '🥞', needs: ['eggs', 'milk'], food: 45, hours: 0.5 },
+  { id: 'tacos', name: 'Tacos', icon: '🌮', needs: ['tortillas', 'chicken', 'cheese'], extra: 'veggies', food: 60, hours: 0.75 },
+  { id: 'omelet', name: 'Cheese Omelet', icon: '🍳', needs: ['eggs', 'cheese'], extra: 'veggies', food: 40, hours: 0.4 },
+  { id: 'grilled', name: 'Grilled Cheese', icon: '🥪', needs: ['bread', 'cheese'], food: 40, hours: 0.3 },
+  { id: 'chickenrice', name: 'Chicken & Rice', icon: '🍛', needs: ['chicken', 'rice', 'veggies'], food: 65, hours: 1, health: 5 },
+  { id: 'salad', name: 'Garden Salad', icon: '🥗', needs: ['veggies', 'apples'], food: 30, hours: 0.3, health: 6 },
+  { id: 'smoothie', name: 'Fruit Smoothie', icon: '🍹', needs: ['bananas', 'milk'], extra: 'apples', food: 25, hours: 0.2, thirst: 35, noStove: true },
+];
+const countFood = id => S.fridgeFood.filter(f => f.id === id).length;
+function useFood(id) { const list = S.fridgeFood.filter(f => f.id === id).sort((a, b) => a.exp - b.exp); if (!list.length) return false; S.fridgeFood.splice(S.fridgeFood.indexOf(list[0]), 1); return true; }
+function buyFood(id) {
+  const f = FOODS[id];
+  if (S.hour < 7 || S.hour > 22) return nope('The store is closed.');
+  if (!spend(f.price, f.name)) return;
+  for (let k = 0; k < f.units; k++) S.fridgeFood.push({ id, exp: S.day + f.shelf });
+  log(`${f.icon} You bought ${f.name.toLowerCase()} (${f.units}). ${f.shelf < 365 ? `Good for ${f.shelf} days.` : 'It won\'t go bad.'}`);
+  if (f.cold && !hasF('fridge')) toast('⚠️ No fridge at home — this will spoil fast!', 'bad');
+  render();
+}
+function recipeModal() {
+  if (!S.fridgeFood.length) return nope('Your kitchen is empty! Buy real groceries in the Supermarket\'s grocery aisle.');
+  showModal(`<h2>👩‍🍳 Cook a Recipe</h2><p class="muted">Better Cooking skill = tastier food. You need a stove (except for smoothies).</p>
+    <div class="grid actions">${RECIPES.map(r => { const ok = r.needs.every(n => countFood(n) > 0) && (r.noStove || hasF('stove')); return `<button class="action ${ok ? '' : 'locked'}" ${ok ? '' : 'disabled'} onclick="cookRecipe('${r.id}')"><span class="ic">${r.icon}</span><b>${r.name}</b><small>${r.needs.map(n => `${countFood(n) ? '✅' : '❌'}${FOODS[n].icon}`).join(' ')}${r.extra ? ` + ${FOODS[r.extra].icon}?` : ''}</small></button>`; }).join('')}</div>`, [{ label: 'Close', cls: 'ghost' }]);
+}
+function cookRecipe(id) {
+  const r = RECIPES.find(x => x.id === id);
+  closeModal();
+  if (!r.noStove && !hasF('stove')) return nope('You need a stove.');
+  if (!r.needs.every(n => countFood(n) > 0)) return nope('You\'re missing ingredients.');
+  r.needs.forEach(useFood);
+  const bonus = r.extra && useFood(r.extra);
+  if (S.powerOut && !r.noStove) return nope('The power is out! The stove doesn\'t work.');
+  pass(r.hours);
+  const skill = S.skills.cook;
+  ateFood(r.food + (bonus ? 10 : 0));
+  if (r.thirst) S.needs.thirst = clamp(S.needs.thirst + r.thirst);
+  S.needs.health = clamp(S.needs.health + (r.health || 2));
+  S.dishes += 2; S.mess = clamp(S.mess + 4); S.trash = clamp(S.trash + 4);
+  addSkill('cook', 2.5);
+  const taste = skill > 60 ? 'Restaurant quality! 🤩' : skill > 30 ? 'Really tasty!' : Math.random() < 0.4 ? 'A little burnt... but you ate it.' : 'Pretty good!';
+  fun2(skill > 30 ? 10 : 4);
+  log(`${r.icon} You cooked ${r.name.toLowerCase()}${bonus ? ` with extra ${FOODS[r.extra].name.toLowerCase()}` : ''}. ${taste}`, 'good');
+  if (!r.noStove && skill < 30 && Math.random() < 0.12) smokeAlarm();
+  done();
+}
+function eatFresh(id) {
+  const f = FOODS[id];
+  if (!useFood(id)) return;
+  pass(0.1); ateFood(f.snack[0]); S.needs.thirst = clamp(S.needs.thirst + (f.snack[1] || 0)); S.needs.health = clamp(S.needs.health + 1); S.trash = clamp(S.trash + 1);
+  log(`${f.icon} You had some ${f.name.toLowerCase()}.`); closeModal(); done();
+}
+function fridgeChips() {
+  if (!S.fridgeFood.length) return '<span class="muted small">Your fridge and cupboard are empty.</span>';
+  const ids = [...new Set(S.fridgeFood.map(f => f.id))];
+  return ids.map(id => { const list = S.fridgeFood.filter(f => f.id === id); const soon = Math.min(...list.map(f => f.exp)) - S.day; return `<span class="chip ${soon <= 1 ? 'warn' : ''}">${FOODS[id].icon} ${list.length}${FOODS[id].shelf < 365 ? ` · ${soon <= 0 ? 'today!' : soon + 'd'}` : ''}</span>`; }).join('');
+}
+function groceryAisle() {
+  return `<div class="card money"><h3>🛒 Grocery Aisle</h3><p class="muted">Buy real ingredients and cook recipes at home. Fresh food goes bad after a few days — check the dates!</p>
+    <div class="grid shop">${Object.entries(FOODS).map(([id, f]) => `<div class="card item"><div class="jt"><b>${f.icon} ${f.name}</b><span class="pay">${money(f.price)}</span></div><p class="muted small">${f.units} ${f.units > 1 ? 'servings' : 'serving'} · ${f.shelf < 365 ? `fresh for ${f.shelf} days` : 'keeps a long time'}${f.cold ? ' · 🧊 keep cold' : ''} · you have ${countFood(id)}</p><button class="btn primary sm" onclick="buyFood('${id}')">Buy</button></div>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button class="btn sm ghost" onclick="buyExtra('medicine')">💊 Medicine $12</button><button class="btn sm ghost" onclick="buyExtra('bugspray')">🐜 Bug spray $8</button><button class="btn sm ghost" onclick="buyExtra('newspaper')">📰 Newspaper $1</button><button class="btn sm ghost" onclick="drinkSoda()">🥤 Soda $2</button><button class="btn sm ghost" onclick="buyExtra('water')">💧 Bottled water $1</button></div></div>`;
+}
+function buyExtra(what) {
+  const p = { medicine: 12, bugspray: 8, newspaper: 1, water: 1 }[what];
+  if (!spend(p, { medicine: 'Medicine', bugspray: 'Bug spray', newspaper: 'Newspaper', water: 'Bottled water' }[what])) return;
+  if (what === 'medicine') { S.medicine += 6; log('💊 You bought medicine (6 doses). Only take it when you\'re sick!'); }
+  if (what === 'bugspray') { S.bugSpray = (S.bugSpray || 0) + 1; log('🐜 You bought bug spray.'); }
+  if (what === 'water') { S.needs.thirst = clamp(S.needs.thirst + 45); S.trash = clamp(S.trash + 2); log('💧 You drank a bottle of water. (A reusable bottle makes less trash!)'); }
+  if (what === 'newspaper') { showNews('📰 The Maple Times'); return; }
+  done();
+}
+
+// ---------- haircuts ----------
+function hairChip() { return S.hairDays > 40 ? `<span class="chip warn">💇 Your hair is getting long (${S.hairDays} days)</span>` : ''; }
+function haircut(color) {
+  const price = color ? 45 : 25;
+  showModal(`<h2>${color ? '🎨 Hair Color' : '💇 Haircut'}</h2><p>${color ? 'Pick a new hair color!' : 'Pick a style, or keep the same one with a fresh trim.'}</p>
+    <div class="styles">${(color ? LOOKS.hair : LOOKS.style).map(v => color ? `<button class="sw" style="background:${v}" onclick="doHaircut('${v}', true)" aria-label="hair color"></button>` : `<button class="st ${S.look.style === v ? 'sel' : ''}" onclick="doHaircut('${v}', false)">${STYLE_NAMES[v]}</button>`).join('')}</div>
+    <p class="muted">Cost: ${money(price)}</p>`, [{ label: 'Never mind', cls: 'ghost' }]);
+}
+function doHaircut(v, color) {
+  closeModal();
+  if (!spend(color ? 45 : 25, color ? 'Hair coloring' : 'Haircut')) return;
+  pass(color ? 1.5 : 0.75);
+  if (color) S.look.hair = v; else { S.look.style = v; S.hairDays = 0; }
+  fun2(8); addSkill('comm', 0.5);
+  log(color ? '🎨 You got your hair colored. Looking fresh!' : `💇 You got a haircut (${STYLE_NAMES[v]}). Looking sharp for interviews!`, 'good');
+  done();
+}
+
+// ---------- emergencies ----------
+function smokeAlarm() {
+  queueModal(`<h2>🚨 BEEP BEEP BEEP!</h2><p>The smoke alarm is going off! Some food burned on the stove and the kitchen is smoky.</p><p><b>What should you do?</b></p>
+    <div class="row"><button class="btn primary" onclick="emergencyAnswer('smoke','stove')">Turn off the stove and open a window</button>
+    <button class="btn ghost" onclick="emergencyAnswer('smoke','911')">Call 911</button>
+    <button class="btn ghost" onclick="emergencyAnswer('smoke','ignore')">Ignore it</button></div>`);
+}
+function emergencyAnswer(kind, ans) {
+  closeModal();
+  const right = { smoke: 'stove', hurt: '911', keys: 'friend' }[kind];
+  const why = {
+    smoke: 'Burnt food makes smoke, but it\'s not a fire. Turn off the heat and let the smoke out. If there\'s a REAL fire you can\'t put out, get outside and call 911!',
+    hurt: 'When someone is badly hurt, call 911 right away. Stay with them until help comes.',
+    keys: 'Losing your keys is annoying, but it\'s NOT an emergency. 911 is only for fires, crimes and people who are hurt or in danger.',
+  }[kind];
+  if (ans === right) {
+    log('✅ You handled the emergency the right way!', 'good'); S.volunteerHours += kind === 'hurt' ? 1 : 0; addSkill('aid', 1.5);
+    if (kind === 'hurt') { S.community = (S.community || 0) + 5; addNews('🦸 Local hero calls 911, helps hurt bike rider'); unlock('hero'); }
+  } else {
+    if (kind === 'smoke' && ans === 'ignore') { S.mess = clamp(S.mess + 25); fun2(-10); }
+    log('❌ Not quite the best choice in that emergency.', 'bad');
+  }
+  showModal(`<h2>${ans === right ? '✅ Good thinking!' : '🤔 Hmm, not quite'}</h2><p>${why}</p>${!has('smokedetector') && kind === 'smoke' ? '<p class="lesson">💡 Smoke detectors save lives! Every home should have one. (Mall, $25)</p>' : ''}`, [{ label: 'OK' }]);
+  done(false);
+}
+function startPowerOutage() {
+  S.powerOut = 6 + Math.floor(Math.random() * 10);
+  log(`🔌 The storm knocked out the power! Lights, TV and stove won't work for a while.`, 'bad');
+  addNews('🔌 Storm causes power outage across Maple Town');
+  if (S.powerOut > 12) { const lost = S.fridgeFood.filter(f => FOODS[f.id].cold).length; S.fridgeFood = S.fridgeFood.filter(f => !FOODS[f.id].cold); if (lost) log(`🧊 The power was out so long that the food in your fridge spoiled (${lost} items).`, 'bad'); }
+  queueModal(`<h2>🔌 Power Outage!</h2><p>A thunderstorm knocked out the electricity for about <b>${S.powerOut} hours</b>.</p><ul class="notes"><li>💡 No lights, TV or video games</li><li>🍳 The stove doesn't work</li><li>🧊 Keep the fridge closed so food stays cold!</li></ul>${has('flashlight') ? '<p>🔦 Good thing you have a flashlight!</p>' : '<p class="lesson">💡 Keep a flashlight at home for emergencies (Mall, $10).</p>'}`);
+}
+function emergencyEvent() {
+  if (Math.random() < 0.5) {
+    queueModal(`<h2>🚑 Someone Needs Help!</h2><p>A person fell off their bike right in front of you. They hurt their leg badly and can't get up.</p><p><b>What should you do?</b></p>
+      <div class="row"><button class="btn primary" onclick="emergencyAnswer('hurt','911')">Call 911 and stay with them</button><button class="btn ghost" onclick="emergencyAnswer('hurt','walk')">Walk away</button><button class="btn ghost" onclick="emergencyAnswer('hurt','post')">Take a video for social media</button></div>`);
+  } else {
+    queueModal(`<h2>🔑 You Lost Your Keys!</h2><p>You can't find your house keys anywhere. What should you do?</p>
+      <div class="row"><button class="btn ghost" onclick="emergencyAnswer('keys','911')">Call 911</button><button class="btn primary" onclick="emergencyAnswer('keys','friend')">Retrace your steps and ask family for the spare</button></div>`);
+  }
+}
+
+// ---------- volunteering ----------
+const VOLUNTEER = {
+  park: ['🧤', 'Park Cleanup', 'Pick up litter and plant flowers', 'eco'],
+  petshop: ['🐶', 'Animal Shelter Helper', 'Walk and feed shelter animals', 'animal'],
+  library: ['📖', 'Read to Kids', 'Story time for little kids', 'write'],
+  cityhall: ['🥫', 'Food Bank', 'Pack food boxes for families in need', 'lead'],
+  hospital: ['💐', 'Hospital Volunteer', 'Bring flowers and books to patients', 'aid'],
+};
+function volunteerCard(pid) {
+  const v = VOLUNTEER[pid]; if (!v) return '';
+  return `<div class="card money"><h3>🤝 Volunteer</h3><div class="mrows">${mrow(v[0], v[1], `${v[2]} · 2 hrs · no pay, but it helps your town · you've volunteered ${S.volunteerHours} hrs`, b('Help out', `volunteer('${pid}')`))}</div>
+    <p class="lesson">💡 Volunteering helps people, and bosses like to hire people who volunteer!</p></div>`;
+}
+function volunteer(pid) {
+  if (S.needs.energy < 20) return nope('You\'re too tired to volunteer.');
+  const v = VOLUNTEER[pid];
+  pass(2, pid === 'park' ? 'sport' : 'work');
+  S.volunteerHours += 2; S.community = (S.community || 0) + 2;
+  if (v[3] === 'eco') S.eco = (S.eco || 0) + 3; else addSkill(v[3], 1.5);
+  addSkill('comm', 1); fun2(10);
+  if (isDate(3, 22) && pid === 'park') { fun2(10); log('🌍 Happy Earth Day! You helped make the park beautiful.', 'good'); }
+  log(`🤝 You volunteered: ${v[1]}. People really appreciated it! (${S.volunteerHours} hrs total)`, 'good');
+  if (S.volunteerHours >= 20) unlock('helper');
+  if (Math.random() < 0.3) meetFriend('volunteering');
+  done();
+}
+
+// ---------- winter coat chip ----------
+function coldChip() { return seasonOf() === 'winter' && !has('coat') ? '<span class="chip warn">🥶 It\'s freezing outside! Buy a winter coat at the Mall.</span>' : ''; }
+
+</script>
+  <script>
+// ===================== PEOPLE: FRIENDS, FAMILY, NEIGHBORS, COWORKERS, PHONE =====================
+
+const FIRST_NAMES = ['Jordan', 'Sam', 'Riley', 'Alex', 'Taylor', 'Morgan', 'Casey', 'Jamie', 'Avery', 'Quinn', 'Priya', 'Mateo', 'Zoe', 'Leo', 'Nia', 'Kai', 'Emma', 'Omar', 'Lily', 'Diego', 'Hana', 'Eli', 'Maya', 'Noah'];
+const LAST_NAMES = ['Smith', 'Garcia', 'Chen', 'Johnson', 'Patel', 'Brown', 'Kim', 'Davis', 'Lopez', 'Wilson', 'Nguyen', 'Taylor'];
+const pickR = a => a[Math.floor(Math.random() * a.length)];
+const MAX_FRIENDS = 8;
+
+function ensureSocialState() {
+  if (!S.friends) S.friends = [];
+  if (!S.family) {
+    S.family = {
+      mom: { name: 'Mom', icon: '👩', rel: 80 }, dad: { name: 'Dad', icon: '👨', rel: 80 }, grandma: { name: 'Grandma', icon: '👵', rel: 85 },
+    };
+  }
+  if (!S.texts) S.texts = [];
+  if (!S.neighbors) S.neighbors = { names: [pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES), pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES)], complaints: 0 };
+}
+function text(from, msg) { S.texts.unshift({ day: S.day, hour: S.hour, from, msg }); if (S.texts.length > 30) S.texts.length = 30; S.unread = (S.unread || 0) + 1; }
+
+// ---------- friends ----------
+function meetFriend(where) {
+  ensureSocialState();
+  if (S.friends.length >= MAX_FRIENDS) return;
+  const used = new Set(S.friends.map(f => f.name));
+  const name = FIRST_NAMES.filter(n => !used.has(n))[Math.floor(Math.random() * 10)] || pickR(FIRST_NAMES);
+  const d = 1 + Math.floor(Math.random() * 360); let m = 0, doy = d; while (doy >= MDAYS[m]) { doy -= MDAYS[m]; m++; }
+  const fr = { name, look: randomLook(), f: 30, bday: { m, d: doy + 1 }, where, met: S.day };
+  S.friends.push(fr);
+  log(`👋 You met ${name} ${{ park: 'at the park', work: 'at work', diner: 'at the diner', school: 'in class', sports: 'at the Sports Park', volunteering: 'while volunteering' }[where] || 'in town'}. You're becoming friends!`, 'good');
+  text(name, 'Hey! It was really nice meeting you 😊');
+  if (S.friends.length >= 5) unlock('popular');
+}
+function hangOut(i) {
+  const fr = S.friends[i]; if (!fr) return;
+  if (S.needs.energy < 15) return nope('You\'re too tired to hang out.');
+  if (S.hour < 8 || S.hour > 22) return nope(`${fr.name} is probably asleep!`);
+  pass(2, 'relax'); fr.f = clamp(fr.f + 15); fun2(14); addSkill('comm', 1);
+  const what = pickR(['played video games', 'went for ice cream', 'shot hoops', 'watched a movie', 'talked for hours', 'played board games', 'went for a bike ride']);
+  log(`😄 You and ${fr.name} ${what}. Friendship +15!`, 'good');
+  done();
+}
+function textFriend(i) {
+  const fr = S.friends[i]; if (!fr) return;
+  if (!has('phone')) return nope('You need a phone to text.');
+  if (fr.textedToday === S.day) return nope(`You already texted ${fr.name} today.`);
+  fr.textedToday = S.day; fr.f = clamp(fr.f + 5); fun2(3);
+  const msg = pickR(['How are you? 😊', 'Wanna hang out this weekend?', 'Did you see the news?!', 'Lol that was so funny yesterday', 'Good luck at work today!']);
+  text('You → ' + fr.name, msg);
+  setTimeout(() => { text(fr.name, pickR(['Haha yes!! 😂', 'I\'m good! You?', 'Totally! Let\'s do it 🙌', 'Thanks!! ❤️', 'OMG yes'])); render(); }, 50);
+  log(`💬 You texted ${fr.name}.`); done();
+}
+function socialNewDay() {
+  ensureSocialState();
+  S.friends.forEach(fr => {
+    fr.f = clamp(fr.f - 1);
+    if (fr.bday && isDate(fr.bday.m, fr.bday.d)) { fr.bdayToday = S.day; log(`🎂 It's ${fr.name}'s birthday today! Text them or hang out!`); text('📅 Calendar', `It's ${fr.name}'s birthday 🎂`); }
+    if (fr.bday && isDate(fr.bday.m, fr.bday.d, S.day - 1) && fr.wished !== S.day - 1) { fr.f = clamp(fr.f - 8); }
+  });
+  const lost = S.friends.filter(fr => fr.f <= 0);
+  lost.forEach(fr => log(`😢 You and ${fr.name} drifted apart. Friendships need time and attention.`, 'bad'));
+  S.friends = S.friends.filter(fr => fr.f > 0);
+  // a friend invites you
+  const close = S.friends.filter(fr => fr.f > 35);
+  if (close.length && Math.random() < 0.15) {
+    const fr = pickR(close), plan = pickR([['the movies', 12, 'theater'], ['the beach', 0, 'beach'], ['a pizza party', 8, 'diner'], ['a basketball game', 0, 'sports']]);
+    S.invite = { name: fr.name, plan: plan[0], cost: plan[1], day: S.day };
+    text(fr.name, `Want to go to ${plan[0]} today? 🙂`);
+  }
+  // family
+  Object.values(S.family).forEach(m => m.rel = clamp(m.rel - (S.home === 'parents' ? 0 : 0.6)));
+  if (S.home !== 'parents' && S.family.mom.rel < 55 && Math.random() < 0.3) text('👩 Mom', 'We miss you! Come visit or call sometime ❤️');
+  // neighbors
+  if (Math.random() < 0.12) neighborEvent();
+  if (S.lateNoise && ['shared', 'studio', 'onebed'].includes(S.home)) {
+    S.neighbors.complaints++;
+    log(`📢 Your neighbor complained that your TV and games were too loud last night. (${S.neighbors.complaints}/3)`, 'bad');
+    if (S.neighbors.complaints >= 3) { queueModal('<h2>📝 Letter from the Landlord</h2><p>"We got 3 noise complaints about your apartment. Please keep it quiet after 10 PM, or you could lose your apartment."</p><p class="lesson">💡 In apartments, you share walls with neighbors. Be considerate!</p>'); S.neighbors.complaints = 0; S.credit = Math.max(300, (S.credit || 600) - 10); }
+  }
+  S.lateNoise = false;
+}
+function acceptInvite(yes) {
+  const iv = S.invite; if (!iv) return;
+  S.invite = null;
+  const fr = S.friends.find(f => f.name === iv.name);
+  if (!yes) { if (fr) fr.f = clamp(fr.f - 3); log(`You told ${iv.name} maybe next time.`); return done(); }
+  if (iv.cost && !spend(iv.cost, `${iv.plan} with ${iv.name}`)) return;
+  pass(3, 'relax'); fun2(22); if (fr) fr.f = clamp(fr.f + 18); addSkill('comm', 1);
+  log(`🎉 You went to ${iv.plan} with ${iv.name}. Best day ever!`, 'good'); done();
+}
+
+// ---------- family ----------
+function callFamily(who) {
+  if (!has('phone')) return nope('You need a phone to call.');
+  const m = S.family[who];
+  pass(0.25, 'relax'); m.rel = clamp(m.rel + 8); fun2(5);
+  const advice = pickR(['Save a little money from every paycheck.', 'Drink water and get enough sleep!', 'Be on time — it shows you care.', 'Always wash your hands before you eat.', 'Don\'t buy things just because they\'re on sale.', 'Call your grandma! 😉', 'Be kind to your coworkers.']);
+  log(`📞 You called ${m.name}. ${m.icon} "${advice}"`, 'good'); done();
+}
+function viewFamilyVisit() {
+  return `<p>You're visiting your family! ${S.family.mom.icon} ${S.family.dad.icon} ${S.family.grandma.icon}</p>
+    <div class="grid actions">
+      <button class="action" onclick="familyAct('dinner')"><span class="ic">🍲</span><b>Family Dinner</b><small>Free home-cooked meal · 1 hr</small></button>
+      <button class="action" onclick="familyAct('help')"><span class="ic">🧹</span><b>Help with Chores</b><small>1 hr · Mom pays $10</small></button>
+      <button class="action" onclick="familyAct('advice')"><span class="ic">💬</span><b>Ask for Advice</b><small>30 min</small></button>
+      <button class="action" onclick="familyAct('cookies')"><span class="ic">🍪</span><b>Bake with Grandma</b><small>1 hr · Cooking skill</small></button>
+    </div>${holidayToday() && holidayToday().m === 10 ? '<p class="lesson">🦃 Happy Thanksgiving! The whole family is here for a big dinner.</p>' : ''}`;
+}
+function familyAct(a) {
+  const f = S.family;
+  if (a === 'dinner') { pass(1, 'relax'); ateFood(holidayToday() && holidayToday().m === 10 ? 80 : 55); fun2(holidayToday() && holidayToday().m === 10 ? 25 : 10); Object.values(f).forEach(m => m.rel = clamp(m.rel + 10)); log(holidayToday() && holidayToday().m === 10 ? '🦃 Turkey, mashed potatoes and pie! Everyone shared what they\'re thankful for.' : '🍲 Mom made your favorite dinner. So good to be home!', 'good'); }
+  if (a === 'help') { pass(1); earn(10, 'Helped Mom'); f.mom.rel = clamp(f.mom.rel + 8); log('🧹 You helped Mom clean the garage. She gave you $10.'); }
+  if (a === 'advice') { pass(0.5, 'relax'); f.dad.rel = clamp(f.dad.rel + 6); log(`👨 Dad says: "${pickR(['Make a budget and stick to it.', 'Your credit score matters — pay bills on time!', 'Change your car\'s oil every 3,000 miles.', 'A good job takes time to find. Keep trying!'])}"`); }
+  if (a === 'cookies') { pass(1, 'relax'); addSkill('cook', 2); f.grandma.rel = clamp(f.grandma.rel + 10); fun2(10); ateFood(10); log('🍪 Grandma taught you her secret cookie recipe!', 'good'); }
+  done();
+}
+
+// ---------- neighbors ----------
+function neighborEvent() {
+  const nb = pickR(S.neighbors.names);
+  const se = seasonOf();
+  const r = Math.random();
+  if (se === 'winter' && S.weather === 'snowy' && r < 0.5) {
+    S.gig = { kind: 'snow', name: nb, hours: 1, pay: 20, skill: 'fit', day: S.day };
+    log(`🌨️ Your neighbor ${nb} asked if you could shovel their driveway for $20. (Check Home)`);
+  } else if (r < 0.6) {
+    log(`👋 Your neighbor ${nb} waved and said good morning!`); fun2(2);
+  } else if (r < 0.8) {
+    log(`📦 ${nb} got your package by mistake and brought it over. Nice neighbor!`);
+  } else {
+    log(`🌻 ${nb} gave you some tomatoes from their garden.`); S.fridgeFood.push({ id: 'veggies', exp: S.day + 5 }, { id: 'veggies', exp: S.day + 5 });
+  }
+}
+
+// ---------- boss and coworkers ----------
+function setupWorkplace(j) {
+  j.boss = { name: pickR(FIRST_NAMES) + ' ' + pickR(LAST_NAMES), style: pickR(['nice', 'fair', 'strict']) };
+  j.coworkers = [pickR(FIRST_NAMES), pickR(FIRST_NAMES)].filter((v, i, a) => a.indexOf(v) === i);
+}
+function workEvent(j) {
+  if (!j.boss) setupWorkplace(j);
+  const r = Math.random(), cw = pickR(j.coworkers);
+  if (r < 0.08) { fun2(8); return `🍩 ${cw} brought donuts for everyone!`; }
+  if (r < 0.14) { if (Math.random() < 0.5) meetFriend('work'); fun2(6); return `🥪 You had lunch with ${cw}.`; }
+  if (r < 0.19) { j.weekHours += 2 * 1.5; pass(2, 'work'); return `⏰ ${j.boss.name} asked you to stay 2 hours late. That's overtime — you get paid 1.5× for it!`; }
+  if (r < 0.23 && j.boss.style !== 'strict') { fun2(8); return `👏 ${j.boss.name} said "Great job today!" in front of everyone.`; }
+  if (r < 0.26) { fun2(-4); return '😴 There was a looooong boring meeting.'; }
+  if (r < 0.29) { fun2(6); return `🎂 It was ${cw}'s birthday — there was cake in the break room!`; }
+  return '';
+}
+
+// ---------- phone ----------
+function phoneButton() { return has('phone') ? `<button class="phonebtn" onclick="openPhone()" aria-label="Open your phone">📱${S.unread ? `<i>${S.unread}</i>` : ''}</button>` : ''; }
+function openPhone(app) {
+  if (!has('phone')) return nope('You don\'t have a phone. Buy one at the Mall.');
+  ensureSocialState();
+  const apps = [['msgs', '💬', 'Messages'], ['weather', '🌦️', 'Weather'], ['bank', '🏦', 'Bank'], ['cal', '📅', 'Calendar'], ['news', '📰', 'News'], ['contacts', '👥', 'Contacts'], ['budget', '📊', 'Budget'], ['maps', '🗺️', 'Maps']];
+  let body = '';
+  if (!app) body = `<div class="apps">${apps.map(a => `<button onclick="openPhone('${a[0]}')"><span>${a[1]}</span>${a[2]}${a[0] === 'msgs' && S.unread ? ` <i>${S.unread}</i>` : ''}</button>`).join('')}</div>`;
+  if (app === 'maps') { closeModal(); setTab('places'); return; }
+  if (app === 'msgs') { S.unread = 0; body = `${S.invite && S.invite.day === S.day ? `<div class="card holiday"><b>${esc(S.invite.name)}:</b> Want to go to ${S.invite.plan} today?${S.invite.cost ? ` (${money(S.invite.cost)})` : ''}<div class="row"><button class="btn sm primary" onclick="closeModal();acceptInvite(true)">Yes! 🙌</button><button class="btn sm ghost" onclick="closeModal();acceptInvite(false)">Maybe next time</button></div></div>` : ''}
+    <div class="msgs">${S.texts.length ? S.texts.slice(0, 14).map(t => `<div class="msg ${t.from.startsWith('You') ? 'me' : ''}"><b>${esc(t.from)}</b> ${esc(t.msg)} <span class="muted small">${dateText(t.day)}</span></div>`).join('') : '<p class="muted">No messages yet.</p>'}</div>`; }
+  if (app === 'weather') body = `<p><b>Today:</b> ${weatherText()} · ${SEASONS[seasonOf()].icon} ${SEASONS[seasonOf()].name}</p><table class="stub">${S.forecast.map(f => `<tr><td>${WEEKDAYS[weekday(f.day)]}, ${dateText(f.day)}</td><td>${WEATHER[f.w].icon} ${WEATHER[f.w].name}</td></tr>`).join('')}</table>${seasonOf() === 'winter' ? '<p class="lesson">🧥 Bundle up! Wear your coat outside.</p>' : ''}`;
+  if (app === 'bank') body = `<table class="stub"><tr><td>💵 Checking (cash)</td><td>${money(S.money)}</td></tr><tr><td>🐷 Savings</td><td>${money(S.savings)}</td></tr><tr><td>💳 Loan</td><td class="minus">${money(S.loan)}</td></tr><tr><td>📈 Credit score</td><td>${S.credit} (${creditWord()})</td></tr></table>
+    <h3>Recent</h3><table class="stub">${S.week.lines.slice(-8).reverse().map(l => `<tr class="${l.amount < 0 ? 'minus' : 'plus'}"><td>${esc(l.label)}</td><td>${l.amount < 0 ? '-' : '+'}${money(Math.abs(l.amount))}</td></tr>`).join('') || '<tr><td class="muted">Nothing yet this week</td><td></td></tr>'}</table>`;
+  if (app === 'cal') body = `<table class="stub">${calendarEvents(30).map(e => `<tr><td>${WEEKDAYS[weekday(e.day)].slice(0, 3)} ${dateText(e.day)}</td><td>${e.text}</td></tr>`).join('')}</table>`;
+  if (app === 'news') body = newsHtml();
+  if (app === 'contacts') body = `<div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `❤️ ${Math.round(m.rel)}`, b('📞 Call', `closeModal();callFamily('${k}')`))).join('')}
+    ${S.friends.map((fr, i) => mrow('🙂', fr.name + (fr.bdayToday === S.day ? ' 🎂' : ''), `Friendship ${Math.round(fr.f)}`, b('💬 Text', `closeModal();textFriend(${i})`))).join('')}</div>`;
+  if (app === 'budget') body = budgetHtml(true);
+  showModal(`<div class="phone"><div class="phonetop">${app ? `<button class="btn sm ghost" onclick="openPhone()">‹ Back</button>` : ''}<b>${app ? apps.find(a => a[0] === app)[2] : `${fmtTime(S.hour)} · ${dateText()}`}</b></div>${body}</div>`, [{ label: 'Close phone', cls: 'ghost' }]);
+}
+function calendarEvents(n) {
+  const out = [];
+  for (let k = 0; k <= n; k++) {
+    const d = S.day + k;
+    const h = holidayToday(d); if (h) out.push({ day: d, text: `${h.icon} ${h.name}` });
+    if (isBirthday(d)) out.push({ day: d, text: '🎂 Your birthday!' });
+    S.friends.forEach(fr => { if (fr.bday && isDate(fr.bday.m, fr.bday.d, d)) out.push({ day: d, text: `🎂 ${fr.name}'s birthday` }); });
+    const ev = eventToday(d); if (ev && dateOf(d).d === ev.from) out.push({ day: d, text: `${ev.icon} ${ev.name} starts` });
+    if (electionDay(d)) out.push({ day: d, text: '🗳️ Election Day' });
+    if (weekday(d) === 1) out.push({ day: d, text: '🚛 Trash day (bin out by 8 AM)' });
+    if (weekday(d) === 0 && k) out.push({ day: d, text: '🧾 Bills due' });
+    if (weekday(d) === 4) out.push({ day: d, text: '💵 Payday (tonight)' });
+    const { m, d: dd } = dateOf(d); if (m === 3 && dd === 15) out.push({ day: d, text: '🧾 Taxes due!' });
+  }
+  return out.slice(0, 18);
+}
+function newsHtml() {
+  return `<div class="news"><h3>📰 The Maple Times · ${dateText(S.day, true)}</h3>${(S.news || []).slice(0, 10).map(n => `<p>• ${n.text} <span class="muted small">${dateText(n.day)}</span></p>`).join('') || '<p class="muted">No news yet.</p>'}</div>`;
+}
+function showNews(title) { showModal(`<h2>${title}</h2>${newsHtml()}`, [{ label: 'OK' }]); }
+
+// ---------- the People card on the Me screen ----------
+function peopleCard() {
+  ensureSocialState();
+  return `<div class="card"><h3>👨‍👩‍👧 Family</h3><div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `❤️ Relationship ${Math.round(m.rel)}`, has('phone') ? b('📞 Call', `callFamily('${k}')`) : '')).join('')}</div>
+    ${S.home !== 'parents' ? `<button class="btn sm ghost" onclick="travelTo('h_parents')">🏡 Visit your parents</button>` : ''}</div>
+    <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}`, b('Hang out', `hangOut(${i})`) + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}
+    <p class="lesson">💡 Friendships fade if you never talk. Text, hang out and remember birthdays!</p></div>`;
+}
+
+</script>
+  <script>
+// ===================== WORK & MONEY: SHIFTS, DAYS OFF, CREDIT, TAXES, BUDGET, ELECTRICITY =====================
+
+// ---------- job schedules ----------
+const SHIFTS = {
+  day:     { label: 'Day shift · Mon–Fri · start 6–9 AM', days: [1, 1, 1, 1, 1, 0, 0], from: 5, to: 11, late: 9.1 },
+  early:   { label: 'Early shift · Mon–Fri · start 3–5 AM', days: [1, 1, 1, 1, 1, 0, 0], from: 2.5, to: 7, late: 5.1 },
+  night:   { label: 'Night shift · Mon–Fri · start 8–10 PM', days: [1, 1, 1, 1, 1, 0, 0], from: 19, to: 23, late: 22.1 },
+  weekend: { label: 'Weekend shift · Wed–Sun · start 9 AM–noon', days: [0, 0, 1, 1, 1, 1, 1], from: 8, to: 14, late: 12.1 },
+};
+const NIGHT_JOBS = ['Security Guard', 'Police Officer', '911 Dispatcher', 'Nurse', 'EMT', 'Paramedic', 'Truck Driver', 'Air Traffic Controller', 'Warehouse Worker', 'Hospital Cleaner'];
+const EARLY_JOBS = ['Baker', 'Barista', 'Mail Carrier', 'Farmer', 'Farm Hand', 'Garbage Collector', 'Delivery Driver'];
+const WEEKEND_JOBS = ['Server', 'Line Cook', 'Chef', 'Cashier', 'Sales Associate', 'Movie Theater Usher', 'Lifeguard', 'Golf Caddy', 'Dog Walker', 'Pet Store Clerk', 'Grocery Bagger', 'Busser', 'Dishwasher', 'Fast Food Worker', 'Street Performer', 'Musician', 'Actor', 'Dancer', 'Swim Instructor', 'Tennis Coach', 'Gym Front Desk', 'Florist', 'Taxi Driver'];
+function shiftOf(job) {
+  if (NIGHT_JOBS.includes(job.name)) return 'night';
+  if (EARLY_JOBS.includes(job.name)) return 'early';
+  if (WEEKEND_JOBS.includes(job.name)) return 'weekend';
+  return 'day';
+}
+const ESSENTIAL = ['Health', 'Public Service'];
+function worksOn(day) {
+  const j = S.job; if (!j) return false;
+  const job = JOBS[j.id], sh = SHIFTS[shiftOf(job)];
+  if (!sh.days[weekday(day)]) return false;
+  if (day === S.day && S.snowDay && !ESSENTIAL.includes(job.cat)) return false;
+  const h = holidayToday(day);
+  if (h && h.closed && shiftOf(job) === 'day') return false;
+  return true;
+}
+const worksToday = () => worksOn(S.day);
+function shiftNow() { return S.job ? SHIFTS[shiftOf(JOBS[S.job.id])] : SHIFTS.day; }
+
+// ---------- vacation & sick days ----------
+function ensureWorkState() {
+  if (S.credit === undefined) S.credit = 600;
+  if (!S.budget) S.budget = { Housing: 0, Food: 60, Transport: 20, Fun: 40, Shopping: 40, Bills: 40, Health: 20, Pets: 15 };
+  if (!S.taxYear) S.taxYear = { year: dateOf().year, wages: 0, withheld: 0, side: 0 };
+  if (S.kwh === undefined) S.kwh = 0;
+  if (!S.thermostat) S.thermostat = 'normal';
+  if (S.job && S.job.pto === undefined) giveBenefits(S.job);
+  if (S.job && !S.job.boss) setupWorkplace(S.job);
+}
+function giveBenefits(j) { const ins = JOBS[j.id].insurance; j.pto = ins ? 10 : 0; j.sickDays = ins ? 6 : 3; }
+function takeVacationDay() {
+  const j = S.job; if (!j) return;
+  if (!worksToday() || S.today.worked) return nope('You don\'t work today anyway!');
+  if (!j.pto) return nope('You don\'t have any vacation days left. Jobs with benefits give paid vacation.');
+  j.pto--; S.today.worked = true; j.weekHours += 8; fun2(12);
+  log(`🏖️ You took a paid vacation day! (${j.pto} left this year)`, 'good'); done();
+}
+function useSickDay() {
+  const j = S.job;
+  if (!j || !j.sickDays) return false;
+  if (!(S.ill || S.needs.health < 70)) return false;
+  j.sickDays--; j.weekHours += 8;
+  log(`📞 You used a paid sick day. Rest up! (${j.sickDays} left)`);
+  return true;
+}
+
+// ---------- credit score ----------
+function creditWord(c = S.credit) { return c < 580 ? 'Poor' : c < 670 ? 'Fair' : c < 740 ? 'Good' : c < 800 ? 'Very Good' : 'Excellent'; }
+function credit(n, why) {
+  const before = S.credit;
+  S.credit = Math.max(300, Math.min(850, Math.round(S.credit + n)));
+  if (Math.abs(n) >= 10) log(`📈 Credit score ${n > 0 ? 'went up' : 'went down'} to ${S.credit}: ${why}`, n > 0 ? 'good' : 'bad');
+  if (S.credit >= 740 && before < 740) unlock('credit');
+}
+function creditCard() {
+  const c = S.credit, pct = (c - 300) / 550 * 100;
+  return `<div class="card"><h3>📈 Credit Score: ${c} <span class="muted">(${creditWord()})</span></h3>
+    <div class="bar"><div class="fill ${c < 580 ? 'low' : c < 670 ? 'mid' : 'ok'}" style="width:${pct}%"></div></div>
+    <p class="muted small">300 = Poor · 580 = Fair · 670 = Good · 740 = Very Good · 800+ = Excellent</p>
+    <ul class="notes"><li>✅ Paying rent and bills on time makes it go up</li><li>❌ Missing rent, overdrafts and big debts make it go down</li><li>🏠 Landlords and banks check it. A good score means lower loan interest!</li></ul></div>`;
+}
+const loanRate = () => S.credit >= 740 ? 0.01 : S.credit >= 670 ? 0.015 : 0.02;
+
+// ---------- yearly taxes ----------
+function taxCalc() {
+  const t = S.taxYear;
+  const taxable = Math.max(0, t.wages - 3000);
+  const owe = Math.round(taxable * 0.12 + taxable * 0.04 + t.side * 0.1);
+  return { owe, refund: Math.round(t.withheld - owe) };
+}
+function taxSeason() { const { m, d } = dateOf(); return (m >= 0 && m < 3) || (m === 3 && d <= 15); }
+function taxCard() {
+  const t = S.taxYear, due = S.taxDue;
+  if (!due) return `<div class="card money"><h3>🧾 Taxes</h3><p class="muted">Every spring (by <b>April 15</b>) you file a tax return for last year. Wages so far this year: ${money(t.wages)} · Side income: ${money(t.side)}</p></div>`;
+  const c = taxCalc();
+  return `<div class="card money"><h3>🧾 File Your Taxes</h3><p>It's tax season! File for ${due.year} by <b>April 15</b>.</p>
+    <table class="stub"><tr><td>💼 Wages from jobs (W-2)</td><td>${money(due.wages)}</td></tr><tr><td>💰 Side income</td><td>${money(due.side)}</td></tr><tr><td>➖ Standard deduction</td><td>-${money(3000)}</td></tr>
+    <tr><td>🧮 Tax you owe for the year</td><td>${money(due.owe)}</td></tr><tr><td>✅ Already taken from your paychecks</td><td>${money(due.withheld)}</td></tr>
+    <tr class="total"><td>${due.refund >= 0 ? '🎉 Your refund' : '😬 You still owe'}</td><td>${money(Math.abs(due.refund))}</td></tr></table>
+    <button class="btn primary sm" onclick="fileTaxes()">📝 File my taxes</button>
+    <p class="lesson">💡 If more tax was taken from your paychecks than you owe, you get a refund. Side income isn't taxed until now, so you might owe!</p></div>`;
+}
+function fileTaxes() {
+  const due = S.taxDue; if (!due) return;
+  pass(1, 'study');
+  if (due.refund >= 0) earn(due.refund, `Tax refund for ${due.year}`); else charge(-due.refund, `Taxes owed for ${due.year}`);
+  log(due.refund >= 0 ? `🧾 You filed your taxes and got a ${money(due.refund)} refund!` : `🧾 You filed your taxes and paid the ${money(-due.refund)} you owed.`, 'good');
+  S.taxDue = null; unlock('taxes'); credit(3, 'filed taxes on time'); done();
+}
+function taxNewDay() {
+  const { m, d, year } = dateOf();
+  if (m === 0 && d === 1) {
+    const t = S.taxYear; const c = taxCalc();
+    S.taxDue = { year: t.year, wages: Math.round(t.wages), side: Math.round(t.side), withheld: Math.round(t.withheld), owe: c.owe, refund: c.refund };
+    S.taxYear = { year, wages: 0, withheld: 0, side: 0 };
+    if (S.job) giveBenefits(S.job);
+    if (S.taxDue.wages + S.taxDue.side > 0) queueModal(`<h2>🧾 Tax Season Is Here</h2><p>It's a new year! You need to file your ${S.taxDue.year} taxes by <b>April 15</b> at City Hall (or on your phone).</p>`);
+    else S.taxDue = null;
+  }
+  if (m === 3 && d === 16 && S.taxDue) {
+    charge(100, 'Late tax filing penalty');
+    log('⚠️ You missed the April 15 tax deadline! $100 penalty. File right away at City Hall.', 'bad');
+    credit(-15, 'late taxes');
+  }
+}
+
+// ---------- budget ----------
+const CATS = ['Housing', 'Food', 'Transport', 'Fun', 'Shopping', 'Bills', 'Health', 'Pets'];
+const CAT_ICONS = { Housing: '🏠', Food: '🍎', Transport: '🚗', Fun: '🎉', Shopping: '🛍️', Bills: '🧾', Health: '🩺', Pets: '🐾' };
+function catOf(label) {
+  const l = label.toLowerCase();
+  if (/rent|mortgage|property|move in|bought .*house|down payment|land|construction/.test(l)) return 'Housing';
+  if (/grocer|meal|food|lunch|pancake|milk|egg|bread|cheese|apple|banana|chicken|veggie|pasta|sauce|rice|tortilla|fish|soda|water|ice cream|sundae|cocoa|cookie|cake|candy|marshmallow|pizza|chips|cereal|fruit|seafood/.test(l)) return 'Food';
+  if (/bus|gas|car|tire|oil|tow|parking|flight|ticket to|license|test fee|bike/.test(l) && !/pet/.test(l)) return 'Transport';
+  if (/pet|vet|dog|cat|toy/.test(l)) return 'Pets';
+  if (/doctor|hospital|dentist|medicine|flu|insurance|emergency/.test(l)) return 'Health';
+  if (/bill|utilit|electric|phone|internet|loan|fee|tax/.test(l)) return 'Bills';
+  if (/ticket|movie|ride|game|lesson|surf|ski|tour|sled|skating|hayride|carnival|show|class|tuition|camp|spa|spring/.test(l)) return 'Fun';
+  return 'Shopping';
+}
+function trackSpend(label, amount) {
+  S.week.cats = S.week.cats || {};
+  const c = catOf(label);
+  S.week.cats[c] = (S.week.cats[c] || 0) + amount;
+}
+function budgetHtml(compact) {
+  const cats = S.week.cats || {};
+  return `<p class="muted small">Plan how much to spend each week. This week so far:</p>
+    <table class="stub budget">${CATS.map(c => { const spent = cats[c] || 0, plan = S.budget[c] || 0, over = plan && spent > plan; return `<tr><td>${CAT_ICONS[c]} ${c}</td><td class="${over ? 'minus' : ''}">${money(spent)}${plan ? ` / ${money(plan)}` : ''} ${over ? '⚠️' : plan ? '✅' : ''}</td></tr>`; }).join('')}</table>
+    ${compact ? '' : `<div class="budgetedit">${CATS.map(c => `<label>${CAT_ICONS[c]} ${c}<input type="number" min="0" step="5" id="bud_${c}" value="${S.budget[c] || 0}"></label>`).join('')}</div><button class="btn primary sm" onclick="saveBudget()">Save my budget</button>`}`;
+}
+function saveBudget() { CATS.forEach(c => { const v = Number(($('#bud_' + c) || {}).value || 0); S.budget[c] = Math.max(0, Math.round(v)); }); log('📊 You saved your weekly budget plan.', 'good'); unlock('budgeter'); save(); render(); }
+function budgetReport() {
+  const cats = S.week.cats || {};
+  const rows = CATS.filter(c => (cats[c] || 0) > 0 || S.budget[c]).map(c => { const spent = cats[c] || 0, plan = S.budget[c] || 0; return `<tr class="${plan && spent > plan ? 'minus' : ''}"><td>${CAT_ICONS[c]} ${c}</td><td>${money(spent)}${plan ? ` of ${money(plan)} ${spent > plan ? '⚠️ over' : '✅'}` : ''}</td></tr>`; });
+  return rows.length ? `<h3>📊 Your budget last week</h3><table class="stub">${rows.join('')}</table>` : '';
+}
+
+// ---------- electricity ----------
+function useKwh(h, mode) {
+  if (S.home === 'parents' && !S.kwhParents) { /* parents pay, but still count */ }
+  const se = seasonOf();
+  let k = hasF('fridge') ? 0.05 : 0;
+  if (S.lightsOn) k += 0.08;
+  if (se === 'winter') k += 0.25 * { eco: 0.6, normal: 1, toasty: 1.6 }[S.thermostat];
+  if (S.weather === 'hot' && has('ac')) k += 0.35;
+  if (S.weather === 'hot' && has('fan')) k += 0.03;
+  if (S.powerOut) k = 0;
+  S.kwh += k * h;
+  if (atHome() && se === 'winter' && mode !== 'sleep') S.needs.fun = clamp(S.needs.fun + { eco: -0.4, normal: 0, toasty: 0.3 }[S.thermostat] * h);
+  if (atHome() && S.weather === 'hot' && has('ac') && mode !== 'sleep') S.needs.fun = clamp(S.needs.fun + 0.8 * h);
+}
+function electricBill() { return Math.round(S.kwh * 1.3); }
+function toggleLights() { S.lightsOn = !S.lightsOn; log(S.lightsOn ? '💡 You turned the lights on.' : '💡 You turned the lights off. Saving energy!'); render(); }
+function setThermostat(v) { S.thermostat = v; log(`🌡️ Thermostat set to ${{ eco: 'Eco (a bit chilly, cheap)', normal: 'Normal', toasty: 'Toasty (warm, costs more)' }[v]}.`); render(); }
+function energyCard() {
+  const se = seasonOf();
+  return `<div class="card energy"><h3>⚡ Energy <span class="muted small">· this week: ${S.kwh.toFixed(1)} kWh ≈ ${money(electricBill())}${S.home === 'parents' ? ' (your parents pay)' : ''}</span></h3>
+    <div class="row"><button class="btn sm ${S.lightsOn ? 'primary' : 'ghost'}" onclick="toggleLights()">💡 Lights: ${S.lightsOn ? 'ON' : 'off'}</button>
+    ${se === 'winter' ? `<span class="muted small">🌡️ Heat:</span>${['eco', 'normal', 'toasty'].map(v => `<button class="btn sm ${S.thermostat === v ? 'primary' : 'ghost'}" onclick="setThermostat('${v}')">${{ eco: '❄️ Eco', normal: '🙂 Normal', toasty: '🔥 Toasty' }[v]}</button>`).join('')}` : ''}
+    ${S.powerOut ? '<span class="chip warn">🔌 The power is out!</span>' : ''}</div>
+    <p class="muted small">Leaving lights on and blasting the heat or AC makes your electric bill bigger!</p></div>`;
+}
+
+</script>
+  <script>
+// ===================== CARS, TRAFFIC, GAS, LICENSE, AIRPORT =====================
+
+const hasCar = () => has('car') || has('newcar');
+function ensureCarState() {
+  if (S.license === undefined) S.license = hasCar() || S.skills.drive >= 20 && false;
+  if (hasCar() && S.license === false && !S.licenseChecked) { S.license = true; }
+  S.licenseChecked = true;
+  if (S.fuel === undefined) S.fuel = 100;
+  if (!S.car) S.car = { miles: has('newcar') ? 0 : 62000, oilAt: has('newcar') ? 0 : 62000, dirty: 10 };
+  if (!S.gasPrice) S.gasPrice = 3.6;
+}
+const isRush = () => weekday() < 5 && ((S.hour >= 7 && S.hour < 9) || (S.hour >= 16 && S.hour < 18.5));
+const fuelFor = len => len / 90;   // % of a tank
+function canDrive(len) { return hasCar() && S.license && S.skills.drive >= 20 && S.fuel >= fuelFor(len) && !S.carBroken; }
+function afterDrive(info) {
+  if (info.icon !== '🚙') return;
+  S.fuel = Math.max(0, S.fuel - fuelFor(info.len));
+  S.car.miles += Math.round(info.len / 25);
+  if (S.fuel < 15) toast('⛽ Your gas tank is almost empty! Fill up at the gas station.', 'bad');
+  if (S.car.miles - S.car.oilAt > 6000 && !S.carBroken) {
+    S.carBroken = true;
+    charge(900, 'Engine repair');
+    queueModal('<h2>💥 Engine Trouble!</h2><p>Your car\'s engine broke down because the oil wasn\'t changed for too long. The repair cost <b>$900</b>.</p><p class="lesson">💡 Get an oil change about every 3,000 miles. A $45 oil change is much cheaper than a new engine!</p>');
+    log('💥 Your engine broke from old oil! $900 repair.', 'bad');
+  } else if (Math.random() < 0.015) flatTire();
+}
+function flatTire() {
+  queueModal(`<h2>🛞 Flat Tire!</h2><p>Bump bump bump... you got a flat tire. What do you do?</p>
+    <div class="row"><button class="btn primary" onclick="fixTire(true)">🔧 Change it with the spare (Building skill)</button><button class="btn ghost" onclick="fixTire(false)">🚛 Call a tow truck ($90)</button></div>`);
+}
+function fixTire(self) {
+  closeModal();
+  if (self && S.skills.build >= 20) { pass(1); addSkill('build', 2); log('🔧 You changed the flat tire yourself! Then you bought a new tire for $60.', 'good'); charge(60, 'New tire'); }
+  else { if (self) log('🔧 You tried, but couldn\'t get the lug nuts off. You had to call a tow truck.', 'bad'); pass(1.5); charge(90, 'Tow truck'); charge(60, 'New tire'); log('🚛 The tow truck took your car to the shop for a new tire. $150 total.'); }
+  done();
+}
+function carsNewDay() {
+  ensureCarState();
+  S.gasPrice = Math.round((3.1 + Math.random() * 1.5) * 100) / 100;
+  if (hasCar()) { S.car.dirty = clamp(S.car.dirty + 6 + (S.weather === 'rainy' || S.weather === 'snowy' ? 20 : 0)); }
+  S.carBroken = false;
+}
+function fillTank() {
+  if (!hasCar()) return nope('You don\'t have a car.');
+  const gal = Math.round((100 - S.fuel) / 100 * 12 * 10) / 10;
+  if (gal < 0.5) return nope('Your tank is already full!');
+  const cost = Math.round(gal * S.gasPrice * 100) / 100;
+  if (!spend(cost, 'Gas for car')) return;
+  pass(0.2); S.fuel = 100;
+  log(`⛽ You filled up ${gal} gallons at $${S.gasPrice.toFixed(2)}/gallon = ${money(cost)}.`); done();
+}
+function carWash() { if (!hasCar()) return nope('You don\'t have a car.'); if (!spend(10, 'Car wash')) return; pass(0.3); S.car.dirty = 0; fun2(4); log('🧽 Your car went through the car wash. Shiny!'); done(); }
+function oilChange() { if (!hasCar()) return nope('You don\'t have a car.'); if (!spend(45, 'Oil change')) return; pass(0.75); S.car.oilAt = S.car.miles; log('🛢️ Oil changed! Your engine is happy. Next one in 3,000 miles.', 'good'); done(); }
+function carCard() {
+  if (!hasCar()) return '';
+  const oilLeft = 3000 - (S.car.miles - S.car.oilAt);
+  return `<div class="card energy"><h3>🚙 Your Car <span class="muted small">· ${S.car.miles.toLocaleString()} miles</span></h3>
+    <div class="pbar"><span>⛽ Gas</span><div class="bar small"><div class="fill ${S.fuel < 15 ? 'low' : S.fuel < 40 ? 'mid' : 'ok'}" style="width:${S.fuel}%"></div></div></div>
+    <div class="pbar"><span>🧽 Clean</span><div class="bar small"><div class="fill ${S.car.dirty > 70 ? 'low' : 'ok'}" style="width:${100 - S.car.dirty}%"></div></div></div>
+    <p class="muted small">🛢️ ${oilLeft > 0 ? `Oil change due in ${oilLeft.toLocaleString()} miles` : `<b class="neg">Oil change overdue by ${(-oilLeft).toLocaleString()} miles!</b>`} · 🪪 ${S.license ? 'Licensed driver' : 'No license!'}</p></div>`;
+}
+
+// ---------- driver's license ----------
+const ROAD_QUESTIONS = [
+  ['What does a red octagon (8-sided) sign mean?', ['Stop completely', 'Slow down a little', 'Speed up']],
+  ['A traffic light turns yellow. You should…', ['Slow down and stop if it\'s safe', 'Speed up to beat the red', 'Honk your horn']],
+  ['A school bus stops with flashing red lights. You…', ['Stop and wait', 'Drive around it quickly', 'Honk']],
+  ['When should you wear a seatbelt?', ['Every single time', 'Only on the highway', 'Only at night']],
+  ['Can you text while driving?', ['No, never', 'Only at red lights', 'Yes, if you\'re careful']],
+  ['Someone is walking in the crosswalk. You…', ['Stop and let them cross', 'Honk so they hurry', 'Drive around them']],
+  ['An ambulance with sirens is behind you. You…', ['Pull over to the right and stop', 'Speed up', 'Stay where you are']],
+  ['What does a green light mean?', ['Go, if the way is clear', 'Stop', 'Park here']],
+  ['The speed limit near a school is usually…', ['20–25 mph', '50 mph', '70 mph']],
+  ['Before changing lanes you should…', ['Check mirrors, look over your shoulder, and signal', 'Just turn the wheel', 'Close your eyes']],
+];
+function writtenTest() {
+  if (S.permit || S.license) return nope('You already passed the written test!');
+  if (!spend(10, 'Written driving test fee')) return;
+  const qs = [...ROAD_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 5);
+  showModal(`<h2>📝 Written Driving Test</h2><p>Answer at least 4 out of 5 right to get your learner's permit.</p>
+    ${qs.map((q, i) => { const opts = q[1].map((o, k) => [o, k]).sort(() => Math.random() - 0.5); return `<div class="quiz"><b>${i + 1}. ${q[0]}</b>${opts.map(([o, k]) => `<label><input type="radio" name="q${i}" value="${k}"> ${o}</label>`).join('')}</div>`; }).join('')}`,
+    [{ label: 'Turn in my test', cls: 'primary', keepOpen: true, fn: () => {
+      let right = 0; qs.forEach((q, i) => { const v = (document.querySelector(`input[name="q${i}"]:checked`) || {}).value; if (v === '0') right++; });
+      closeModal(); pass(0.75, 'study');
+      if (right >= 4) { S.permit = true; addSkill('drive', 3); log(`📝 You got ${right}/5 right and passed! You have a learner's permit.`, 'good'); showModal(`<h2>✅ You Passed! (${right}/5)</h2><p>You got your <b>learner's permit</b>. Practice driving (take Driving classes at the College) until your Driving skill is 20, then take the road test here.</p>`, [{ label: 'OK' }]); }
+      else { log(`📝 You got ${right}/5. You need 4 to pass. Study the road rules and try again!`, 'bad'); showModal(`<h2>❌ Not this time (${right}/5)</h2><p>You need 4 out of 5. Here are the right answers:</p><ul class="notes">${qs.map(q => `<li>${q[0]} <b>${q[1][0]}</b></li>`).join('')}</ul>`, [{ label: 'OK' }]); }
+      done(false);
+    } }]);
+}
+function roadTest() {
+  if (S.license) return nope('You already have your license!');
+  if (!S.permit) return nope('Pass the written test first.');
+  if (S.skills.drive < 20) return nope(`You need Driving skill 20 for the road test (you have ${Math.round(S.skills.drive)}). Take Driving classes at the College.`);
+  if (!spend(25, 'Road test fee')) return;
+  pass(1);
+  const pass2 = Math.random() < 0.45 + S.skills.drive / 100;
+  if (pass2) {
+    S.license = true; unlock('licensed');
+    log('🪪 You passed the road test! You have your driver\'s license!', 'good');
+    showModal(`<h2>🪪 You Got Your Driver's License!</h2><p>The examiner said you did great: full stops, used your signals, and checked your mirrors.</p><p>Now you can buy a car at the Bike & Car Shop.</p>`, [{ label: 'Yay!' }]);
+    addNews(`🪪 ${S.name} passes driving test on ${dateText()}`);
+  } else {
+    const oops = pickR(['you rolled through a stop sign', 'you forgot to signal before turning', 'you drove too fast in the school zone', 'you bumped the curb while parking']);
+    log(`🚗 You didn't pass the road test because ${oops}. Practice and try again!`, 'bad');
+    showModal(`<h2>😬 Not This Time</h2><p>The examiner said ${oops}.</p><p class="lesson">💡 Lots of people need two or three tries. Practice and come back!</p>`, [{ label: 'OK' }]);
+  }
+  done(false);
+}
+
+// ---------- traffic lights & stop signs ----------
+function lightGreen(horiz, t) { const ph = (t / 1000) % 12; return horiz ? ph < 5 : ph >= 6 && ph < 11; }
+function lightColor(horiz, t) { const ph = (t / 1000) % 12; if (horiz) return ph < 5 ? 'g' : ph < 6 ? 'y' : 'r'; return ph >= 6 && ph < 11 ? 'g' : ph >= 11 ? 'y' : 'r'; }
+function carMustStop(car, t) {
+  if (car.t < 0.78 || car.t > 0.95 || !isTownNode(car.to)) return false;
+  const P0 = NODES[car.from], P1 = NODES[car.to];
+  const horiz = P0[1] === P1[1];
+  if (!isTownNode(car.to) || neighbors(car.to).length < 3) return false;
+  return !lightGreen(horiz, t);
+}
+function drawTrafficLights(c, t, inView) {
+  NODES.forEach((n, i) => {
+    if (!inView(n[0], n[1], 40) || neighbors(i).length < 3) return;
+    if (isTownNode(i)) {
+      [[-1, -1, true], [1, 1, true], [1, -1, false], [-1, 1, false]].forEach(([dx, dy, horiz]) => {
+        const x = n[0] + dx * (ROAD_W / 2 + 6), y = n[1] + dy * (ROAD_W / 2 + 6);
+        fillR(c, x - 1, y - 2, 2, 8, '#333');
+        fillR(c, x - 3.5, y - 14, 7, 13, '#222', 2);
+        const col = lightColor(horiz, t);
+        [['r', '#ff3b30', -11], ['y', '#ffcc00', -7.5], ['g', '#34c759', -4]].forEach(([k, cc, oy]) => circ(c, x, y + oy, 1.5, col === k ? cc : 'rgba(80,80,80,.9)'));
+      });
+    } else {
+      const x = n[0] + ROAD_W / 2 + 8, y = n[1] - ROAD_W / 2 - 8;
+      fillR(c, x - 1, y, 2, 12, '#666');
+      c.fillStyle = '#d32f2f'; c.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; c.lineTo(x + Math.cos(a) * 6, y + Math.sin(a) * 6); } c.closePath(); c.fill();
+      txt(c, 'STOP', x, y + 0.5, '#fff', 3.4, 900);
+    }
+  });
+}
+
+// ---------- airport & trips ----------
+const DESTS = [
+  { id: 'nyc', name: 'New York City', icon: '🗽', price: 450, days: 3, facts: ['You saw the Statue of Liberty!', 'You rode the subway under the city.', 'You ate a giant slice of pizza in Times Square.'] },
+  { id: 'grand', name: 'Grand Canyon', icon: '🏜️', price: 350, days: 3, facts: ['The canyon is over a mile deep!', 'You watched the sunset turn the rocks red and orange.', 'You hiked part of the Bright Angel Trail.'] },
+  { id: 'orlando', name: 'Orlando Theme Parks', icon: '🎢', price: 500, days: 4, facts: ['You rode the tallest roller coaster!', 'You met your favorite characters.', 'You watched fireworks over the castle.'] },
+  { id: 'hawaii', name: 'Hawaii', icon: '🌺', price: 700, days: 5, facts: ['You snorkeled with sea turtles!', 'You saw a real volcano.', 'You learned to hula dance at a luau.'] },
+  { id: 'paris', name: 'Paris, France', icon: '🗼', price: 900, days: 5, facts: ['You went up the Eiffel Tower!', 'You saw the Mona Lisa at the Louvre.', 'You ate fresh croissants every morning.'] },
+  { id: 'tokyo', name: 'Tokyo, Japan', icon: '🏯', price: 1100, days: 6, facts: ['You rode a super fast bullet train!', 'You saw Mount Fuji.', 'You ate sushi and ramen.'] },
+  { id: 'kenya', name: 'Safari in Kenya', icon: '🦁', price: 1300, days: 7, facts: ['You saw lions, elephants and giraffes in the wild!', 'You watched a huge herd of zebras.', 'You slept in a tent under a sky full of stars.'] },
+];
+const HOTEL_NIGHT = 90;
+function viewAirport() {
+  return `<p>Fly anywhere in the world! You need a 🧳 suitcase (Mall). Hotels cost about ${money(HOTEL_NIGHT)} a night.</p>
+    <div class="grid shop">${DESTS.map(d => { const total = d.price + d.days * HOTEL_NIGHT; return `<div class="card item"><div class="jt"><b>${d.icon} ${d.name}</b><span class="pay">${money(total)}</span></div>
+      <p class="muted small">✈️ Ticket ${money(d.price)} + 🏨 ${d.days} nights · ${d.days} days away${S.trips && S.trips[d.id] ? ' · ✅ been here' : ''}</p>
+      <button class="btn primary sm" onclick="bookTrip('${d.id}')">Book trip</button></div>`; }).join('')}</div>
+    <p class="lesson">💡 Bills still come while you're away, your pets need care, and if you have a job you need vacation days!</p>`;
+}
+function bookTrip(id) {
+  const d = DESTS.find(x => x.id === id), total = d.price + d.days * HOTEL_NIGHT;
+  if (!has('suitcase')) return nope('You need a suitcase to pack your things! Buy one at the Mall.');
+  if (S.money < total) return nope(`This trip costs ${money(total)} in total. Save up!`);
+  if (S.hour < 6 || S.hour > 20) return nope('All flights today have left. Come back in the morning!');
+  const j = S.job; let workDays = 0;
+  if (j) for (let k = 0; k < d.days; k++) if (worksOn(S.day + k)) workDays++;
+  const pets = (S.pets || []).length;
+  showModal(`<h2>${d.icon} Trip to ${d.name}</h2>
+    <table class="stub"><tr><td>✈️ Plane tickets</td><td>${money(d.price)}</td></tr><tr><td>🏨 Hotel (${d.days} nights)</td><td>${money(d.days * HOTEL_NIGHT)}</td></tr>${pets ? `<tr><td>🐾 Pet sitter (${d.days} days)</td><td>${S.family.mom.rel >= 50 ? 'Free — Mom will help!' : money(20 * pets * d.days)}</td></tr>` : ''}<tr class="total"><td>Total</td><td>${money(total + (pets && S.family.mom.rel < 50 ? 20 * pets * d.days : 0))}</td></tr></table>
+    ${j && workDays ? `<p>${j.pto >= workDays ? `🏖️ You'll use <b>${workDays} vacation days</b> from work (you have ${j.pto}).` : `<b class="neg">⚠️ You only have ${j.pto} vacation days but would miss ${workDays} work days. Your boss will be upset!</b>`}</p>` : ''}
+    <h3>🛂 Airport Security Quiz</h3><p>Which of these can't go in your carry-on bag?</p>
+    <label class="quiz"><input type="radio" name="sec" value="1"> A big bottle of water</label><label class="quiz"><input type="radio" name="sec" value="0"> A book</label><label class="quiz"><input type="radio" name="sec" value="0"> Socks</label>`,
+    [{ label: 'Cancel', cls: 'ghost' }, { label: '✈️ Fly!', cls: 'primary', keepOpen: true, fn: () => { const right = (document.querySelector('input[name="sec"]:checked') || {}).value === '1'; closeModal(); goOnTrip(d, right); } }]);
+}
+function goOnTrip(d, securityRight) {
+  const pets = (S.pets || []).length, sitter = pets && S.family.mom.rel < 50 ? 20 * pets * d.days : 0;
+  if (!spend(d.price, `Plane tickets to ${d.name}`)) return;
+  charge(d.days * HOTEL_NIGHT, `Hotel in ${d.name}`); if (sitter) charge(sitter, 'Pet sitter');
+  if (!securityRight) log('🛂 Airport security took your big water bottle. Liquids in carry-ons must be tiny (3.4 oz)!', 'bad');
+  const j = S.job;
+  log(`✈️ You flew to ${d.name}!`, 'good');
+  for (let k = 0; k < d.days; k++) {
+    if (j && worksToday() && !S.today.worked && j.pto > 0) { j.pto--; S.today.worked = true; j.weekHours += 8; }
+    pass(24, 'relax');
+    const n = S.needs; n.food = 85; n.thirst = 85; n.hygiene = 85; n.bladder = 85; n.energy = Math.max(n.energy, 60); n.fun = clamp(n.fun + 15); n.health = Math.max(n.health, 70);
+    (S.pets || []).forEach(p => { p.food = 80; p.clean = 80; p.happy = Math.max(p.happy, 55); p.walked = true; });
+    log(`${d.icon} Day ${k + 1} in ${d.name}: ${d.facts[k % d.facts.length]}`, 'good');
+  }
+  S.needs.energy = 35;
+  S.trips = S.trips || {}; S.trips[d.id] = true;
+  S.inv.prints = S.inv.prints || []; S.inv.prints.push({ kind: 'print', q: 70, seed: Math.random(), souvenir: d.name });
+  unlock('jetsetter');
+  addNews(`✈️ Local traveler back from ${d.name}`);
+  queueModal(`<h2>${d.icon} Welcome Back!</h2><p>What a trip to <b>${d.name}</b>!</p><ul class="notes">${d.facts.map(f => `<li>${f}</li>`).join('')}</ul><p>🖼️ You brought home a souvenir poster to hang on your wall. 😴 You have jet lag — get some sleep!</p>`);
+  done();
+}
+function drawPlane(c, x, y, s, ang = 0) {
+  c.save(); c.translate(x, y); c.rotate(ang); c.scale(s, s);
+  c.fillStyle = 'rgba(0,0,0,.2)'; c.beginPath(); c.ellipse(4, 8, 30, 6, 0, 0, Math.PI * 2); c.fill();
+  fillR(c, -30, -4, 60, 8, '#f5f5f5', 4); tri(c, [[-6, -2], [8, -2], [-10, -26]], '#cfd8dc'); tri(c, [[-6, 2], [8, 2], [-10, 26]], '#b0bec5');
+  tri(c, [[-30, -2], [-22, -2], [-32, -12]], '#1e88e5'); fillR(c, 24, -2, 6, 4, '#90caf9', 2);
+  for (let k = 0; k < 6; k++) circ(c, -14 + k * 6, 0, 1, '#1e88e5');
+  c.restore();
+}
+
+// ---------- new places on Maple Town's east road ----------
+Object.assign(PLACES, {
+  gasstation: { kind: 'place', far: true, shop: true, town: 'maple', name: 'Gas Station', icon: '⛽', r: [1720, 240, 180, 140], door: [1810, 386], blurb: 'Gas, car wash, oil changes and snacks.' },
+  salon:      { kind: 'place', far: true, shop: true, town: 'maple', name: 'Snip & Style Salon', icon: '💇', r: [1300, 414, 170, 140], door: [1385, 414], blurb: 'Haircuts and hair color.' },
+  dmv:        { kind: 'place', far: true, shop: true, town: 'maple', name: 'License Office', icon: '🪪', r: [1500, 414, 190, 140], door: [1595, 414], blurb: 'Take the written test and the road test to get your driver\'s license.' },
+  airport:    { kind: 'place', far: true, shop: true, name: 'Maple Airport', icon: '✈️', r: [5470, 230, 620, 340], door: [5470, 400], blurb: 'Fly to faraway cities for vacation!' },
+});
+road([4300, 400], [5450, 400]);
+road([5450, 400], [5470, 400]);
+Object.assign(ENTRANCE, {
+  gasstation: { facade: 'store', wall: '#fff3e0', door: 'slide', doorCol: '#bfe3f5', signBg: '#e53935', signFg: '#fff', hours: [0, 24], inside: '#fbf7f0', awning: '#e53935', keeper: true },
+  salon:      { facade: 'store', wall: '#fce4ec', door: 'swing', doorCol: '#ad1457', signBg: '#ad1457', signFg: '#fff', hours: [9, 19], inside: '#fff4f8', awning: '#f06292', keeper: true },
+  dmv:        { facade: 'brick', wall: '#9e9e9e', door: 'double', doorCol: '#37474f', signBg: '#1565c0', signFg: '#fff', hours: [8, 17], inside: '#eef2f5', keeper: true },
+  airport:    { facade: 'glass', wall: '#cfe3f0', door: 'slide', doorCol: '#bfe3f5', signBg: '#0d47a1', signFg: '#fff', hours: [0, 24], inside: '#eef4f8', keeper: true },
+});
+const _drawShopOld = drawShop;
+drawShop = function (c, id, lod) {
+  if (id !== 'airport' && id !== 'gasstation') return _drawShopOld(c, id, lod);
+  const [x, y, w, h] = PLACES[id].r;
+  if (id === 'gasstation') {
+    fillR(c, x, y + 40, w, h - 40, '#9e9e9e');
+    fillR(c, x + 10, y + 20, 110, 10, '#e53935', 2); fillR(c, x + 16, y + 30, 4, 60, '#bbb'); fillR(c, x + 110, y + 30, 4, 60, '#bbb');
+    [[30, 70], [80, 70]].forEach(([dx, dy]) => { fillR(c, x + dx, y + dy, 14, 22, '#eceff1', 2); fillR(c, x + dx + 3, y + dy + 4, 8, 5, '#4caf50'); });
+    shadow(c, x + 125, y + 50, 50, 50); fillR(c, x + 125, y + 50, 50, 50, '#fff3e0'); win(c, x + 130, y + 60, 40, 18); fillR(c, x + 143, y + 80, 14, 20, '#bfe3f5', 2);
+    signBoard(c, x + 124, y + 42, 52, 10, '#e53935', '#fff', 'GAS & SNACKS', 5);
+    fillR(c, x + 150, y + 4, 6, 30, '#666'); fillR(c, x + 134, y, 38, 20, '#fff', 3); txt(c, `$${(S && S.gasPrice || 3.6).toFixed(2)}`, x + 153, y + 10, '#e53935', 9, 900);
+    carShape(c, x + 55, y + 100, '#1e88e5');
+    return;
+  }
+  // airport: runway, terminal, tower, planes
+  fillR(c, x, y, w, h, '#a5c98d', 6);
+  fillR(c, x + 140, y + 230, 470, 46, '#4d535b', 4); c.strokeStyle = '#fff'; c.lineWidth = 2; c.setLineDash([16, 12]); c.beginPath(); c.moveTo(x + 150, y + 253); c.lineTo(x + 600, y + 253); c.stroke(); c.setLineDash([]);
+  for (let k = 0; k < 6; k++) fillR(c, x + 146, y + 234 + k * 7, 10, 3, '#fff');
+  fillR(c, x + 40, y + 120, 200, 70, '#bdbdbd', 4);
+  shadow(c, x + 40, y + 60, 200, 64); fillR(c, x + 40, y + 60, 200, 64, '#cfe3f0'); winGrid(c, x + 40, y + 68, 200, 50, 8, 2, 18, 16, '#9fc4dd', '#eceff1');
+  signBoard(c, x + 80, y + 64, 120, 12, '#0d47a1', '#fff', 'MAPLE AIRPORT', 7);
+  fillR(c, x + 270, y + 30, 16, 90, '#eceff1'); fillR(c, x + 260, y + 18, 36, 18, '#4fc3f7', 3); fillR(c, x + 258, y + 14, 40, 5, '#37474f');
+  drawPlane(c, x + 120, y + 150, 0.9, 0); drawPlane(c, x + 380, y + 150, 0.9, 0);
+  for (let k = 0; k < 8; k++) carShape(c, x + 30 + k * 26, y + 210, ['#e53935', '#1e88e5', '#fdd835', '#43a047'][k % 4], false);
+};
+INTERIORS.gasstation = c => {
+  iWall(c, '#fbf7f0'); iFloor(c, 'tile', ['#e6e1d8']); iLights(c, 'strip', [250, 750]);
+  iShelf(c, 40, 80, 240, 188, 'grocery', 101, '#9aa3aa'); iShelf(c, 300, 80, 200, 188, 'grocery', 102, '#9aa3aa');
+  box3d(c, 540, 110, 110, 158, 0.04, '#cfd8dc', 'metal'); for (let k = 0; k < 4; k++) { c.fillStyle = 'rgba(190,230,250,.5)'; c.fillRect(546, 118 + k * 36, 98, 30); for (let j = 0; j < 6; j++) { c.fillStyle = ['#e53935', '#1e88e5', '#43a047', '#fdd835'][(j + k) % 4]; c.fillRect(550 + j * 15, 126 + k * 36, 10, 20); } }
+  iCounter(c, 700, 200, 270, 68, '#37474f', { register: 900, mat: 'solid' });
+  iWindow(c, 700, 50, 260, 110); for (let k = 0; k < 2; k++) { fillR(c, 740 + k * 120, 110, 30, 45, '#eceff1', 3); fillR(c, 745 + k * 120, 116, 20, 10, '#4caf50'); }
+  iSign(c, 300, 30, 200, 26, '#e53935', '#fff', `⛽ GAS $${S.gasPrice.toFixed(2)}`, 13);
+  iPeople(c, [[800, 196, 1.8, staff('#e53935', 30)]]);
+};
+INTERIORS.salon = c => {
+  iWall(c, '#fff4f8'); iFloor(c, 'checker', ['#ffffff', '#f8bbd0']); iLights(c, 'pendant', [250, 500, 750]);
+  for (let k = 0; k < 3; k++) {
+    const x = 120 + k * 260;
+    c.fillStyle = '#c9a54a'; rrect(c, x - 40, 40, 100, 120, 50); c.fill(); const mg = c.createLinearGradient(x - 34, 46, x + 54, 154); mg.addColorStop(0, '#eef6fb'); mg.addColorStop(1, '#b8cfdd'); c.fillStyle = mg; rrect(c, x - 34, 46, 88, 108, 44); c.fill();
+    box3d(c, x - 30, 220, 70, 22, 0.06, '#1d1d1d', 'fabric'); box3d(c, x - 24, 180, 58, 40, 0.03, '#1d1d1d', 'fabric'); metal(c, x, 242, 10, 26, 2, '#c0c6cb');
+    drawPerson(c, x + 5, 232, 1.6, guest(70 + k)); drawPerson(c, x + 70, 262, 1.8, staff('#ad1457', 31 + k));
+  }
+  iPlant(c, 960, 0.8);
+};
+INTERIORS.dmv = c => {
+  iWall(c, '#eef2f5'); iFloor(c, 'tile', ['#d7dde0']); iLights(c, 'strip', [200, 500, 800]);
+  fillR(c, 420, 30, 160, 50, '#111', 4); txt(c, 'NOW SERVING', 500, 44, '#ffcc00', 10, 900); txt(c, `A-${(S.day * 7) % 90 + 10}`, 500, 66, '#ff3b30', 20, 900);
+  for (let k = 0; k < 3; k++) { iCounter(c, 120 + k * 260, 200, 200, 68, '#607d8b', { register: 250 + k * 260, mat: 'solid' }); drawPerson(c, 180 + k * 260, 196, 1.7, staff('#1565c0', 33 + k)); }
+  // eye chart
+  wallShadow(c, 860, 30, 100, 130); fillR(c, 860, 30, 100, 130, '#fff'); ['E', 'F P', 'T O Z', 'L P E D', 'P E C F D'].forEach((l, i) => txt(c, l, 910, 50 + i * 22, '#111', 18 - i * 3, 900));
+  for (let k = 0; k < 6; k++) { box3d(c, 40 + k * 120, 300, 90, 10, 0.08, '#607d8b', 'solid'); }
+  iPeople(c, [[300, 330, 2, guest(75)], [700, 335, 2, guest(76)]]);
+};
+INTERIORS.airport = c => {
+  iWall(c, '#eef4f8'); iFloor(c, 'marble', ['#e4e8ec']); iLights(c, 'strip', [200, 500, 800]);
+  iWindow(c, 40, 30, 920, 140);
+  drawPlane(c, 520, 120, 2.4, 0);
+  fillR(c, 360, 180, 280, 70, '#111', 4); txt(c, 'DEPARTURES', 500, 192, '#ffcc00', 11, 900);
+  ['NYC  ON TIME', 'PARIS  BOARDING', 'TOKYO  10:45'].forEach((l, i) => txt(c, l, 500, 210 + i * 14, i === 1 ? '#34c759' : '#fff', 10, 800));
+  iCounter(c, 60, 214, 240, 54, '#0d47a1', { register: 240, mat: 'solid' });
+  for (let k = 0; k < 6; k++) box3d(c, 680 + k * 50, 260, 42, 10, 0.08, '#37474f', 'solid');
+  // suitcases
+  [[420, 300, '#e53935'], [600, 310, '#1e88e5']].forEach(([sx, sy, col]) => { box3d(c, sx, sy - 34, 30, 34, 0.05, col, 'solid'); metal(c, sx + 13, sy - 44, 4, 10, 1, '#555'); });
+  iPeople(c, [[150, 210, 1.8, staff('#0d47a1', 36)], [440, 332, 2, guest(77)], [620, 338, 2, guest(78)]]);
+};
+
+// ---------- what you can do at each new place ----------
+function viewGas() {
+  return `<div class="card money"><h3>⛽ Gas Pumps <span class="muted small">· today: $${S.gasPrice.toFixed(2)}/gallon</span></h3>${hasCar() ? carCard() : '<p class="muted">You don\'t have a car yet.</p>'}
+    <div class="row"><button class="btn primary sm" onclick="fillTank()">⛽ Fill the tank</button><button class="btn ghost sm" onclick="carWash()">🧽 Car wash $10</button><button class="btn ghost sm" onclick="oilChange()">🛢️ Oil change $45</button></div>
+    <p class="lesson">💡 Gas prices change every day. Driving far uses more gas!</p></div>
+    <div class="card"><h3>🍫 Snacks</h3><div class="row"><button class="btn sm ghost" onclick="buyExtra('water')">💧 Water $1</button><button class="btn sm ghost" onclick="drinkSoda()">🥤 Soda $2</button></div></div>`;
+}
+function viewSalon() {
+  return `<p>Your hair grows every day. Right now it's been <b>${S.hairDays} days</b> since your last haircut.</p>
+    <div class="grid actions"><button class="action" onclick="haircut(false)"><span class="ic">💇</span><b>Haircut</b><small>$25 · pick a new style</small></button>
+    <button class="action" onclick="haircut(true)"><span class="ic">🎨</span><b>Hair Color</b><small>$45 · any color</small></button></div>
+    <p class="lesson">💡 A fresh haircut helps you look your best at job interviews!</p>`;
+}
+function viewDmv() {
+  return `<div class="card money"><h3>🪪 Get Your Driver's License</h3><div class="mrows">
+    ${mrow('📝', 'Step 1: Written test', S.permit || S.license ? '✅ Passed — you have a learner\'s permit' : '$10 · 5 questions about road rules', S.permit || S.license ? '' : b('Take the test', 'writtenTest()'))}
+    ${mrow('🚗', 'Step 2: Practice', `Driving skill ${Math.round(S.skills.drive)}/20 · take Driving classes at the College`, '')}
+    ${mrow('🛣️', 'Step 3: Road test', S.license ? '✅ You have your license!' : '$25 · drive with an examiner', S.license ? '' : b('Take the road test', 'roadTest()', 'primary', !S.permit))}
+    </div><p class="lesson">💡 You need a license to drive a car. It shows you know the rules and can drive safely.</p></div>`;
+}
+function interviewExtras(job, notes) {
+  let s = 0;
+  if (job.req.some(r => r.s === 'drive') && !S.license) { s -= 20; notes.push('🪪 They asked to see your driver\'s license. You don\'t have one yet! (−20)'); }
+  if (S.volunteerHours >= 4) { const v = Math.min(8, Math.round(S.volunteerHours / 2)); s += v; notes.push(`🤝 They liked that you volunteer in your community. (+${v})`); }
+  if (S.hairDays > 60) { s -= 6; notes.push('💇 Your hair looked really messy. Get a haircut! (−6)'); }
+  if (S.ill && S.ill.type !== 'arm') { s -= 8; notes.push(`🤧 You were sneezing and coughing the whole time. (−8)`); }
+  if (S.credit < 500 && JOBS.indexOf(job) >= 0 && job.cat === 'Office') { s -= 5; notes.push('📉 They checked your credit and it was poor. (−5)'); }
+  return s;
+}
+
+</script>
+  <script>
+// ===================== BUILD YOUR OWN HOUSE =====================
+// Buy land, design a house, and watch workers build it day by day.
+
+const LOTS = {
+  lot_country: { name: 'Countryside Lot', icon: '🌾', r: [-1580, 236, 200, 144], door: [-1480, 386], price: 25000, about: 'Quiet land out in the country, on the road west of town.' },
+  lot_river:   { name: 'Riverview Lot',   icon: '🏞️', r: [352, -720, 180, 150], door: [344, -645], price: 40000, about: 'Land by the river, north of Maple Town.' },
+  lot_sea:     { name: 'Seaview Lot',     icon: '🌊', r: [4380, 2926, 180, 130], door: [4470, 2918], price: 60000, about: 'Land in Seaside Bay, close to the beach.' },
+};
+const HOUSE_STYLES = {
+  cottage:   { name: 'Cozy Cottage', icon: '🏡', base: 60000, roof: '#7f5539', days: 10 },
+  modern:    { name: 'Modern House', icon: '🏢', base: 90000, roof: '#37474f', days: 14, flat: true },
+  farmhouse: { name: 'Farmhouse', icon: '🏚️', base: 75000, roof: '#b03a2e', days: 12 },
+  cabin:     { name: 'Log Cabin', icon: '🪵', base: 55000, roof: '#4e342e', days: 9, logs: true },
+  castle:    { name: 'Mini Castle', icon: '🏰', base: 250000, roof: '#5b6b80', days: 30, castle: true },
+};
+const BUILD_STAGES = ['🧱 Pouring the foundation', '🪚 Building the frame', '🏠 Putting on the roof', '🎨 Painting and finishing'];
+Object.entries(LOTS).forEach(([id, l]) => { PLACES[id] = { kind: 'land', far: true, name: l.name, icon: l.icon, r: l.r, door: l.door, blurb: l.about }; });
+(function clearLots() {
+  for (let i = VHOUSES.length - 1; i >= 0; i--) { const h = VHOUSES[i]; if (Object.values(LOTS).some(l => overlap([h.x, h.y, h.w, h.h], l.r, 10))) VHOUSES.splice(i, 1); }
+})();
+
+function ensureBuildState() {
+  const b2 = S.build;
+  if (b2 && b2.done) registerCustomHome();
+}
+function registerCustomHome() {
+  const b2 = S.build, st = HOUSE_STYLES[b2.style];
+  HOMES.custom = { name: `Your ${st.name}`, icon: st.icon, type: 'buy', price: b2.cost, upkeep: 40 + b2.beds * 25, comfort: 4 + b2.beds, desc: `The ${st.name.toLowerCase()} you designed and built yourself!`, custom: true };
+  HOME_PLACE.custom = b2.lot;
+  PLACES[b2.lot].kind = 'home';
+  HOME_INCLUDES.custom = ['toilet', 'shower'];
+  WALL_SLOTS.custom = 4 + b2.beds;
+  DOOR_STYLE.custom = { kind: st.castle ? 'grand' : 'house', wall: b2.color, door: b2.door, num: String(7 + b2.beds) };
+}
+
+function viewLand() {
+  return `<div class="card money"><h3>🏗️ Build Your Own House</h3>
+    ${S.build ? `<p>You own the <b>${LOTS[S.build.lot].name}</b>. ${S.build.done ? '✅ Your house is finished!' : S.build.style ? `🚧 Building: ${Math.round(S.build.progress)}% done.` : 'Design your house next!'}</p>
+      ${!S.build.style ? `<button class="btn primary sm" onclick="designHouse()">✏️ Design my house</button>` : ''}
+      ${S.build.done && S.home !== 'custom' ? `<button class="btn primary sm" onclick="moveIntoCustom()">🔑 Move in</button>` : ''}
+      ${S.build.style && !S.build.done ? `<button class="btn ghost sm" onclick="travelTo('${S.build.lot}')">👷 Go watch the builders</button>` : ''}`
+    : `<p class="muted">Buy land, then design your dream house. Builders take a few weeks to build it.</p>
+      <div class="grid shop">${Object.entries(LOTS).map(([id, l]) => `<div class="card item"><div class="jt"><b>${l.icon} ${l.name}</b><span class="pay">${money(l.price)}</span></div><p class="muted small">${l.about}</p><button class="btn primary sm" onclick="buyLand('${id}')">Buy land</button></div>`).join('')}</div>`}
+    <p class="lesson">💡 Building a house takes land, a design, money, and time. Builders follow steps: foundation, frame, roof, then finishing.</p></div>`;
+}
+function buyLand(id) {
+  const l = LOTS[id];
+  if (S.build) return nope('You already own land.');
+  confirmModal(`Buy the <b>${l.name}</b> for <b>${money(l.price)}</b>?`, () => {
+    if (!spend(l.price, `Bought land: ${l.name}`)) return;
+    S.build = { lot: id, style: null, progress: 0, done: false };
+    log(`🌾 You bought the ${l.name}! Now design your house.`, 'good');
+    done(); designHouse();
+  });
+}
+let designPick = { style: 'cottage', beds: 2, color: '#f7d794', door: '#b03a2e' };
+function houseCost(d = designPick) { return HOUSE_STYLES[d.style].base + d.beds * 15000; }
+function designHouse() {
+  const d = designPick;
+  showModal(`<h2>✏️ Design Your House</h2>
+    <div class="cc-row"><span class="cc-label">Style</span><div class="styles">${Object.entries(HOUSE_STYLES).map(([k, s]) => `<button class="st ${d.style === k ? 'sel' : ''}" onclick="designPick.style='${k}';closeModal();designHouse()">${s.icon} ${s.name}</button>`).join('')}</div></div>
+    <div class="cc-row"><span class="cc-label">Bedrooms</span><div class="styles">${[1, 2, 3, 4, 5].map(n => `<button class="st ${d.beds === n ? 'sel' : ''}" onclick="designPick.beds=${n};closeModal();designHouse()">${n}</button>`).join('')}</div></div>
+    <div class="cc-row"><span class="cc-label">Wall color</span><div class="swatches">${['#f7d794', '#a7d8f0', '#f8c6c6', '#d6f0b5', '#e4d4f7', '#fde2b8', '#f2f2f2', '#c8b39a'].map(c => `<button class="sw ${d.color === c ? 'sel' : ''}" style="background:${c}" onclick="designPick.color='${c}';closeModal();designHouse()" aria-label="wall color"></button>`).join('')}</div></div>
+    <div class="cc-row"><span class="cc-label">Front door</span><div class="swatches">${['#b03a2e', '#2c5f8a', '#2e6b4a', '#f2b705', '#3e2723', '#7e57c2'].map(c => `<button class="sw ${d.door === c ? 'sel' : ''}" style="background:${c}" onclick="designPick.door='${c}';closeModal();designHouse()" aria-label="door color"></button>`).join('')}</div></div>
+    <canvas id="housepreview" width="320" height="200" style="width:100%;max-width:320px;border-radius:10px;background:#cfeaff"></canvas>
+    <p>Cost to build: <b>${money(houseCost())}</b> · Takes about <b>${HOUSE_STYLES[d.style].days + d.beds * 2} days</b></p>`,
+    [{ label: 'Later', cls: 'ghost' }, { label: `🏗️ Start building (${money(houseCost())})`, cls: 'primary', fn: startBuilding }]);
+  const cv = $('#housepreview'); if (cv) { const c = cv.getContext('2d'); c.scale(2, 2); c.fillStyle = '#8fd17a'; c.fillRect(0, 70, 160, 30); drawCustomHouse(c, 20, 10, 120, 85, { ...d, progress: 100 }); }
+}
+function startBuilding() {
+  const d = designPick, cost = houseCost();
+  if (S.mortgage && S.money < cost) return nope('You already have a mortgage. Pay it off or save up cash first.');
+  if (S.money < cost) {
+    // a construction loan: 10% down, the bank pays the builders, you pay back weekly for 10 years
+    const down = Math.round(cost * 0.1), total = Math.round((cost - down) * 1.45), weekly = Math.round(total / 520);
+    return showModal(`<h2>🏦 Construction Loan</h2><p>You have ${money(S.money)}, but building costs <b>${money(cost)}</b>.</p>
+      <p>The bank can lend you the rest: <b>${money(down)}</b> down now, then <b>${money(weekly)}/week</b> for 10 years (${money(total + down)} total with interest).</p>
+      <p class="lesson">💡 Banks want a credit score of 620+ and a payment under 40% of your pay (you earn ${money(weeklyIncome())}/week).</p>`,
+      [{ label: 'No thanks', cls: 'ghost' }, { label: 'Get the loan', cls: 'primary', fn: () => {
+        if (S.credit < 620) { queueModal(`<h2>🏦 Loan Denied</h2><p>Your credit score is <b>${S.credit}</b>. Banks want at least <b>620</b>.</p>`); return done(); }
+        if (weeklyIncome() * 0.4 < weekly) { queueModal(`<h2>🏦 Loan Denied</h2><p>Your income is too low for ${money(weekly)}/week. You need to earn at least ${money(weekly / 0.4)}/week.</p>`); return done(); }
+        if (!spend(down, 'Construction loan down payment')) return;
+        S.mortgage = { balance: total, weekly };
+        beginConstruction(d, cost);
+      } }]);
+  }
+  if (!spend(cost, 'House construction')) return;
+  beginConstruction(d, cost);
+}
+function beginConstruction(d, cost) {
+  Object.assign(S.build, { style: d.style, beds: d.beds, color: d.color, door: d.door, cost: cost + LOTS[S.build.lot].price, progress: 0, daysTotal: HOUSE_STYLES[d.style].days + d.beds * 2 });
+  log(`🏗️ The builders started building your ${HOUSE_STYLES[d.style].name}!`, 'good');
+  addNews(`🏗️ Construction begins on a new ${HOUSE_STYLES[d.style].name.toLowerCase()}`);
+  refreshLotChunks(); done();
+}
+function buildNewDay() {
+  const b2 = S.build; if (!b2 || !b2.style || b2.done) return;
+  const rain = S.weather === 'rainy' || S.weather === 'snowy';
+  if (rain) { log('🌧️ Bad weather today — the builders couldn\'t work on your house.'); return; }
+  if (weekday() >= 5) return;
+  b2.progress = Math.min(100, b2.progress + 100 / (b2.daysTotal * 5 / 7));
+  const stage = Math.min(3, Math.floor(b2.progress / 25));
+  if (stage !== b2.stage) { b2.stage = stage; log(`👷 House update: ${BUILD_STAGES[stage]}...`); }
+  if (b2.progress >= 100) {
+    b2.done = true; registerCustomHome(); unlock('builder');
+    queueModal(`<h2>🏡 Your House Is Finished!</h2><p>The builders finished your <b>${HOUSE_STYLES[b2.style].name}</b> with ${b2.beds} bedroom${b2.beds > 1 ? 's' : ''}!</p><p>Go to 🔑 Real Estate or visit your land to move in.</p>`);
+    addNews(`🏡 New ${HOUSE_STYLES[b2.style].name.toLowerCase()} finished!`);
+  }
+  refreshLotChunks();
+}
+function moveIntoCustom() {
+  if (!S.build || !S.build.done) return;
+  if (S.home !== 'parents' && home().type === 'buy') return nope('Sell your other house first.');
+  if (!petsOkFor('custom')) return;
+  S.home = 'custom'; S.loc = 'home'; S.doorOpen = false; S.missedRent = 0; S.mortgage = null;
+  homeWelcome(); unlock('homeowner'); unlock('moved_out');
+  log('🔑 You moved into the house you built yourself!', 'good'); done();
+}
+function refreshLotChunks() {
+  if (!S.build) return;
+  const [x, y, w, h] = LOTS[S.build.lot].r;
+  for (let cy = Math.floor((y - 60) / CHUNK); cy <= Math.floor((y + h + 60) / CHUNK); cy++)
+    for (let cx = Math.floor((x - 60) / CHUNK); cx <= Math.floor((x + w + 60) / CHUNK); cx++) chunkCache.forEach(m => m.delete(cx + ',' + cy));
+}
+function viewLot(id) {
+  const b2 = S.build;
+  if (!b2 || b2.lot !== id) return `<p>${LOTS[id].about} This land is for sale at 🔑 Real Estate for <b>${money(LOTS[id].price)}</b>.</p>`;
+  if (!b2.style) return `<p>This is your land! Design a house to build here.</p><button class="btn primary" onclick="designHouse()">✏️ Design my house</button>`;
+  if (b2.done) return `<p>Your ${HOUSE_STYLES[b2.style].name} is finished!</p>${S.home !== 'custom' ? '<button class="btn primary" onclick="moveIntoCustom()">🔑 Move in</button>' : ''}`;
+  return `<div class="roomwrap"><canvas id="buildcv" aria-label="Your house being built"></canvas></div>
+    <p>🚧 <b>${Math.round(b2.progress)}%</b> done · ${BUILD_STAGES[Math.min(3, Math.floor(b2.progress / 25))]}</p>
+    <div class="bar"><div class="fill ok" style="width:${b2.progress}%"></div></div>
+    <p class="muted small">Builders work on weekdays when the weather is nice.</p>`;
+}
+function drawBuildView(cv) {
+  const b2 = S.build;
+  const cssW = cv.parentElement.clientWidth, dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.style.height = (cssW * RH / RW) + 'px'; cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssW * dpr * RH / RW);
+  const c = cv.getContext('2d'); c.setTransform(cv.width / RW, 0, 0, cv.width / RW, 0, 0);
+  const g = c.createLinearGradient(0, 0, 0, 260); g.addColorStop(0, '#5aa9e6'); g.addColorStop(1, '#cfe8fa'); c.fillStyle = g; c.fillRect(0, 0, RW, 260);
+  c.fillStyle = '#7fbf6a'; c.fillRect(0, 260, RW, 120); c.fillStyle = '#b98b5a'; c.fillRect(280, 262, 440, 30);
+  drawCustomHouse(c, 300, 20, 400, 270, b2);
+  // workers and machines
+  drawPerson(c, 230, 330, 2, { skin: '#c4885a', hair: '#2a1c14', style: 'short', shirt: '#f57c00', pants: '#24395e' });
+  drawPerson(c, 780, 335, 2, { skin: '#f3c9a0', hair: '#8a5230', style: 'ponytail', shirt: '#f57c00', pants: '#24395e' });
+  [[230, 252], [780, 257]].forEach(([hx, hy]) => { c.fillStyle = '#fdd835'; c.beginPath(); c.arc(hx, hy, 15, Math.PI, 0); c.fill(); c.fillRect(hx - 19, hy - 2, 38, 4); });
+  if (b2.progress < 50) { fillR(c, 820, 230, 120, 50, '#fbc02d', 6); fillR(c, 900, 200, 30, 30, '#333', 4); circ(c, 845, 285, 14, '#222'); circ(c, 915, 285, 14, '#222'); }
+  fillR(c, 60, 270, 120, 18, '#c9a06a'); fillR(c, 70, 254, 100, 16, '#c9a06a');
+  drawPerson(c, 120, 350, 2.3, S.look);
+}
+// a drawing of the custom house (used on the map, in the preview and on the building site)
+function drawCustomHouse(c, x, y, w, h, b2) {
+  const st = HOUSE_STYLES[b2.style || 'cottage'], p = b2.progress == null ? 100 : b2.progress;
+  const bx = x + w * 0.12, bw = w * 0.76, by = y + h * 0.42, bh = h * 0.5;
+  c.fillStyle = '#9e9e9e'; c.fillRect(bx - 4, by + bh - 4, bw + 8, 8);                       // foundation
+  if (p < 25) { c.fillStyle = 'rgba(150,150,150,.5)'; c.fillRect(bx, by + bh - 4 - (p / 25) * 6, bw, 6); return; }
+  if (p < 50) {                                                                              // wooden frame
+    c.strokeStyle = '#c9a06a'; c.lineWidth = Math.max(1.5, w / 80);
+    const top = by + bh - (bh * Math.min(1, (p - 25) / 20));
+    for (let k = 0; k <= 6; k++) { c.beginPath(); c.moveTo(bx + bw * k / 6, by + bh); c.lineTo(bx + bw * k / 6, top); c.stroke(); }
+    c.beginPath(); c.moveTo(bx, top); c.lineTo(bx + bw, top); c.moveTo(bx, by + bh / 2); c.lineTo(bx + bw, by + bh / 2); c.stroke();
+    return;
+  }
+  const painted = p >= 75;
+  const wall = painted ? b2.color : '#d7ccc8';
+  if (st.castle) { c.fillStyle = wall; c.fillRect(bx, by - bh * 0.2, bw, bh * 1.2); [bx - w * 0.06, bx + bw - w * 0.06].forEach(tx => { c.fillStyle = tone(wall, -0.1); c.fillRect(tx, by - bh * 0.6, w * 0.12, bh * 1.6); tri(c, [[tx - 4, by - bh * 0.6], [tx + w * 0.06, by - bh * 1.1], [tx + w * 0.12 + 4, by - bh * 0.6]], st.roof); }); for (let k = 0; k < 6; k++) c.fillRect(bx + k * bw / 6, by - bh * 0.3, bw / 12, bh * 0.1); }
+  else { c.fillStyle = wall; c.fillRect(bx, by, bw, bh); }
+  if (st.logs && painted) for (let k = 0; k < 8; k++) { c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(bx, by + k * bh / 8, bw, 2); }
+  if (p >= 62) {
+    if (st.flat) { c.fillStyle = st.roof; c.fillRect(bx - 6, by - 8, bw + 12, 10); }
+    else if (!st.castle) tri(c, [[bx - w * 0.06, by + 2], [bx + bw / 2, y + h * 0.05], [bx + bw + w * 0.06, by + 2]], st.roof);
+  }
+  if (painted) {
+    const n = Math.min(4, (b2.beds || 2) + 1);
+    for (let k = 0; k < n; k++) { const wx = bx + bw * (k + 0.5) / (n + 0.5) - w * 0.03; c.fillStyle = '#fff'; c.fillRect(wx - 1, by + bh * 0.18 - 1, w * 0.07 + 2, h * 0.11 + 2); c.fillStyle = '#bfe3f5'; c.fillRect(wx, by + bh * 0.18, w * 0.07, h * 0.11); }
+    c.fillStyle = b2.door; c.fillRect(bx + bw - w * 0.16, by + bh - h * 0.22, w * 0.09, h * 0.22);
+  }
+}
+// the lots on the big map
+const _drawFarPlaceOld = drawFarPlace;
+drawFarPlace = function (c, id, lod) {
+  if (!LOTS[id]) return _drawFarPlaceOld(c, id, lod);
+  const [x, y, w, h] = LOTS[id].r;
+  const mine = S && S.build && S.build.lot === id;
+  c.fillStyle = mine && S.build.style ? '#c9b48a' : '#9fd987'; c.fillRect(x, y, w, h);
+  c.strokeStyle = '#8b6b45'; c.lineWidth = 1.5; c.setLineDash([4, 4]); c.strokeRect(x + 2, y + 2, w - 4, h - 4); c.setLineDash([]);
+  if (mine && S.build.style) drawCustomHouse(c, x + 10, y, w - 20, h - 10, S.build);
+  else { fillR(c, x + w / 2 - 1, y + h - 50, 2, 30, '#6d4c41'); signBoard(c, x + w / 2 - 30, y + h - 66, 60, 18, mine ? '#2e7d32' : '#fff', mine ? '#fff' : '#c62828', mine ? 'YOUR LAND' : 'FOR SALE', 8); }
+};
+
+</script>
+  <script>
 // ===================== RENDERING =====================
 // Places you can go (shown as buttons under the map) + personal screens
 const TABS = [
@@ -7246,7 +8971,19 @@ function lvlBar(v) {
   return `<div class="bar small"><div class="fill skill" style="width:${v}%"></div></div>`;
 }
 function workDue() {
-  return S.job && !isWeekend() && !S.today.worked && !S.today.sick && S.day >= S.job.startDay && S.hour >= 5 && S.hour < 11;
+  if (!S.job || !worksToday() || S.today.worked || S.today.sick || S.day < S.job.startDay) return false;
+  const sh = shiftNow();
+  return S.hour >= sh.from - 1 && S.hour < sh.to;
+}
+
+// everything new about real life starts here for old and new saves
+function ensureRealLife() {
+  ensureCalendarState();
+  ensureLifeState();
+  ensureSocialState();
+  ensureWorkState();
+  ensureCarState();
+  ensureBuildState();
 }
 
 function render() {
@@ -7256,14 +8993,26 @@ function render() {
   document.body.classList.toggle('night', night);
 
   $('#hud').innerHTML = `
-    <div class="who">${avatarImg(S.look, 48)}<div><b>${esc(S.name)}</b><div class="muted">📍 ${esc(locName(S.loc))}</div></div></div>
-    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">Day ${S.day} · ${wd}${isWeekend() ? ' 🎉' : ''} · ${WEATHER[S.weather].icon} ${WEATHER[S.weather].name}</div></div>
+    <div class="who">${avatarImg(S.look, 48)}<div><b>${esc(S.name)}</b> <span class="muted">· age ${S.age}${isBirthday() ? ' 🎂' : ''}</span><div class="muted">📍 ${esc(locName(S.loc))}</div></div>${phoneButton()}</div>
+    <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">${wd}, ${dateText()}${isWeekend() ? ' 🎉' : ''} · ${SEASONS[seasonOf()].icon} ${SEASONS[seasonOf()].name}</div><div class="muted">${weatherText()}${holidayToday() ? ` · ${holidayToday().icon} ${holidayToday().name}` : ''}${eventToday() ? ` · ${eventToday().icon} ${eventToday().name}` : ''}</div></div>
     <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
 
   $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
+  if (S.powerOut) warn.push(`<span class="chip warn">🔌 The power is out! (${Math.ceil(S.powerOut)} hrs left)</span>`);
+  if (S.needs.thirst < 25) warn.push(`<button class="chip warn" onclick="quickDrink()">💧 You're thirsty! (tap to drink water)</button>`);
+  if (S.ill) warn.push(`<button class="chip warn" onclick="takeMedicine()">${ILLNESS[S.ill.type].icon} You have ${ILLNESS[S.ill.type].name.toLowerCase()} (${S.ill.days}d) · tap for medicine</button>`);
+  const cc = coldChip(); if (cc) warn.push(cc);
+  const hc = hairChip(); if (hc) warn.push(hc);
+  if (weekday() === 1 && S.hour < 8 && S.bin > 0 && !S.today.binOut && S.home !== 'parents') warn.push(`<button class="chip warn" onclick="binsToCurb()">🚛 It's trash day! Put the bin at the curb before 8 AM (tap)</button>`);
+  if (S.trash >= 90) warn.push('<span class="chip warn">🗑️ Your trash is full! Take it out.</span>');
+  if (S.bugs) warn.push('<span class="chip warn">🐜 There are ants in your kitchen! Clean up.</span>');
+  if (hasCar() && S.fuel < 15) warn.push(`<span class="chip warn">⛽ Low on gas! Fill up at the Gas Station.</span>`);
+  if (hasCar() && S.car.miles - S.car.oilAt > 3000) warn.push(`<span class="chip warn">🛢️ Your car needs an oil change!</span>`);
+  if (S.car && S.car.flat) warn.push(`<span class="chip warn">🛞 You have a flat tire!</span>`);
+  if (S.invite && S.invite.day === S.day) warn.push(`<button class="chip warn" onclick="openPhone('msgs')">💬 ${esc(S.invite.name)} invited you to ${S.invite.plan}! (tap)</button>`);
   if (S.needs.bladder < 25) warn.push(`<button class="chip warn" onclick="quickToilet()">🚽 You really need the bathroom! (tap to go)</button>`);
   if (S.handsDirty) warn.push(`<button class="chip warn" onclick="washHands();done()">🧼 Wash your hands! (tap)</button>`);
   (S.pets || []).forEach(p => {
@@ -7298,6 +9047,8 @@ function render() {
   if (intCv) drawInterior(intCv, intCv.dataset.pid);
   const entCv = $('#entcv');
   if (entCv && !placeDoorAnim) drawEntrance(entCv, entCv.dataset.pid, 0);
+  const buildCv = $('#buildcv');
+  if (buildCv) drawBuildView(buildCv);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
 }
 
@@ -7311,13 +9062,16 @@ const PLACE_VIEWS = {
   mall: () => viewShopAt('mall'),
   diner: () => viewShopAt('diner'),
   cars: () => viewShopAt('cars'),
-  bank: () => viewBank(),
-  realestate: () => viewHousing(),
+  bank: () => viewBank() + `<div class="grid two">${creditCard()}<div class="card"><h3>📊 Weekly Budget</h3>${budgetHtml()}</div></div>`,
+  realestate: () => viewHousing() + viewLand(),
   hospital: () => viewHospital(),
-  park: () => viewPark(),
+  park: () => viewParkEvent() + viewPark(),
+  gasstation: () => viewGas(), salon: () => viewSalon(), dmv: () => viewDmv(), airport: () => viewAirport(),
+  h_parents: () => viewFamilyVisit(),
+  lot_country: () => viewLot('lot_country'), lot_river: () => viewLot('lot_river'), lot_sea: () => viewLot('lot_sea'),
   petshop: () => viewPetShop(),
   vet: () => viewVet(),
-  cityhall: () => viewWorkplace('cityhall'),
+  cityhall: () => viewCivic() + viewWorkplace('cityhall'),
   theater: () => viewWorkplace('theater'),
   beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
   campground: () => viewTrip('campground'), village: () => viewTrip('village'), zoo: () => viewTrip('zoo'),
@@ -7335,7 +9089,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -7398,19 +9152,24 @@ function jobCard() {
   const j = S.job, job = JOBS[j.id];
   const wp = workplaceOf(job);
   const c = travelInfo('home', wp);
-  const canWork = !isWeekend() && !S.today.worked && !S.today.sick && S.day >= j.startDay;
+  const sh = SHIFTS[shiftOf(job)];
+  const canWork = worksToday() && !S.today.worked && !S.today.sick && S.day >= j.startDay;
   let status;
   if (S.day < j.startDay) status = 'Your first day is tomorrow.';
-  else if (isWeekend()) status = 'Weekend — no work! 🎉';
+  else if (S.today.vacation) status = '🏖️ Vacation day — enjoy!';
+  else if (!worksToday()) status = S.snowDay ? '❄️ Snow day — work is closed!' : 'Day off — no work today! 🎉';
   else if (S.today.worked) status = '✅ You worked today.';
   else if (S.today.sick) status = '🤒 Called in sick today.';
-  else status = 'Leave between 6 and 9 AM to be on time.';
+  else status = `Be there by ${fmtTime(sh.late)} to be on time.`;
   return `<div class="card job">
     <h3>💼 ${job.name} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
     <p class="muted">${status} · Trip from home: ${c.icon} ${travelTime(c.hours)}${c.cost ? `, $${c.cost} bus each way` : ''}</p>
+    <p class="muted">🕐 ${sh.label}</p>
     <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
+    <p class="muted">🏖️ Vacation days: ${j.pto || 0} · 🤒 Paid sick days: ${j.sickDays || 0}${j.boss ? ` · 👔 Boss: ${esc(j.boss.name)} (${j.boss.style}) · 👥 Coworkers: ${j.coworkers.map(w => esc(w.name)).join(', ')}` : ''}</p>
     <div class="row">
       <button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goWork()">${c.icon} Go to Work (8 hrs)</button>
+      <button class="btn ghost" ${canWork && j.pto > 0 ? '' : 'disabled'} onclick="takeVacationDay()">🏖️ Take a Vacation Day</button>
       <button class="btn ghost" ${canWork ? '' : 'disabled'} onclick="callInSick()">📞 Call in Sick</button>
       <button class="btn ghost danger" onclick="quitJob()">Quit</button>
     </div></div>`;
@@ -7432,13 +9191,21 @@ function viewHome() {
       <span class="chip">🪥 Teeth: ${S.today.brushAM ? '✅' : '⬜'} morning ${S.today.brushPM ? '✅' : '⬜'} night</span>
       <span class="chip ${tc}">🦷 ${ti} ${tl}</span>
     </div>
-    <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span></div>
-    <h3>Things to do at home</h3><div class="grid actions">${acts}</div>`;
+    <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span>
+      <span class="chip ${S.mess > 60 ? 'warn' : ''}">🧹 Mess: ${Math.round(S.mess)}%</span><span class="chip ${S.dishes > 5 ? 'warn' : ''}">🍽️ ${S.dishes} dirty dishes</span><span class="chip ${S.trash > 80 ? 'warn' : ''}">🗑️ Trash ${Math.round(S.trash)}%</span>
+      ${S.home !== 'parents' ? `<button class="chip" onclick="binsToCurb()">🚛 Bin: ${S.bin ? S.bin + ' bags (trash day is Tuesday)' : 'empty'}</button>` : `<button class="chip" onclick="choreAllowance()">💵 Ask Mom for chore money</button>`}
+      ${S.bugs ? '<button class="chip warn" onclick="bugSpray()">🐜 Spray the ants</button>' : ''}</div>
+    <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
+    ${holidayCard()}
+    <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
+    ${energyCard()}${carCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);
+  if (S.powerOut && ['tv', 'games', 'laptop', 'computer', 'movie'].includes(id)) return nope('🔌 The power is out! That needs electricity.');
   const before = S.hour + S.day * 24;
   a.fn();
+  if (['tv', 'games', 'laptop', 'computer', 'movie', 'music'].includes(id)) { S.kwh += 0.3; if (S.hour >= 22 || S.hour < 6) S.lateNoise = true; }
   if (S.hour + S.day * 24 !== before) done(); else render();
 }
 
@@ -7565,6 +9332,10 @@ function viewHospital() {
       <div class="card"><h3>🦷 Dentist</h3><p>Teeth: <b>${teethStatus()[0]} ${teethStatus()[1]}</b></p>
         <p>A cleaning makes your teeth sparkling clean. Cost: <b>${insured ? '$15' : '$90'}</b></p>
         <button class="btn primary" onclick="dentistClean()">Get a teeth cleaning</button></div>
+      <div class="card"><h3>💉 Flu Shot</h3><p>Helps stop you from getting the flu this year.</p>
+        <p>Cost: <b>${insured ? 'Free' : '$25'}</b> ${S.fluShot === dateOf().year ? '· ✅ You got one this year' : ''}</p>
+        <button class="btn primary" ${S.fluShot === dateOf().year ? 'disabled' : ''} onclick="fluShot()">Get a flu shot</button>
+        ${S.ill ? `<p>Right now you have: <b>${ILLNESS[S.ill.type].icon} ${ILLNESS[S.ill.type].name}</b> (${S.ill.days} more days). ${ILLNESS[S.ill.type].about}</p>` : ''}</div>
       <div class="card"><h3>🚑 Emergency Room</h3><p>If your health reaches zero, an ambulance brings you here.</p>
         <p>Bill: <b>${insured ? '$300' : '$3,000'}</b></p>
         <p class="lesson">💡 Health insurance is sold at the 🏦 Bank. Some jobs give it to you for free.</p></div>
@@ -7648,7 +9419,9 @@ function viewMe() {
   const all = Object.keys(SKILLS).map(k => [k, S.skills[k]]).sort((a, b) => b[1] - a[1]);
   return `<div class="placehead">${avatarImg(S.look, 72, 'avatar big')}<h2>${esc(S.name)}</h2></div>
     <details class="card"><summary>✂️ Change your look (new haircut, new clothes!)</summary><div id="restyle"></div></details>
-    <p>🎓 ${EDU_NAMES[S.edu]} · Day ${S.day} of your life · Jobs held: ${S.jobsWorked.length}</p>
+    <p>🎂 Age ${S.age} (birthday ${MONTHS[S.bday.m]} ${S.bday.d}) · 🎓 ${EDU_NAMES[S.edu]} · ${dateText(S.day, true)} · Jobs held: ${S.jobsWorked.length}</p>
+    <p>${S.license ? '🪪 Driver\'s license ✅' : S.permit ? '📝 Learner\'s permit — take the road test at the 🪪 License Office' : '🪪 No driver\'s license yet'} · 📈 Credit ${S.credit} · 🗳️ ${S.registered ? 'Registered voter' : 'Not registered to vote'} · 🤝 Volunteered ${S.volunteerHours} hrs${S.age >= 65 ? ' · 👴 You can retire any time!' : ''}</p>
+    ${peopleCard()}
     <p class="muted">These are the things you can tell a boss in a job interview. They want a level that's high enough!</p>
     <h3>Skills</h3>
     <div class="grid skills">${all.map(([k, v]) => `<div class="card skill"><div class="jt"><b>${skillName(k)}</b><span>${Math.round(v)}</span></div>${lvlBar(v)}</div>`).join('')}</div>
@@ -7728,6 +9501,7 @@ window.addEventListener('DOMContentLoaded', () => {
     ensureHomeState();
     ensureTripState();
     ensurePetState();
+    ensureRealLife();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();
