@@ -72,6 +72,8 @@ function render() {
   if (roomCv) drawRoom(roomCv);
   const doorCv = $('#doorcv');
   if (doorCv && !doorAnim) drawDoorView(doorCv, 0);
+  const intCv = $('#intcv');
+  if (intCv) drawInterior(intCv, intCv.dataset.pid);
   const entCv = $('#entcv');
   if (entCv && !placeDoorAnim) drawEntrance(entCv, entCv.dataset.pid, 0);
   $('#log').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.kind}"><span class="t">${l.t}</span> ${l.text}</li>`).join('');
@@ -108,7 +110,7 @@ function viewFor(t) {
   const outside = t !== 'home' && ENTRANCE[pid] && S.insideOf !== pid;
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
-  const body = PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t);
+  const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   return head + body + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
