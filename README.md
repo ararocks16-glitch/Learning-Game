@@ -1,4 +1,4 @@
-# 🌱 Life Lessons
+# 🌱 The Big Game of Life
 
 A life simulation game about what grown-up life is really like.
 

@@ -449,7 +449,7 @@ function showSetup() {
   const s = $('#setup');
   s.classList.remove('hidden');
   s.innerHTML = `<div class="setup-card">
-    <h1>🌱 Life Lessons</h1>
+    <h1>🌱 The Big Game of Life</h1>
     <p>Grow up, get a job, pay bills, play sports, and learn what life is really like!</p>
     <label>Your name<input id="pname" maxlength="16" placeholder="Type your name"></label>
     <div class="label">Make your character</div>

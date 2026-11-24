@@ -1,4 +1,4 @@
-# Life Lessons game
+# The Big Game of Life
 
 A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools needed to play: open `index.html`.
 
