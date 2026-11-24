@@ -5,6 +5,7 @@ const NEEDS = {
   food:    { name: 'Hunger',  icon: '🍽️' },
   energy:  { name: 'Energy',  icon: '⚡' },
   hygiene: { name: 'Clean',   icon: '🧼' },
+  bladder: { name: 'Bathroom', icon: '🚽' },
   fun:     { name: 'Fun',     icon: '😄' },
   health:  { name: 'Health',  icon: '❤️' },
 };
@@ -115,9 +116,9 @@ function newGame(name, avatar, talents) {
   S = {
     name, avatar, day: 1, hour: 7,
     money: 300, savings: 0, loan: 0,
-    needs: { food: 75, energy: 90, hygiene: 60, fun: 70, health: 100 },
+    needs: { food: 75, energy: 90, hygiene: 60, bladder: 55, fun: 70, health: 100 },
     skills, sports, edu: 1, eduProgress: { 2: 0, 3: 0 },
-    job: null, jobsWorked: [], cooldown: {},
+    job: null, jobsWorked: [], cooldown: {}, loc: 'home', handsDirty: false,
     home: 'parents', mortgage: null, missedRent: 0,
     owned: {}, groceries: 4, clothes: 1, laundryDays: 0,
     today: { worked: false, brushed: false, showered: false, sick: false },
@@ -128,13 +129,14 @@ function newGame(name, avatar, talents) {
     log: [],
   };
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
-  log(`💡 Go to the 💼 Jobs tab, pick a job, and tell them what you can do.`);
+  log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
   showModal(`<h2>${avatar} Welcome to Life, ${esc(name)}!</h2>
     <p>You just graduated high school. You live with your parents and have <b>$300</b>.</p>
     <ul class="tips">
       <li>💼 <b>Get a job</b> — tell the boss what you're good at.</li>
-      <li>🚿 <b>Take care of yourself</b> — eat, sleep, shower, brush teeth.</li>
+      <li>🗺️ <b>Click buildings on the town map</b> to go places. Walking is slow — a bike, the bus or a car is faster.</li>
+      <li>🚿 <b>Take care of yourself</b> — eat, sleep, use the toilet, wash your hands, shower, brush teeth.</li>
       <li>💵 <b>Paychecks come Friday night</b> — taxes come out first.</li>
       <li>🧾 <b>Bills are due every Monday.</b></li>
       <li>🏅 <b>Play sports</b>, pay coaches for lessons, and enter tournaments on weekends.</li>
@@ -145,13 +147,13 @@ function newGame(name, avatar, talents) {
 
 // ---------- time ----------
 const RATES = {
-  //        food  energy hygiene fun
-  awake:  [-4,   -3.5,  -2,     -1],
-  work:   [-4.5, -5,    -3,     -1.5],
-  study:  [-4,   -5,    -1.5,   -2],
-  sport:  [-6,   -9,    -12,    3],
-  relax:  [-3.5, -1,    -1,     6],
-  sleep:  [-1.5, 0,     -1,     0],
+  //        food  energy hygiene fun  bladder
+  awake:  [-4,   -3.5,  -2,     -1,  -7],
+  work:   [-4.5, -5,    -3,     -1.5, -7],
+  study:  [-4,   -5,    -1.5,   -2,  -7],
+  sport:  [-6,   -9,    -12,    3,   -6],
+  relax:  [-3.5, -1,    -1,     6,   -7],
+  sleep:  [-1.5, 0,     -1,     0,   -2.5],
 };
 
 function tick(h, mode) {
@@ -159,6 +161,17 @@ function tick(h, mode) {
   n.food += r[0] * h;
   n.hygiene += r[2] * h;
   n.fun += r[3] * h;
+  n.bladder += r[4] * h;
+  if (n.bladder <= 4) {
+    if (mode === 'work' || mode === 'study' || mode === 'sport') {
+      n.bladder = 100; S.handsDirty = false;          // bathroom break (public places have restrooms)
+    } else if (mode === 'sleep') {
+      n.bladder = 100; n.energy -= 4; S.nightWake = true; S.handsDirty = true;
+    } else {
+      n.bladder = 100; n.hygiene = Math.min(n.hygiene, 10); n.fun -= 25;
+      S.laundryDays = Math.max(S.laundryDays, 8); S.accident = true;
+    }
+  }
   if (mode === 'sleep') {
     const per = 8.5 + home().comfort * 0.6 + (has('bed') ? 2 : 0);
     n.energy += per * h;
@@ -287,8 +300,7 @@ function startInterview(jobId) {
 }
 
 function doInterview(job, picks) {
-  pass(1.5 + commute().time, 'awake');
-  if (commute().cost) charge(commute().cost, 'Bus fare to interview');
+  pass(1.5, 'awake');
   const notes = [];
   let score = 55;
   const lies = [];
@@ -360,14 +372,7 @@ function doInterview(job, picks) {
   done(false);
 }
 
-function commute() {
-  if ((has('car') || has('newcar')) && S.skills.drive >= 20) return { how: '🚙 Drive', time: 0.5, cost: 0 };
-  if (has('bike')) return { how: '🚲 Bike', time: 0.75, cost: 0 };
-  if (S.money >= 3) return { how: '🚌 Bus', time: 1, cost: 3 };
-  return { how: '🚶 Walk', time: 1.5, cost: 0 };
-}
-
-function goWork() {
+async function goWork() {
   const j = S.job; if (!j) return;
   const job = JOBS[j.id];
   if (S.day < j.startDay) return nope('Your first day is tomorrow!');
@@ -376,17 +381,16 @@ function goWork() {
   if (S.today.sick) return nope('You called in sick today. Rest up!');
   if (S.hour < 5) return nope('It\'s too early. Work starts at 6 AM.');
   if (S.hour >= 11) return nope('Too late — your shift already started. You could call in sick...');
+  if (traveler) return;
 
-  const c = commute();
-  if (c.cost) charge(c.cost * 2, 'Bus fare to work');
-  pass(c.time, 'awake');
+  await travelTo(workplaceOf(job), { noDone: true, quiet: true });
   const late = S.hour > 9.1;
   const n = S.needs;
   let perf = (n.energy + n.food + n.hygiene + n.health) / 4 + rand(-8, 10) + S.clothes * 2;
   if (late) perf -= 20;
   if (S.laundryDays > 7) perf -= 8;
+  if (n.bladder < 20) perf -= 5;
   pass(8, 'work');
-  pass(c.time, 'awake');
 
   j.weekHours += 8; j.daysWorked++;
   S.today.worked = true;
@@ -394,6 +398,7 @@ function goWork() {
 
   const msgs = [];
   if (late) msgs.push('⏰ You were late!');
+  let fired = false;
   if (perf >= 65) {
     j.goodDays++;
     msgs.push('Great work today! 👏');
@@ -407,18 +412,21 @@ function goWork() {
   } else if (perf < 35) {
     j.warnings++;
     msgs.push(`😠 You did a bad job. Boss warning ${j.warnings}/3.`);
-    if (j.warnings >= 3) { log(`${job.name}: ${msgs.join(' ')}`, 'bad'); fire('You did poor work too many times. (Come to work rested, fed and clean!)'); return done(); }
+    if (j.warnings >= 3) { log(`${job.name}: ${msgs.join(' ')}`, 'bad'); fire('You did poor work too many times. (Come to work rested, fed and clean!)'); fired = true; }
   } else msgs.push('An OK day at work.');
 
-  // were you caught lying?
-  j.lies = j.lies.filter(s => skillLevel(s) < (job.req.find(r => r.s === s) || { lvl: 0 }).lvl);
-  if (j.lies.length && Math.random() < 0.12) {
-    log(`${job.name}: ${msgs.join(' ')}`);
-    fire(`Your boss found out you can't really do ${skillName(j.lies[0])} like you said in your interview.`);
-    return done();
+  if (!fired) {
+    // were you caught lying?
+    j.lies = j.lies.filter(s => skillLevel(s) < (job.req.find(r => r.s === s) || { lvl: 0 }).lvl);
+    if (j.lies.length && Math.random() < 0.12) {
+      log(`${job.name}: ${msgs.join(' ')}`);
+      fire(`Your boss found out you can't really do ${skillName(j.lies[0])} like you said in your interview.`);
+    } else {
+      log(`💼 Worked 8 hours as ${job.name}. ${msgs.join(' ')}`, perf >= 65 ? 'good' : perf < 35 ? 'bad' : '');
+    }
   }
-  log(`💼 Worked 8 hours as ${job.name}. ${msgs.join(' ')}`, perf >= 65 ? 'good' : perf < 35 ? 'bad' : '');
-  done();
+  render();
+  await travelTo('home', { quiet: true });
 }
 
 function callInSick() {
@@ -559,12 +567,66 @@ function dailyEvent() {
   }
 }
 
+// ---------- body ----------
+function ateFood(amount) {
+  S.needs.food = clamp(S.needs.food + amount);
+  S.needs.bladder = clamp(S.needs.bladder - 8);   // you drink something with your meal
+  if (S.handsDirty && Math.random() < 0.3) {
+    S.needs.health = clamp(S.needs.health - 15);
+    S.needs.fun = clamp(S.needs.fun - 10);
+    log('🤢 You got a tummy ache. You ate without washing your hands after using the toilet!', 'bad');
+    toast('🤢 Tummy ache! Wash your hands before eating.', 'bad');
+  }
+}
+function useToilet() {
+  pass(0.1);
+  const before = S.needs.bladder;
+  S.needs.bladder = 100;
+  S.handsDirty = true;
+  log(before > 70 ? '🚽 You used the toilet (you didn\'t really need to).' : '🚽 You used the toilet. Ahh, much better!');
+  toast('🧼 Now wash your hands!');
+}
+function washHands() {
+  pass(0.04);
+  S.handsDirty = false;
+  S.needs.hygiene = clamp(S.needs.hygiene + 3);
+  log('🧼 You washed your hands with soap. Germs gone!');
+}
+
+// ---------- town places ----------
+function seeDoctor() {
+  if (S.hour < 7 || S.hour > 21) return nope('The clinic is open 7 AM to 10 PM. (The emergency room is always open if your health hits zero.)');
+  const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
+  const cost = insured ? 20 : 150;
+  if (!spend(cost, 'Doctor visit')) return;
+  pass(1.5);
+  S.needs.health = clamp(S.needs.health + 45);
+  log(`🩺 The doctor checked you out and gave you medicine. Health +45. Cost: ${money(cost)}${insured ? ' (insurance helped!)' : ''}.`, 'good');
+  done();
+}
+const PARK_ACTIONS = [
+  { id: 'walk', icon: '🚶', name: 'Walk Around the Lake', hint: '1 hr · free · fun & fitness',
+    fn: () => { pass(1, 'relax'); addSkill('fit', 1); S.needs.health = clamp(S.needs.health + 2); log('🌳 You walked around the lake. Fresh air!'); } },
+  { id: 'ducks', icon: '🦆', name: 'Feed the Ducks', hint: '30 min · $2 for duck food',
+    fn: () => { if (!spend(2, 'Duck food')) return; pass(0.5, 'relax'); S.needs.fun = clamp(S.needs.fun + 8); log('🦆 You fed the ducks. They quacked happily!'); } },
+  { id: 'friends', icon: '🧑‍🤝‍🧑', name: 'Hang Out with Friends', hint: '2 hrs · free · fun & talking skill',
+    fn: () => { pass(2, 'relax'); S.needs.fun = clamp(S.needs.fun + 10); addSkill('comm', 1.5); log('😄 You hung out with friends at the park.'); } },
+  { id: 'picnic', icon: '🧺', name: 'Have a Picnic', hint: '1 hr · uses 1 grocery meal',
+    fn: () => { if (S.groceries < 1) return nope('Pack food first — you have no groceries.'); S.groceries--; pass(1, 'relax'); ateFood(40); S.needs.fun = clamp(S.needs.fun + 8); log('🧺 You had a picnic by the lake.'); } },
+  { id: 'playground', icon: '🛝', name: 'Play on the Playground', hint: '1 hr · free · you\'re never too old!',
+    fn: () => { if (S.needs.energy < 15) return nope('Too tired to play.'); pass(1, 'sport'); S.needs.fun = clamp(S.needs.fun + 12); addSkill('fit', 1); log('🛝 You went down the slide and swung on the swings!'); } },
+];
+
 // ---------- home actions ----------
 const HOME_ACTIONS = [
   { id: 'eat', icon: '🍽️', name: 'Eat a Meal', hint: 'Uses 1 grocery meal · 30 min',
-    fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Shop.'); S.groceries--; pass(0.5); S.needs.food = clamp(S.needs.food + 40); log('🍽️ You ate a meal at home.'); } },
+    fn: () => { if (S.groceries < 1) return nope('No food at home! Buy groceries at the 🛒 Supermarket.'); S.groceries--; pass(0.5); ateFood(40); log('🍽️ You ate a meal at home.'); } },
   { id: 'cook', icon: '🍳', name: 'Cook a Meal', hint: 'Uses 1 meal · 1 hr · better food & cooking skill',
-    fn: () => { if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); const g = 40 + S.skills.cook / 4; S.needs.food = clamp(S.needs.food + g); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
+    fn: () => { if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
+  { id: 'toilet', icon: '🚽', name: 'Use the Toilet', hint: '5 min · don\'t forget to flush!',
+    fn: () => useToilet() },
+  { id: 'hands', icon: '🧼', name: 'Wash Your Hands', hint: '2 min · stops germs',
+    fn: () => washHands() },
   { id: 'shower', icon: '🚿', name: 'Take a Shower', hint: '30 min',
     fn: () => { pass(0.5); S.needs.hygiene = 100; S.today.showered = true; log('🚿 You took a shower. Squeaky clean!'); } },
   { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: '5 min',
@@ -587,8 +649,8 @@ const HOME_ACTIONS = [
     fn: () => { pass(1, 'relax'); addSkill('write', 1.5); log('📖 You read a good book.'); } },
   { id: 'run', icon: '🏃', name: 'Exercise', hint: '1 hr · Fitness skill · free',
     fn: () => { if (S.needs.energy < 15) return nope('Too tired to exercise.'); pass(1, 'sport'); addSkill('fit', 2.5); S.needs.health = clamp(S.needs.health + 3); log('🏃 You exercised. Fitness up! (Better shower now...)'); } },
-  { id: 'friend', icon: '📞', name: 'Hang Out with Friends', hint: '2 hrs · Fun & talking skill',
-    fn: () => { pass(2, 'relax'); S.needs.fun = clamp(S.needs.fun + 10); addSkill('comm', 1.5); log('😄 You hung out with friends.'); } },
+  { id: 'friend', icon: '📞', name: 'Call a Friend', hint: '1 hr · Fun & talking skill',
+    fn: () => { pass(1, 'relax'); S.needs.fun = clamp(S.needs.fun + 6); addSkill('comm', 1); log('📞 You called a friend and talked for an hour.'); } },
   { id: 'wait', icon: '⏳', name: 'Wait 1 Hour', hint: 'Pass time',
     fn: () => { pass(1); } },
 ];
@@ -626,7 +688,7 @@ function attendSchool(lvl) {
     S.edu = lvl;
     unlock(lvl === 2 ? 'college' : 'grad');
     log(`🎓 GRADUATION! You earned your ${EDU_NAMES[lvl]}!`, 'good');
-    queueModal(`<h2>🎓 Congratulations, Graduate!</h2><p>You earned your <b>${EDU_NAMES[lvl]}</b>!</p><p>Lots of new jobs are open to you now. Check the 💼 Jobs tab.</p>`);
+    queueModal(`<h2>🎓 Congratulations, Graduate!</h2><p>You earned your <b>${EDU_NAMES[lvl]}</b>!</p><p>Lots of new jobs are open to you now. Check the 💼 Job Center.</p>`);
   } else log(`🎒 You went to ${e.name}. (${S.eduProgress[lvl]}/${e.sessions} classes)`);
   done();
 }
@@ -723,12 +785,14 @@ function buy(itemId) {
   if (S.hour < 8 || S.hour > 22) return nope('Stores are open 8 AM to 10 PM.');
   if (it.clothes && S.clothes >= it.clothes) return nope('You already have clothes this nice.');
   if (!it.consumable && !it.clothes && has(it.id)) return nope('You already own this.');
-  if ((it.id === 'car' || it.id === 'newcar') && S.skills.drive < 20) return nope('You need Driving skill 20 to get a license! Take Driving classes at 🏫 School.');
+  if ((it.id === 'car' || it.id === 'newcar') && S.skills.drive < 20) return nope('You need Driving skill 20 to get a license! Take Driving classes at the 🎓 College.');
   if (!spend(it.price, it.name)) return;
   pass(0.5);
   if (it.id === 'groceries') { S.groceries += 7; log('🛒 You bought groceries. 7 meals at home!'); }
-  else if (it.id === 'fastfood') { S.needs.food = clamp(S.needs.food + 45); S.needs.health = clamp(S.needs.health - 1); log('🍔 You ate fast food. Yum, but greasy.'); }
-  else if (it.id === 'salad') { S.needs.food = clamp(S.needs.food + 40); S.needs.health = clamp(S.needs.health + 4); log('🥗 You ate a healthy lunch.'); }
+  else if (it.id === 'fastfood') { ateFood(45); S.needs.health = clamp(S.needs.health - 1); log('🍔 You ate fast food. Yum, but greasy.'); }
+  else if (it.id === 'salad') { ateFood(40); S.needs.health = clamp(S.needs.health + 4); log('🥗 You ate a healthy lunch.'); }
+  else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
+  else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
     S.owned[it.id] = true;
@@ -856,6 +920,12 @@ function toggleInsurance() {
 // ---------- after every action ----------
 function checkBody() {
   const n = S.needs;
+  if (S.nightWake) { S.nightWake = false; log('🌙 You woke up in the night to use the bathroom.'); }
+  if (S.accident) {
+    S.accident = false;
+    log('😳 Oops! You didn\'t make it to the bathroom in time.', 'bad');
+    queueModal(`<h2>😳 Oops!</h2><p>You waited too long and didn't make it to the bathroom in time. Your clothes need washing and you need a shower.</p><p class="lesson">💡 When the 🚽 Bathroom bar gets low, go! Every store, school and workplace has a restroom.</p>`);
+  }
   if (n.health <= 0) {
     const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
     const bill = insured ? 300 : 3000;

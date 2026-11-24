@@ -65,7 +65,7 @@ a { color: var(--primary); cursor: pointer; text-decoration: underline; }
 .cash .big { color: var(--good); }
 
 /* needs */
-#needs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 10px 0; }
+#needs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 10px 0; }
 .need { background: var(--bg2); border-radius: 10px; padding: 6px 10px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; font-size: .85rem; }
 .need .bar { grid-column: 1 / -1; grid-row: 2; }
 .need .num { grid-row: 1; grid-column: 2; font-weight: 700; }
@@ -93,6 +93,23 @@ a { color: var(--primary); cursor: pointer; text-decoration: underline; }
 
 .main { display: grid; grid-template-columns: 1fr 320px; gap: 14px; align-items: start; }
 #view { min-width: 0; }
+.left { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+#mapwrap { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); background: #7cc46a; line-height: 0; border: 3px solid var(--bg2); }
+#map { width: 100%; display: block; touch-action: manipulation; }
+#tabs { margin: 0; }
+.tab { position: relative; }
+.tab.here { outline: 2px solid var(--good); outline-offset: -2px; }
+.tab i { position: absolute; top: 1px; right: 3px; font-style: normal; font-size: .7rem; }
+.tab.personal { background: var(--line); }
+.tab.personal.active { background: var(--primary); }
+body.traveling #view, body.traveling #tabs { pointer-events: none; opacity: .55; }
+.placehead { display: flex; gap: 12px; align-items: center; }
+.placehead h2 { margin: 0; }
+.placehead p { margin: 2px 0; }
+.placehead .pic { font-size: 2.6rem; line-height: 1; }
+.card.goto { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; border-color: var(--line); }
+.card.restroom { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+button.chip { cursor: pointer; font: inherit; font-size: .85rem; }
 aside { background: var(--bg2); border-radius: var(--radius); padding: 8px 14px; box-shadow: var(--shadow); position: sticky; top: 10px; max-height: calc(100vh - 20px); overflow-y: auto; }
 #log { list-style: none; padding: 0; margin: 0; font-size: .85rem; }
 #log li { padding: 6px 0; border-bottom: 1px solid var(--line); line-height: 1.35; }
@@ -212,6 +229,8 @@ table.stub .total td { font-weight: 700; border-top: 2px solid var(--ink); }
   #hud { grid-template-columns: 1fr 1fr; }
   .clock { grid-column: 1 / -1; grid-row: 2; }
   #needs { grid-template-columns: repeat(3, 1fr); }
+  .placehead .pic { font-size: 2rem; }
+  .need { font-size: .74rem; padding: 5px 8px; }
   .tab { min-width: 56px; padding: 6px 8px; }
   .grid.actions { grid-template-columns: repeat(2, 1fr); }
   footer#tip { font-size: .78rem; }

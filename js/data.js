@@ -68,32 +68,36 @@ const HOMES = {
 
 const ITEMS = [
   // food
-  { id: 'groceries', cat: 'Food', name: 'Groceries (7 meals)', icon: '🛒', price: 45, consumable: true,
+  { id: 'groceries', place: 'market', cat: 'Food', name: 'Groceries (7 meals)', icon: '🛒', price: 45, consumable: true,
     desc: 'Cheaper than eating out! Eat or cook at home.' },
-  { id: 'fastfood', cat: 'Food', name: 'Fast Food Meal', icon: '🍔', price: 11, consumable: true,
+  { id: 'fastfood', place: 'diner', cat: 'Food', name: 'Fast Food Meal', icon: '🍔', price: 11, consumable: true,
     desc: 'Eat right now. Quick but pricey and not very healthy.' },
-  { id: 'salad', cat: 'Food', name: 'Healthy Lunch', icon: '🥗', price: 14, consumable: true,
+  { id: 'salad', place: 'diner', cat: 'Food', name: 'Healthy Lunch', icon: '🥗', price: 14, consumable: true,
     desc: 'Eat right now. Good for your health.' },
+  { id: 'pancakes', place: 'diner', cat: 'Food', name: 'Pancake Breakfast', icon: '🥞', price: 9, consumable: true,
+    desc: 'Eat right now. A yummy treat!' },
+  { id: 'milkshake', place: 'diner', cat: 'Food', name: 'Milkshake', icon: '🥤', price: 5, consumable: true,
+    desc: 'Fun! But drinks fill up your bladder fast.' },
   // clothes
-  { id: 'clothes1', cat: 'Clothes', name: 'Basic Clothes', icon: '👕', price: 40, clothes: 1, desc: 'Jeans and t-shirts.' },
-  { id: 'clothes2', cat: 'Clothes', name: 'Nice Outfit', icon: '👔', price: 140, clothes: 2, desc: 'Look sharp for interviews.' },
-  { id: 'clothes3', cat: 'Clothes', name: 'Business Suit', icon: '🤵', price: 400, clothes: 3, desc: 'Big interviews need big style.' },
+  { id: 'clothes1', place: 'mall', cat: 'Clothes', name: 'Basic Clothes', icon: '👕', price: 40, clothes: 1, desc: 'Jeans and t-shirts.' },
+  { id: 'clothes2', place: 'mall', cat: 'Clothes', name: 'Nice Outfit', icon: '👔', price: 140, clothes: 2, desc: 'Look sharp for interviews.' },
+  { id: 'clothes3', place: 'mall', cat: 'Clothes', name: 'Business Suit', icon: '🤵', price: 400, clothes: 3, desc: 'Big interviews need big style.' },
   // electronics
-  { id: 'phone', cat: 'Electronics', name: 'Phone', icon: '📱', price: 300, bill: 20,
+  { id: 'phone', place: 'mall', cat: 'Electronics', name: 'Phone', icon: '📱', price: 300, bill: 20,
     desc: 'Jobs can call you back! Phone bill $20/week.' },
-  { id: 'laptop', cat: 'Electronics', name: 'Laptop', icon: '💻', price: 800, desc: 'Practice computer skills at home for free.' },
-  { id: 'tv', cat: 'Electronics', name: 'TV', icon: '📺', price: 450, desc: 'Watch TV to relax.' },
-  { id: 'console', cat: 'Electronics', name: 'Video Game Console', icon: '🎮', price: 400, desc: 'Lots of fun. Don\'t play all night!' },
+  { id: 'laptop', place: 'mall', cat: 'Electronics', name: 'Laptop', icon: '💻', price: 800, desc: 'Practice computer skills at home for free.' },
+  { id: 'tv', place: 'mall', cat: 'Electronics', name: 'TV', icon: '📺', price: 450, desc: 'Watch TV to relax.' },
+  { id: 'console', place: 'mall', cat: 'Electronics', name: 'Video Game Console', icon: '🎮', price: 400, desc: 'Lots of fun. Don\'t play all night!' },
   // home
-  { id: 'bed', cat: 'Home', name: 'Comfy Bed', icon: '🛌', price: 600, desc: 'Sleep much better.' },
-  { id: 'couch', cat: 'Home', name: 'Couch', icon: '🛋️', price: 350, desc: 'Home feels nicer. More fun relaxing.' },
-  { id: 'washer', cat: 'Home', name: 'Washer & Dryer', icon: '🧺', price: 800, desc: 'Do laundry at home for free.' },
-  { id: 'plant', cat: 'Home', name: 'House Plant', icon: '🪴', price: 25, desc: 'Makes you a little happier. Water it!' },
+  { id: 'bed', place: 'mall', cat: 'Home', name: 'Comfy Bed', icon: '🛌', price: 600, desc: 'Sleep much better.' },
+  { id: 'couch', place: 'mall', cat: 'Home', name: 'Couch', icon: '🛋️', price: 350, desc: 'Home feels nicer. More fun relaxing.' },
+  { id: 'washer', place: 'mall', cat: 'Home', name: 'Washer & Dryer', icon: '🧺', price: 800, desc: 'Do laundry at home for free.' },
+  { id: 'plant', place: 'market', cat: 'Home', name: 'House Plant', icon: '🪴', price: 25, desc: 'Makes you a little happier. Water it!' },
   // transport
-  { id: 'bike', cat: 'Transport', name: 'Bicycle', icon: '🚲', price: 250, desc: 'Free ride to work. Faster than the bus.' },
-  { id: 'car', cat: 'Transport', name: 'Used Car', icon: '🚙', price: 7000, bill: 60,
+  { id: 'bike', place: 'cars', cat: 'Transport', name: 'Bicycle', icon: '🚲', price: 250, desc: 'Free ride to work. Faster than the bus.' },
+  { id: 'car', place: 'cars', cat: 'Transport', name: 'Used Car', icon: '🚙', price: 7000, bill: 60,
     desc: 'Fastest way to work. Gas + insurance: $60/week. Needs Driving skill 20.' },
-  { id: 'newcar', cat: 'Transport', name: 'New Car', icon: '🏎️', price: 32000, bill: 80,
+  { id: 'newcar', place: 'cars', cat: 'Transport', name: 'New Car', icon: '🏎️', price: 32000, bill: 80,
     desc: 'Never breaks down. Gas + insurance: $80/week. Needs Driving skill 20.' },
 ];
 

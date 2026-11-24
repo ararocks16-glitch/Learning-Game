@@ -7,9 +7,12 @@
     <header id="hud"></header>
     <section id="needs"></section>
     <div id="warnings"></div>
-    <nav id="tabs"></nav>
     <div class="main">
-      <main id="view"></main>
+      <div class="left">
+        <div id="mapwrap"><canvas id="map" aria-label="Town map. Click a building to go there."></canvas></div>
+        <nav id="tabs"></nav>
+        <main id="view"></main>
+      </div>
       <aside>
         <h3>📰 What Happened</h3>
         <ul id="log"></ul>
@@ -23,4 +26,5 @@
 
   <script src="js/data.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/map.js"></script>
   <script src="js/ui.js"></script>
