@@ -189,28 +189,80 @@ function carShape(c, x, y, col, horiz = true) {
   else { fillR(c, x - 6, y - 11, 12, 22, col, 4); fillR(c, x - 5, y - 5, 10, 10, 'rgba(190,230,255,.85)', 2); }
 }
 
+// shingle rows on any triangle roof
+function shingles(c, pts, step = 3) {
+  const ys = pts.map(p => p[1]), top = Math.min(...ys), bot = Math.max(...ys), xs = pts.map(p => p[0]), L = Math.min(...xs), R = Math.max(...xs);
+  c.save(); c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.clip();
+  for (let yy = top + step, row = 0; yy < bot; yy += step, row++) { c.fillStyle = 'rgba(0,0,0,.17)'; c.fillRect(L, yy, R - L, 0.7); c.fillStyle = 'rgba(0,0,0,.1)'; for (let xx = L + (row % 2 ? 2 : 0); xx < R; xx += 4) c.fillRect(xx, yy - step, 0.6, step); }
+  c.fillStyle = 'rgba(255,255,255,.1)'; c.fillRect(L, top, (R - L) / 2, bot - top);
+  c.restore();
+}
+// a window with shutters, a cross frame and a flower box
+function winD(c, x, y, w, h, shutter, box = true) {
+  fillR(c, x - 4, y - 1, 3, h + 2, shutter); fillR(c, x + w + 1, y - 1, 3, h + 2, shutter);
+  c.fillStyle = 'rgba(0,0,0,.18)'; for (let k = 1; k < h; k += 2) { c.fillRect(x - 4, y + k, 3, 0.6); c.fillRect(x + w + 1, y + k, 3, 0.6); }
+  win(c, x, y, w, h);
+  c.fillStyle = '#ffffff'; c.fillRect(x + w / 2 - 0.4, y, 0.8, h); c.fillRect(x, y + h / 2 - 0.4, w, 0.8);
+  fillR(c, x - 1.5, y + h + 0.5, w + 3, 1.6, '#f4f1ea');
+  if (box) { fillR(c, x - 1, y + h + 2, w + 2, 3, '#8d5a3b', 1); ['#e53935', '#fdd835', '#ec407a', '#ffffff', '#ab47bc'].forEach((col, k) => circ(c, x + 1 + k * (w / 4.5), y + h + 1.6, 1.1, col)); c.fillStyle = '#4caf50'; c.fillRect(x, y + h + 1, w, 0.8); }
+}
+function shrub(c, x, y, r) { circ(c, x + 1, y + 1.5, r, 'rgba(0,0,0,.18)'); circ(c, x, y, r, '#3f8f3a'); circ(c, x - r * 0.35, y - r * 0.35, r * 0.55, '#5bb04f'); circ(c, x + r * 0.3, y - r * 0.15, r * 0.4, '#4aa144'); }
 function house(c, x, y, w, h, wall, roof, rnd, opts = {}) {
-  // yard
+  // yard, driveway, stepping stones
   fillR(c, x, y, w, h, lawnCol('#8fd17a'), 4);
-  flowers(c, x + 4, y + h - 14, w - 8, 10, rnd);
-  const bw = w * 0.62, bh = h * 0.42, bx = x + (w - bw) / 2, by = y + h * 0.42;
+  const bw = w * 0.6, bh = h * 0.42, bx = x + (w - bw) / 2 - w * 0.05, by = y + h * 0.43;
+  const dx = bx + bw + 4, dw = x + w - dx - 4;
+  if (dw > 10) { fillR(c, dx, by + bh - 4, dw, y + h - by - bh + 4, '#cfc8b8'); c.fillStyle = 'rgba(0,0,0,.06)'; for (let k = 0; k < 4; k++) c.fillRect(dx, by + bh + k * 6, dw, 0.7); }
+  flowers(c, x + 4, y + h - 14, w * 0.5, 10, rnd);
+  // house shadow & walls with siding
   shadow(c, bx, by, bw, bh);
-  fillR(c, bx, by, bw, bh, wall);
-  // chimney
-  fillR(c, bx + bw * 0.7, y + h * 0.12, 8, h * 0.2, '#8b4a3a');
-  tri(c, [[bx - 7, by + 1], [bx + bw / 2, y + h * 0.08], [bx + bw + 7, by + 1]], roof);
-  c.strokeStyle = 'rgba(0,0,0,.15)'; c.lineWidth = 1;
-  for (let i = 1; i < 4; i++) { const yy = y + h * 0.08 + (by - y - h * 0.08) * i / 4; c.beginPath(); c.moveTo(bx + bw / 2 - (yy - y - h * 0.08) * (bw / 2 + 7) / (by - y - h * 0.08), yy); c.lineTo(bx + bw / 2 + (yy - y - h * 0.08) * (bw / 2 + 7) / (by - y - h * 0.08), yy); c.stroke(); }
-  // door & windows
-  fillR(c, bx + bw / 2 - 5, by + bh - 17, 10, 17, '#6b3e26', 2);
-  circ(c, bx + bw / 2 + 3, by + bh - 8, 1, '#ffd23f');
-  win(c, bx + 7, by + 7, 12, 10);
-  win(c, bx + bw - 19, by + 7, 12, 10);
-  if (opts.attic) win(c, bx + bw / 2 - 5, y + h * 0.25, 10, 8);
-  // path to door
-  c.fillStyle = '#d9c9a3'; c.fillRect(bx + bw / 2 - 4, by + bh, 8, y + h - by - bh);
+  const wg = c.createLinearGradient(bx, 0, bx + bw, 0); wg.addColorStop(0, tone(wall, 0.04)); wg.addColorStop(1, tone(wall, -0.08));
+  c.fillStyle = wg; c.fillRect(bx, by, bw, bh);
+  c.fillStyle = 'rgba(0,0,0,.07)'; for (let yy = by + 3; yy < by + bh; yy += 3) c.fillRect(bx, yy, bw, 0.7);
+  c.fillStyle = 'rgba(255,255,255,.18)'; for (let yy = by + 1.5; yy < by + bh; yy += 3) c.fillRect(bx, yy, bw, 0.5);
+  fillR(c, bx, by, 2, bh, '#f7f4ee'); fillR(c, bx + bw - 2, by, 2, bh, '#f7f4ee');
+  fillR(c, bx - 1, by + bh - 3, bw + 2, 3, '#9e9a92');
+  // chimney with bricks and a cap
+  const chx = bx + bw * 0.7, chy = y + h * 0.1;
+  fillR(c, chx, chy, 9, h * 0.22, '#9b4a36'); c.fillStyle = 'rgba(0,0,0,.2)'; for (let k = 0; k < 7; k++) { c.fillRect(chx, chy + 2 + k * 2.6, 9, 0.6); c.fillRect(chx + (k % 2 ? 2 : 6), chy + k * 2.6, 0.6, 2.6); }
+  fillR(c, chx - 1, chy - 2, 11, 2.5, '#6d3426');
+  // roof with shingles, gutter and ridge
+  const top = y + h * 0.06, L = bx - 7, R = bx + bw + 7, mid = bx + bw / 2;
+  const rg = c.createLinearGradient(0, top, 0, by); rg.addColorStop(0, tone(roof, 0.1)); rg.addColorStop(1, tone(roof, -0.12));
+  c.fillStyle = rg; c.beginPath(); c.moveTo(L, by + 1); c.lineTo(mid, top); c.lineTo(R, by + 1); c.closePath(); c.fill();
+  c.save(); c.beginPath(); c.moveTo(L, by + 1); c.lineTo(mid, top); c.lineTo(R, by + 1); c.closePath(); c.clip();
+  for (let yy = top + 3, row = 0; yy < by + 1; yy += 3, row++) {
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(L, yy, R - L, 0.7);
+    c.fillStyle = 'rgba(0,0,0,.12)'; for (let xx = L + (row % 2 ? 2 : 0); xx < R; xx += 4) c.fillRect(xx, yy - 3, 0.6, 3);
+  }
+  c.fillStyle = 'rgba(255,255,255,.12)'; c.beginPath(); c.moveTo(L, by + 1); c.lineTo(mid, top); c.lineTo(mid, by + 1); c.closePath(); c.fill();
+  c.restore();
+  c.strokeStyle = tone(roof, -0.3); c.lineWidth = 1.2; c.beginPath(); c.moveTo(L, by + 1); c.lineTo(mid, top); c.lineTo(R, by + 1); c.stroke();
+  fillR(c, L - 1, by, R - L + 2, 2, '#e9e6df');
+  // windows with shutters and flower boxes
+  const sh = tone(roof, -0.15);
+  winD(c, bx + 7, by + 7, 12, 11, sh);
+  winD(c, bx + bw - 19, by + 7, 12, 11, sh);
+  if (opts.attic) { circ(c, mid, y + h * 0.27, 5.5, '#ffffff'); circ(c, mid, y + h * 0.27, 4.4, '#bfe3f5'); c.fillStyle = '#fff'; c.fillRect(mid - 0.4, y + h * 0.27 - 4.4, 0.8, 8.8); c.fillRect(mid - 4.4, y + h * 0.27 - 0.4, 8.8, 0.8); }
+  // porch: little roof, posts, steps, light and a front door with panels
+  const ddx = mid - 6, ddy = by + bh - 19;
+  fillR(c, ddx - 6, ddy - 5, 24, 3, tone(roof, -0.1)); fillR(c, ddx - 6, ddy - 2, 24, 1, 'rgba(0,0,0,.2)');
+  fillR(c, ddx - 5, ddy - 2, 1.6, 21, '#f7f4ee'); fillR(c, ddx + 15.4, ddy - 2, 1.6, 21, '#f7f4ee');
+  fillR(c, ddx, ddy, 12, 19, '#6b3e26', 1.5);
+  c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(ddx + 2, ddy + 8, 3.4, 4.5); c.fillRect(ddx + 6.6, ddy + 8, 3.4, 4.5); c.fillRect(ddx + 2, ddy + 13.5, 3.4, 4); c.fillRect(ddx + 6.6, ddy + 13.5, 3.4, 4);
+  fillR(c, ddx + 2.5, ddy + 2, 7, 4.5, '#cfe8f5', 2);
+  circ(c, ddx + 10, ddy + 11, 0.9, '#ffd23f');
+  circ(c, ddx - 2.5, ddy + 4, 1.3, '#ffe082');
+  if (!NO_REC) LAMPS.push && LAMPS.push([ddx - 2.5, ddy + 4]);
+  fillR(c, ddx - 3, by + bh, 18, 2.2, '#bdb7aa'); fillR(c, ddx - 1, by + bh + 2.2, 14, 2, '#d1cbbd');
+  fillR(c, ddx + 1, by + bh - 1.3, 10, 1.3, '#a1887f');
+  // bushes along the front and stepping stones
+  [[bx + 2, by + bh + 3, 3.6], [bx + 13, by + bh + 4, 3], [bx + bw - 13, by + bh + 4, 3], [bx + bw - 3, by + bh + 3, 3.6]].forEach(([a, b2, r]) => shrub(c, a, b2, r));
+  for (let yy = by + bh + 6; yy < y + h - 4; yy += 5) { c.fillStyle = '#d9c9a3'; c.beginPath(); c.ellipse(mid + ((yy / 5) % 2 ? 1 : -1), yy, 3.3, 1.8, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(mid - 2.5, yy + 1.2, 5, 0.6); }
   if (opts.fence !== false) fence(c, x + 3, y + h - 3, x + w - 3);
-  if (opts.mailbox) { fillR(c, x + 8, y + h - 18, 3, 12, '#555'); fillR(c, x + 5, y + h - 22, 10, 6, opts.mailbox, 2); }
+  if (opts.mailbox) { fillR(c, x + 8, y + h - 18, 2.5, 12, '#5d4037'); fillR(c, x + 5, y + h - 23, 9, 6, opts.mailbox, 3); fillR(c, x + 12.5, y + h - 26, 1, 4, '#e53935'); fillR(c, x + 12.5, y + h - 26, 3, 1.5, '#e53935'); }
+  // a little yard tree
+  if (opts.tree !== false) { const tx = x + 9, ty = y + h * 0.35; circ(c, tx + 2, ty + 3, 8, 'rgba(0,0,0,.15)'); fillR(c, tx - 1, ty + 3, 2.5, 8, '#6d4c41'); circ(c, tx, ty, 7.5, '#3b8a3a'); circ(c, tx - 2.5, ty - 2.5, 4.5, '#56a84d'); circ(c, tx + 3, ty + 1, 3.5, '#4a9e45'); }
 }
 
 // grass colors change with the seasons (white snow in winter, golden in fall)
@@ -352,6 +404,15 @@ function drawStatic(c) {
   circ(c, x + 160, y + 115, 9, '#cfd8dc'); circ(c, x + 160, y + 115, 5, '#7fd4f5');
   fillR(c, x + 5, y + h - 8, 70, 4, '#4a4a4a'); fillR(c, x + w - 75, y + h - 8, 70, 4, '#4a4a4a');
   [x + 75, x + w - 75].forEach(px => fillR(c, px - 3, y + h - 16, 6, 14, '#c9a24a'));
+  shingles(c, [[x + 80, y + 31], [x + 160, y + 12], [x + 240, y + 31]]);
+  c.fillStyle = 'rgba(0,0,0,.05)'; for (let yy = y + 34; yy < y + 102; yy += 4) c.fillRect(x + 85, yy, 150, 0.7);
+  fillR(c, x + 85, y + 64, 50, 2, '#e0d2b4'); fillR(c, x + 185, y + 64, 50, 2, '#e0d2b4');
+  for (let k = 0; k < 11; k++) { fillR(c, x + 88 + k * 4.4, y + 58, 1, 6, '#fff'); fillR(c, x + 188 + k * 4.4, y + 58, 1, 6, '#fff'); }
+  fillR(c, x + 87, y + 57, 46, 1.4, '#fff'); fillR(c, x + 187, y + 57, 46, 1.4, '#fff');
+  for (let k = 0; k < 4; k++) { fillR(c, x + 138 + k * 14, y + 45, 1.5, 40, 'rgba(0,0,0,.12)'); fillR(c, x + 137 + k * 14, y + 83, 6, 3, '#e8e0d0'); }
+  fillR(c, x + 154, y + 85, 5, 8, 'rgba(255,255,255,.25)'); circ(c, x + 165, y + 92, 1, '#ffd23f');
+  [[x + 145, y + 104], [x + 175, y + 104]].forEach(([a2, b2]) => { fillR(c, a2 - 3, b2 - 2, 6, 5, '#b0a48a'); shrub(c, a2, b2 - 5, 4); });
+  c.fillStyle = 'rgba(255,255,255,.8)'; for (let k = 0; k < 6; k++) { const an = k * 1.05; c.fillRect(x + 160 + Math.cos(an) * 6, y + 115 + Math.sin(an) * 3, 1, 1); }
 
   [x, y, w, h] = P('farm');
   for (let k = 0; k < 7; k++) { fillR(c, x + 5, y + 8 + k * 9, 95, 6, k % 2 ? '#a5793f' : '#b98a4d'); for (let j = 0; j < 12; j++) circ(c, x + 10 + j * 8, y + 11 + k * 9, 2, '#4c9a3a'); }
@@ -416,6 +477,15 @@ function drawStatic(c) {
   c.strokeStyle = '#555'; c.beginPath(); c.moveTo(x + 15, y + 50); c.lineTo(x + 15, y + 66); c.moveTo(x + 40, y + 50); c.lineTo(x + 40, y + 66); c.stroke();
   fence(c, x + 3, y + h - 3, x + w - 3);
   c.fillStyle = '#d9c9a3'; c.fillRect(x + 131, y + 85, 8, 12);
+  // more detail: siding, shingles, shutters, porch, garage door, driveway, bushes
+  c.fillStyle = 'rgba(0,0,0,.06)'; for (let yy = y + 38; yy < y + 85; yy += 3) c.fillRect(x + 60, yy, 150, 0.7);
+  shingles(c, [[x + 52, y + 37], [x + 135, y + 6], [x + 218, y + 37]]); shingles(c, [[x + 205, y + 52], [x + 230, y + 38], [x + 255, y + 52]]);
+  for (let i = 0; i < 5; i++) { if (i === 2) continue; const wx = x + 60 + 13.33 + i * 27.33, wy = y + 54; fillR(c, wx - 4, wy - 1, 3, 15, '#2f5a77'); fillR(c, wx + 15, wy - 1, 3, 15, '#2f5a77'); fillR(c, wx - 1, wy + 14, 16, 3, '#8d5a3b', 1); ['#e53935', '#fdd835', '#ec407a', '#fff'].forEach((col, k) => circ(c, wx + 1 + k * 4, wy + 13.8, 1.1, col)); }
+  fillR(c, x + 120, y + 57, 30, 4, '#3d6e8f'); fillR(c, x + 121, y + 61, 1.8, 24, '#fff'); fillR(c, x + 147, y + 61, 1.8, 24, '#fff'); circ(c, x + 125, y + 66, 1.4, '#ffe082');
+  fillR(c, x + 130, y + 66, 10, 6, '#cfe8f5', 2);
+  fillR(c, x + 214, y + 58, 32, 27, '#e6e2d8'); for (let k = 0; k < 5; k++) fillR(c, x + 214, y + 60 + k * 5.4, 32, 0.9, '#b9b3a6'); fillR(c, x + 226, y + 70, 8, 1.5, '#8d8d8d');
+  fillR(c, x + 214, y + 85, 32, h - 88, '#cfc8b8');
+  [[x + 64, y + 88, 4], [x + 80, y + 89, 3.5], [x + 100, y + 88, 4], [x + 165, y + 88, 4], [x + 185, y + 89, 3.5], [x + 203, y + 88, 4]].forEach(([a2, b2, r]) => shrub(c, a2, b2, r));
 
   [x, y, w, h] = P('h_apartments');
   fillR(c, x, y, w, h, '#a8d98f', 4);
@@ -428,6 +498,10 @@ function drawStatic(c) {
   for (let r = 0; r < 5; r++) for (let k = 0; k < 5; k++) if ((r + k) % 2 === 0) { c.fillStyle = '#5d4037'; c.fillRect(x + 32 + k * 30.6, y + 37 + r * 22, 22, 2); }
   fillR(c, x + 85, y + 145, 40, 30, '#6d4c41', 3); fillR(c, x + 90, y + 150, 30, 25, '#90caf9', 2);
   signBoard(c, x + 70, y + 132, 70, 11, '#3e2723', '#ffe0b2', 'APARTMENTS', 8);
+  for (let r = 0; r < 5; r++) for (let k = 0; k < 5; k++) if ((r + k) % 2 === 0) { const bx2 = x + 32 + k * 30.6, by2 = y + 37 + r * 22; for (let q = 0; q < 6; q++) fillR(c, bx2 + q * 4, by2 - 4, 0.8, 4, '#4e342e'); fillR(c, bx2, by2 - 4.5, 22, 0.8, '#4e342e'); if ((r * 3 + k) % 4 === 0) { fillR(c, bx2 + 16, by2 - 4, 3, 3, '#a1887f'); circ(c, bx2 + 17.5, by2 - 5, 2.2, '#4caf50'); } if ((r + k * 2) % 5 === 1) fillR(c, bx2 - 4, by2 - 9, 5, 4, '#cfd8dc'); }
+  fillR(c, x + 80, y + 140, 50, 5, '#3e2723'); fillR(c, x + 82, y + 145, 1.5, 30, '#5d4037'); fillR(c, x + 126.5, y + 145, 1.5, 30, '#5d4037');
+  [[x + 30, y + 178, 5], [x + 45, y + 179, 4], [x + 165, y + 178, 5], [x + 180, y + 179, 4]].forEach(([a2, b2, r]) => shrub(c, a2, b2, r));
+  fillR(c, x + 40, y + 2, 24, 10, '#90a4ae', 2); for (let k = 0; k < 4; k++) fillR(c, x + 42 + k * 5, y + 4, 3, 6, '#78909c');
   bush(c, x + 40, y + 180, 6); bush(c, x + 170, y + 180, 6);
 
   [x, y, w, h] = P('park');

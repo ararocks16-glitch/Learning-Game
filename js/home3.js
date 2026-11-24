@@ -168,3 +168,47 @@ openDoor = function () {
 const _openPhone3 = openPhone;
 openPhone = function (app) { if (lostBlocks('phone')) return nope('📱 You lost your phone! Search for it at home.'); return _openPhone3(app); };
 function lostChip() { return S.lost ? `<button class="chip warn" onclick="searchFor()">😱 Lost ${LOSTABLE[S.lost.what][0]} ${LOSTABLE[S.lost.what][1]}! (tap to search at home)</button>` : ''; }
+
+// ---------- extra details in your room ----------
+function drawRoomDetails(c) {
+  // wall clock that shows the real game time
+  const cx = 605, cy = 58;
+  c.fillStyle = 'rgba(0,0,0,.15)'; c.beginPath(); c.arc(cx + 2, cy + 3, 17, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#5d4037'; c.beginPath(); c.arc(cx, cy, 17, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fdfaf2'; c.beginPath(); c.arc(cx, cy, 14, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#333'; for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; c.fillRect(cx + Math.cos(a) * 11.5 - 0.7, cy + Math.sin(a) * 11.5 - 0.7, k % 3 ? 1.2 : 2, k % 3 ? 1.2 : 2); }
+  const hr = S.hour % 12, mn = (S.hour % 1) * 60;
+  const hand = (ang, len, w) => { c.strokeStyle = '#222'; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(ang) * len, cy - Math.cos(ang) * len); c.stroke(); };
+  hand(hr / 12 * Math.PI * 2, 7, 2); hand(mn / 60 * Math.PI * 2, 11, 1.2);
+  c.fillStyle = '#c62828'; c.beginPath(); c.arc(cx, cy, 1.6, 0, Math.PI * 2); c.fill();
+  // a calendar on the wall with today's date
+  const d = dateOf(), kx = 735, ky = 26;
+  c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(kx + 2, ky + 3, 34, 40);
+  c.fillStyle = '#ffffff'; c.fillRect(kx, ky, 34, 40); c.fillStyle = '#e53935'; c.fillRect(kx, ky, 34, 10);
+  c.fillStyle = '#fff'; c.font = '800 7px system-ui, sans-serif'; c.textAlign = 'center'; c.fillText(MONTHS[d.m].slice(0, 3).toUpperCase(), kx + 17, ky + 8);
+  c.fillStyle = '#222'; c.font = '900 16px system-ui, sans-serif'; c.fillText(String(d.d), kx + 17, ky + 29);
+  c.fillStyle = '#9e9e9e'; for (let k = 0; k < 5; k++) c.fillRect(kx + 4 + k * 6, ky + 34, 4, 2);
+  c.fillStyle = '#555'; c.beginPath(); c.arc(kx + 17, ky - 2, 1.5, 0, Math.PI * 2); c.fill(); c.textAlign = 'start';
+  // a pendant lamp over the table
+  if (has('table')) {
+    c.strokeStyle = '#333'; c.lineWidth = 1; c.beginPath(); c.moveTo(526, 0); c.lineTo(526, 34); c.stroke();
+    c.fillStyle = '#37474f'; c.beginPath(); c.moveTo(512, 46); c.lineTo(518, 34); c.lineTo(534, 34); c.lineTo(540, 46); c.closePath(); c.fill();
+    const on = S.lightsOn && !S.powerOut;
+    c.fillStyle = on ? '#fff8d6' : '#cfcfcf'; c.beginPath(); c.ellipse(526, 46, 13, 2.5, 0, 0, Math.PI * 2); c.fill();
+    if (on && (S.hour < 7 || S.hour > 18)) { const g = c.createRadialGradient(526, 60, 4, 526, 120, 110); g.addColorStop(0, 'rgba(255,236,170,.35)'); g.addColorStop(1, 'rgba(255,236,170,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(514, 47); c.lineTo(450, 250); c.lineTo(602, 250); c.lineTo(538, 47); c.fill(); }
+  }
+  // a cozy throw blanket on the couch
+  if (has('couch')) {
+    const bx = 478, by = 186;
+    c.fillStyle = '#b5523b'; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + 26, by + 2); c.lineTo(bx + 28, by + 34); c.lineTo(bx + 3, by + 30); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(255,230,200,.6)'; c.lineWidth = 1; for (let k = 4; k < 28; k += 6) { c.beginPath(); c.moveTo(bx + k, by + 1); c.lineTo(bx + k + 1.5, by + 31); c.stroke(); c.beginPath(); c.moveTo(bx + 1, by + k); c.lineTo(bx + 27, by + k + 1.5); c.stroke(); }
+    c.fillStyle = '#e8c9a8'; for (let k = 0; k < 7; k++) c.fillRect(bx + 3 + k * 3.6, by + 30 + k * 0.5, 1, 4);
+  }
+  // slippers by the bed
+  if (hasF('mattress')) { [[120, 0], [134, 0.15]].forEach(([x, r]) => { c.save(); c.translate(x, 306); c.rotate(r); c.fillStyle = '#7e57c2'; c.beginPath(); c.ellipse(0, 0, 9, 4, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#b39ddb'; c.beginPath(); c.ellipse(-3, -1, 5, 3, 0, 0, Math.PI * 2); c.fill(); c.restore(); }); }
+  // a plant on top of the wardrobe (or on the floor)
+  const px = has('wardrobe') ? 230 : 290, py = has('wardrobe') ? 104 : 262;
+  c.fillStyle = '#c56b3d'; c.beginPath(); c.moveTo(px - 8, py - 12); c.lineTo(px + 8, py - 12); c.lineTo(px + 6, py); c.lineTo(px - 6, py); c.closePath(); c.fill();
+  c.fillStyle = '#a4552f'; c.fillRect(px - 9, py - 14, 18, 3);
+  [[-10, -30, -0.6], [0, -36, 0], [9, -30, 0.6], [-5, -26, -0.3], [5, -27, 0.35]].forEach(([dx, dy, a]) => { c.save(); c.translate(px, py - 13); c.rotate(a); c.fillStyle = '#3e8e41'; c.beginPath(); c.ellipse(0, dy / 2, 3.5, Math.abs(dy) / 2, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(-0.4, dy, 0.8, Math.abs(dy)); c.restore(); });
+}
