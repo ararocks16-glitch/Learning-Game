@@ -36,3 +36,5 @@ After ANY change to the game:
    and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/world.js": "js/world.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/room.js": "js/room.js", "js/door.js": "js/door.js", "js/entrance.js": "js/entrance.js", "js/interior.js": "js/interior.js", "js/trips.js": "js/trips.js", "js/towns.js": "js/towns.js", "js/pets.js": "js/pets.js", "js/ui.js": "js/ui.js"}`.
    (Read the artifact first if this session hasn't, as the tool requires.)
 3. Commit and push.
+
+To give the owner a file to download (one file, works offline): run `python3 tools/build-download.py` and send `dist/The-Big-Game-of-Life.html`.
