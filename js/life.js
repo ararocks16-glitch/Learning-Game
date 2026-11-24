@@ -89,6 +89,7 @@ function quickDrink() {
 function drinkSoda() {
   if (!spend(2, 'Soda')) return;
   S.needs.thirst = clamp(S.needs.thirst + 30); S.needs.bladder = clamp(S.needs.bladder - 10); fun2(5); S.needs.health = clamp(S.needs.health - 1); S.plaque = (S.plaque || 0) + 0.4;
+  S.inv.cans++;
   log('🥤 You drank a soda. Sweet and fizzy... but water is healthier for your body and teeth!'); done();
 }
 
@@ -267,7 +268,7 @@ function buyExtra(what) {
   if (!spend(p, { medicine: 'Medicine', bugspray: 'Bug spray', newspaper: 'Newspaper', water: 'Bottled water' }[what])) return;
   if (what === 'medicine') { S.medicine += 6; log('💊 You bought medicine (6 doses). Only take it when you\'re sick!'); }
   if (what === 'bugspray') { S.bugSpray = (S.bugSpray || 0) + 1; log('🐜 You bought bug spray.'); }
-  if (what === 'water') { S.needs.thirst = clamp(S.needs.thirst + 45); S.trash = clamp(S.trash + 2); log('💧 You drank a bottle of water. (A reusable bottle makes less trash!)'); }
+  if (what === 'water') { S.inv.cans++; S.needs.thirst = clamp(S.needs.thirst + 45); S.trash = clamp(S.trash + 2); log('💧 You drank a bottle of water. (A reusable bottle makes less trash!)'); }
   if (what === 'newspaper') { showNews('📰 The Maple Times'); return; }
   done();
 }

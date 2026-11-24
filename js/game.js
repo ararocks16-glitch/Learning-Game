@@ -245,6 +245,7 @@ function newDay() {
   carsNewDay();
   taxNewDay();
   buildNewDay();
+  realNewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -428,6 +429,7 @@ async function goWork() {
   S.today.worked = true;
   pass(8, 'work');
   const extra = workEvent(j);
+  if (j.daysWorked === 0) firstDayTraining(j);
 
   j.weekHours += 8; j.daysWorked++;
   job.req.forEach(r => addSkill(r.s, 1.2));
@@ -438,6 +440,7 @@ async function goWork() {
   if (perf >= 65) {
     j.goodDays++;
     msgs.push('Great work today! 👏');
+    checkPromotion(j);
     if (j.goodDays % 10 === 0) {
       const old = j.wage;
       j.wage = Math.round(j.wage * 1.08 * 100) / 100;
@@ -451,6 +454,7 @@ async function goWork() {
     if (j.warnings >= 3) { log(`${job.name}: ${msgs.join(' ')}`, 'bad'); fire('You did poor work too many times. (Come to work rested, fed and clean!)'); fired = true; }
   } else msgs.push('An OK day at work.');
   if (extra) msgs.push(extra);
+  const md = managerDay(j); if (md) msgs.push(md);
 
   if (!fired) {
     // were you caught lying?
@@ -543,6 +547,7 @@ function weeklyBills() {
   if (S.home === 'parents' && S.kwh > 25) log('👩 Mom says: "Turn off the lights when you leave a room! The electric bill was huge."');
   S.kwh = 0;
   if (has('phone')) { charge(20, 'Phone bill'); bills.push(['Phone bill', 20]); }
+  realWeekly(bills);
   if (has('car')) { charge(35, 'Car insurance'); bills.push(['Car insurance', 35]); }
   if (has('newcar')) { charge(45, 'New car insurance'); bills.push(['New car insurance', 45]); }
   if (S.insurance && !(S.job && JOBS[S.job.id].insurance)) { charge(35, 'Health insurance'); bills.push(['Health insurance', 35]); }
@@ -636,6 +641,7 @@ function ateFood(amount) {
   }
 }
 function useToilet() {
+  if (atHome() && S.broken && S.broken.kind === 'toilet') return nope('🚽 The toilet at home is clogged! Fix it (or call someone), or use a restroom in town.');
   pass(0.1);
   const before = S.needs.bladder;
   S.needs.bladder = 100;
@@ -712,6 +718,16 @@ const HOME_ACTIONS = [
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
   { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
     fn: () => drink('tap') },
+  { id: 'mailbox', icon: '📬', name: 'Check the Mailbox', hint: () => { const n = S.mail ? unreadMail() : 0; return n ? `${n} new!` : 'Letters, bills, packages'; },
+    fn: () => mailbox() },
+  { id: 'libbook', icon: '📚', name: 'Read a Library Book', hint: () => S.lib && S.lib.books.length ? `${S.lib.books.length} borrowed · 1 hr` : 'Borrow free books at the Library',
+    fn: () => readLibraryBook() },
+  { id: 'shoponline', icon: '🛒', name: 'Shop Online', hint: 'Needs a phone or laptop · arrives in 2–4 days',
+    fn: () => shopOnline() },
+  { id: 'yardsale', icon: '🏷️', name: 'Have a Yard Sale', hint: 'Saturdays 7 AM – noon · sell old stuff',
+    fn: () => yardSale() },
+  { id: 'firedrill', icon: '🚒', name: 'Practice a Fire Drill', hint: () => S.safety && S.safety.drill ? '✅ You know what to do!' : '30 min · learn fire safety',
+    fn: () => fireDrill() },
   { id: 'toys', icon: '🧸', name: 'Play With Toys', hint: () => { ensureToyState(); const n = toyCount(); return n ? `${n} toy${n > 1 ? 's' : ''} in your toy box` : 'Buy toys at the Mall'; },
     fn: () => toyBox() },
   { id: 'dinnerparty', icon: '🍽️', name: 'Invite Friends to Dinner', hint: () => S.friends && S.friends.length ? `5–9 PM · ${S.friends.length} friends to invite` : 'Make some friends first!',
@@ -785,7 +801,8 @@ function attendSchool(lvl) {
   if (S.edu >= lvl) return nope('You already finished this!');
   if (S.hour < 8 || S.hour > 18) return nope('Classes are from 8 AM to 6 PM.');
   if (S.needs.energy < 20) return nope('Too tired for class!');
-  if (!spend(e.price, `${e.name} tuition`)) return;
+  if (S.money < e.price) { S.studentLoan = (S.studentLoan || 0) + e.price; log(`📚 A student loan paid your ${money(e.price)} tuition. You'll pay it back after school. (You owe ${money(S.studentLoan)})`); }
+  else if (!spend(e.price, `${e.name} tuition`)) return;
   pass(e.hours, 'study');
   S.eduProgress[lvl]++;
   ['math', 'write', 'sci', 'comp', 'comm'].forEach(s => addSkill(s, lvl === 2 ? 1.3 : 1.6));
@@ -793,7 +810,7 @@ function attendSchool(lvl) {
     S.edu = lvl;
     unlock(lvl === 2 ? 'college' : 'grad');
     log(`🎓 GRADUATION! You earned your ${EDU_NAMES[lvl]}!`, 'good');
-    queueModal(`<h2>🎓 Congratulations, Graduate!</h2><p>You earned your <b>${EDU_NAMES[lvl]}</b>!</p><p>Lots of new jobs are open to you now. Check the 💼 Job Center.</p>`);
+    graduationCeremony(lvl);
   } else log(`🎒 You went to ${e.name}. (${S.eduProgress[lvl]}/${e.sessions} classes)`);
   done();
 }
@@ -947,7 +964,7 @@ function moveTo(hid) {
     confirmModal(`Rent the <b>${h.name}</b>?<br>Move-in cost: <b>${money(upfront)}</b> (first week + security deposit).<br>Then ${money(h.rent)} rent + ${money(h.utilities)} utilities every Monday.`, () => {
       if (!spend(upfront, `Move in: ${h.name}`)) return;
       S.home = hid; S.missedRent = 0;
-      pass(4);
+      pass(1); startMovingDay();
       homeWelcome();
       log(`🔑 You moved into a ${h.name}!`, 'good');
       unlock('moved_out');
@@ -984,7 +1001,7 @@ function moveTo(hid) {
 function finishBuy(hid) {
   S.home = hid; S.missedRent = 0;
   homeWelcome();
-  pass(6);
+  pass(2); startMovingDay();
   log(`🏠 You bought a ${HOMES[hid].name}! Welcome home!`, 'good');
   unlock('homeowner'); unlock('moved_out');
   done();

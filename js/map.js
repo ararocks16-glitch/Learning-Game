@@ -683,6 +683,7 @@ function travelTo(dest, opts = {}) {
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
       afterDrive(info);
+      safetyAfterTravel(info);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
       if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
       if (!opts.keepTab) tab = dest;

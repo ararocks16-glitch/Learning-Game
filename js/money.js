@@ -130,7 +130,7 @@ function moneyWeekly() {
     const b = BUSINESSES[S.business.type];
     const skill = b.skills.reduce((a, s) => a + skillLevel(s), 0) / b.skills.length;
     const luck = 0.55 + Math.random() * 0.8;
-    const sales = Math.round(b.base * luck * (0.7 + skill / 100) * (1 + S.business.worked * 0.12));
+    const sales = Math.round(b.base * luck * (0.7 + skill / 100) * (1 + S.business.worked * 0.12) * (1 + (typeof staffBoost === 'function' ? staffBoost() : 0)));
     const profit = sales - b.costs;
     lines.push([`${b.icon} ${b.name}: sales ${money(sales)} − costs ${money(b.costs)} (rent, workers, supplies)`, profit]);
     total += profit;

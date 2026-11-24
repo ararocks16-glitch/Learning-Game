@@ -164,8 +164,9 @@ function phoneButton() { return has('phone') ? `<button class="phonebtn" onclick
 function openPhone(app) {
   if (!has('phone')) return nope('You don\'t have a phone. Buy one at the Mall.');
   ensureSocialState();
-  const apps = [['msgs', '💬', 'Messages'], ['weather', '🌦️', 'Weather'], ['bank', '🏦', 'Bank'], ['cal', '📅', 'Calendar'], ['news', '📰', 'News'], ['contacts', '👥', 'Contacts'], ['budget', '📊', 'Budget'], ['maps', '🗺️', 'Maps']];
+  const apps = [['msgs', '💬', 'Messages'], ['weather', '🌦️', 'Weather'], ['bank', '🏦', 'Bank'], ['cal', '📅', 'Calendar'], ['news', '📰', 'News'], ['contacts', '👥', 'Contacts'], ['budget', '📊', 'Budget'], ['maps', '🗺️', 'Maps'], ['shop', '🛒', 'Shop']];
   let body = '';
+  if (app === 'shop') { closeModal(); return shopOnline(); }
   if (!app) body = `<div class="apps">${apps.map(a => `<button onclick="openPhone('${a[0]}')"><span>${a[1]}</span>${a[2]}${a[0] === 'msgs' && S.unread ? ` <i>${S.unread}</i>` : ''}</button>`).join('')}</div>`;
   if (app === 'maps') { closeModal(); setTab('places'); return; }
   if (app === 'msgs') { S.unread = 0; body = `${S.invite && S.invite.day === S.day ? `<div class="card holiday"><b>${esc(S.invite.name)}:</b> Want to go to ${S.invite.plan} today?${S.invite.cost ? ` (${money(S.invite.cost)})` : ''}<div class="row"><button class="btn sm primary" onclick="closeModal();acceptInvite(true)">Yes! 🙌</button><button class="btn sm ghost" onclick="closeModal();acceptInvite(false)">Maybe next time</button></div></div>` : ''}
@@ -204,7 +205,7 @@ function showNews(title) { showModal(`<h2>${title}</h2>${newsHtml()}`, [{ label:
 // ---------- the People card on the Me screen ----------
 function peopleCard() {
   ensureSocialState();
-  return `<div class="card"><h3>👨‍👩‍👧 Family</h3><div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `❤️ Relationship ${Math.round(m.rel)}`, has('phone') ? b('📞 Call', `callFamily('${k}')`) : '')).join('')}</div>
+  return `<div class="card"><h3>👨‍👩‍👧 Family</h3><div class="mrows">${Object.entries(S.family).map(([k, m]) => mrow(m.icon, m.name, `${m.age ? `Age ${m.age} · ` : ''}${m.job ? `${m.job} · ` : ''}❤️ Relationship ${Math.round(m.rel)}`, has('phone') ? b('📞 Call', `callFamily('${k}')`) : '')).join('')}</div>
     ${S.home !== 'parents' ? `<button class="btn sm ghost" onclick="travelTo('h_parents')">🏡 Visit your parents</button>` : ''}</div>
     <div class="card"><h3>🙂 Friends (${S.friends.length}/${MAX_FRIENDS})</h3>${S.friends.length ? `<div class="mrows">${S.friends.map((fr, i) => mrow(`<img class="avatar" style="width:28px;height:28px" src="${avatarURL(fr.look, 28)}" alt="">`, fr.name + (fr.bdayToday === S.day ? ' 🎂 Birthday today!' : ''), `Age ${fr.age}${fr.age === S.age ? ' (same as you!)' : ''} · Friendship ${Math.round(fr.f)} · birthday ${MONTHS[fr.bday.m].slice(0, 3)} ${fr.bday.d}${fr.classmate ? ' · high school friend' : ''}`, b('Hang out', `hangOut(${i})`) + b('💬 Say nice', `sayNice('friend', ${i})`, 'ghost') + (has('phone') ? b('💬 Text', `textFriend(${i})`, 'ghost') : ''))).join('')}</div>` : '<p class="muted">Meet people at the park, diner, sports park, at work or while volunteering!</p>'}${S.friends.length ? '<button class="btn sm primary" onclick="dinnerParty()">🍽️ Invite friends over for dinner</button>' : ''}
     <p class="lesson">💡 Friendships fade if you never talk. Text, hang out and remember birthdays!</p></div>`;

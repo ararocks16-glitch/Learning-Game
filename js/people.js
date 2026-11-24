@@ -94,6 +94,14 @@ function drawPerson(c, x, y, s, look, phase = 0, moving = false) {
   c.beginPath(); c.arc(x - 3.6 * s, hy + 2.6 * s, 1.2 * s, 0, Math.PI * 2); c.arc(x + 3.6 * s, hy + 2.6 * s, 1.2 * s, 0, Math.PI * 2); c.fill();
   c.strokeStyle = '#7a3b2e'; c.lineWidth = 0.8 * s;
   c.beginPath(); c.arc(x, hy + 2.6 * s, 1.8 * s, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+  // glasses
+  if (look.glasses) {
+    c.strokeStyle = look.glasses; c.lineWidth = 0.55 * s;
+    [-1, 1].forEach(d => { c.beginPath(); c.ellipse(x + d * 2.4 * s, hy + 0.5 * s, 1.9 * s, 1.5 * s, 0, 0, Math.PI * 2); c.stroke(); });
+    c.beginPath(); c.moveTo(x - 0.5 * s, hy + 0.3 * s); c.lineTo(x + 0.5 * s, hy + 0.3 * s); c.stroke();
+    c.beginPath(); c.moveTo(x - 4.3 * s, hy + 0.2 * s); c.lineTo(x - 6.2 * s, hy - 0.2 * s); c.moveTo(x + 4.3 * s, hy + 0.2 * s); c.lineTo(x + 6.2 * s, hy - 0.2 * s); c.stroke();
+    c.fillStyle = 'rgba(200,230,255,.18)'; [-1, 1].forEach(d => { c.beginPath(); c.ellipse(x + d * 2.4 * s, hy + 0.5 * s, 1.9 * s, 1.5 * s, 0, 0, Math.PI * 2); c.fill(); });
+  }
   // hair on top
   const hairG = c.createLinearGradient(x - 6 * s, hy - 8 * s, x + 6 * s, hy);
   hairG.addColorStop(0, shade(look.hair, 0.16)); hairG.addColorStop(0.5, look.hair); hairG.addColorStop(1, shade(look.hair, -0.12));

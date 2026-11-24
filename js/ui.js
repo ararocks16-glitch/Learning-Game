@@ -46,6 +46,7 @@ function ensureRealLife() {
   ensureCarState();
   ensureBuildState();
   ensureToyState();
+  ensureTown2State();
 }
 
 function render() {
@@ -63,6 +64,10 @@ function render() {
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
+  if (S.mail && unreadMail() && S.loc === 'home') warn.push(`<button class="chip warn" onclick="mailbox()">📬 You have mail! (${unreadMail()}) tap to open</button>`);
+  if (S.moving) warn.push(`<button class="chip warn" onclick="movingModal()">📦 Moving day! ${S.moving.boxes} boxes to move (tap)</button>`);
+  if (S.broken) warn.push(`<span class="chip warn">${BREAKS[S.broken.kind].icon} Broken at home: ${BREAKS[S.broken.kind].name}</span>`);
+  if (S.grandmaAsk) warn.push(`<span class="chip warn">👵 Grandma needs help with ${S.grandmaAsk.what} — visit your parents' house</span>`);
   if (S.powerOut) warn.push(`<span class="chip warn">🔌 The power is out! (${Math.ceil(S.powerOut)} hrs left)</span>`);
   if (S.needs.thirst < 25) warn.push(`<button class="chip warn" onclick="quickDrink()">💧 You're thirsty! (tap to drink water)</button>`);
   if (S.ill) warn.push(`<button class="chip warn" onclick="takeMedicine()">${ILLNESS[S.ill.type].icon} You have ${ILLNESS[S.ill.type].name.toLowerCase()} (${S.ill.days}d) · tap for medicine</button>`);
@@ -118,23 +123,24 @@ const PLACE_VIEWS = {
   home: () => viewHome(),
   jobcenter: () => viewJobs(),
   school: () => viewSchool(),
-  library: () => viewLibrary(),
+  library: () => libraryCard() + viewLibrary(),
   sports: () => viewSports(),
   market: () => treeCard() + groceryAisle() + viewShopAt('market'),
   mall: () => viewShopAt('mall'),
-  diner: () => viewShopAt('diner'),
+  diner: () => `<div class="card"><h3>🍽️ Sit Down & Order</h3><p>Get a table, order from the menu, and leave a tip for your server.</p><button class="btn primary" onclick="sitDown()">🍽️ Get a table</button></div>` + viewShopAt('diner'),
   cars: () => viewShopAt('cars'),
-  bank: () => viewBank() + `<div class="grid two">${creditCard()}<div class="card"><h3>📊 Weekly Budget</h3>${budgetHtml()}</div></div>`,
+  bank: () => viewBank() + `<div class="grid two">${statementCard()}${jarsCard()}</div>` + `<div class="grid two">${creditCard()}<div class="card"><h3>📊 Weekly Budget</h3>${budgetHtml()}</div></div>`,
   realestate: () => viewHousing() + viewLand(),
-  hospital: () => viewHospital(),
+  hospital: () => checkupCard() + viewHospital(),
   park: () => viewParkEvent() + viewPark(),
   gasstation: () => viewGas(), salon: () => viewSalon(), dmv: () => viewDmv(), airport: () => viewAirport(),
-  h_parents: () => viewFamilyVisit(),
+  h_parents: () => viewFamilyVisit() + `<div class="card"><h3>👵 Grandma (age ${S.family.grandma.age})</h3><p>${S.grandmaAsk ? `Grandma needs help with <b>${S.grandmaAsk.what}</b>!` : 'Grandma is knitting and loves visitors.'}</p><button class="btn sm primary" onclick="helpGrandma()">${S.grandmaAsk ? `🤝 Help with ${S.grandmaAsk.what}${S.grandmaAsk.what === 'groceries' ? ' ($30)' : S.grandmaAsk.what === 'medicine' ? ' ($10)' : ''}` : '☕ Visit Grandma (1.5 hrs)'}</button></div>`,
   lot_country: () => viewLot('lot_country'), lot_river: () => viewLot('lot_river'), lot_sea: () => viewLot('lot_sea'),
   petshop: () => viewPetShop(),
   vet: () => viewVet(),
-  cityhall: () => viewCivic() + viewWorkplace('cityhall'),
-  theater: () => viewWorkplace('theater'),
+  cityhall: () => viewCivic() + companyCard() + viewWorkplace('cityhall'),
+  postoffice: () => viewPostOffice(), recycling: () => viewRecycling(),
+  theater: () => movieCard() + viewWorkplace('theater'),
   beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
   campground: () => viewTrip('campground'), village: () => viewTrip('village'), zoo: () => viewTrip('zoo'),
 };
@@ -142,7 +148,7 @@ const PLACE_VIEWS = {
 function viewFor(t) {
   if (t === 'me') return viewMe();
   if (t === 'goals') return viewGoals();
-  if (t === 'money') return viewMoney();
+  if (t === 'money') return jarsCard() + viewMoney();
   if (t === 'places') return viewDirectory();
   if (placeId(t) !== placeId(S.loc)) return viewGoThere(t);
   const place = placeOf(t);
@@ -171,7 +177,7 @@ function viewGoThere(t) {
   const isWork = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
   return `<div class="card goto">
     <div class="placehead"><span class="pic">${t === 'home' ? home().icon : p.icon}</span><div><h2>${t === 'home' ? 'Home' : p.name}</h2><p>${blurb}</p></div></div>
-    <p>You are at <b>${esc(locName(S.loc))}</b>. ${info.icon} You'd ${info.how === 'took the bus' ? 'take the bus' : info.how.replace('drove', 'drive').replace('biked', 'bike').replace('walked', 'walk')} there: <b>${travelTime(info.hours)}</b>${info.cost ? `, $${info.cost} bus fare` : ''}.</p>
+    <p>You are at <b>${esc(locName(S.loc))}</b>. ${info.icon} You'd ${info.how === 'took the bus' ? 'take the bus' : info.how.replace('drove', 'drive').replace('biked', 'bike').replace('walked', 'walk')} there: <b>${travelTime(info.hours)}</b>${info.cost ? `, $${info.cost} bus fare` : ''}.</p>${busText(info)}
     <button class="btn primary" onclick="travelTo('${t}')">${info.icon} Go to ${t === 'home' ? 'Home' : p.name}</button>
     ${isWork ? '<p class="muted">This is where you work. Use the "Go to Work" button to start your shift.</p>' : ''}
     <p class="muted small">Tip: you can also click buildings on the map.</p>
@@ -225,7 +231,7 @@ function jobCard() {
   else if (S.today.sick) status = '🤒 Called in sick today.';
   else status = `Be there by ${fmtTime(sh.late)} to be on time.`;
   return `<div class="card job">
-    <h3>💼 ${job.name} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
+    <h3>💼 ${jobTitle(j)} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
     <p class="muted">${status} · Trip from home: ${c.icon} ${travelTime(c.hours)}${c.cost ? `, $${c.cost} bus each way` : ''}</p>
     <p class="muted">🕐 ${sh.label}</p>
     <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
@@ -234,6 +240,7 @@ function jobCard() {
       <button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goWork()">${c.icon} Go to Work (8 hrs)</button>
       <button class="btn ghost" ${canWork && j.pto > 0 ? '' : 'disabled'} onclick="takeVacationDay()">🏖️ Take a Vacation Day</button>
       <button class="btn ghost" ${canWork ? '' : 'disabled'} onclick="callInSick()">📞 Call in Sick</button>
+      ${canRetire() ? '<button class="btn primary" onclick="retire()">🏖️ Retire</button>' : ''}
       <button class="btn ghost danger" onclick="quitJob()">Quit</button>
     </div></div>`;
 }
@@ -247,7 +254,7 @@ function viewHome() {
   }).join('');
   if (!S.doorOpen) return `${doorSection()}${jobCard()}${neighborsCard()}`;
   const [ti, tl, tc] = teethStatus();
-  return `${homeSection()}${petsSection()}${jobCard()}
+  return `${brokenCard()}${homeSection()}${petsSection()}${jobCard()}
     <div class="row info">
       <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
       <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>
@@ -261,7 +268,7 @@ function viewHome() {
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${energyCard()}${carCard()}${neighborsCard()}`;
+    ${energyCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);

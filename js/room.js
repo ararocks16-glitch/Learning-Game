@@ -200,8 +200,9 @@ function drawRoom(cv, fixedW) {
   const fg = c.createLinearGradient(0, FLOOR_Y, 0, RH);
   fg.addColorStop(0, '#8a5d35'); fg.addColorStop(1, '#c08c58');
   c.fillStyle = fg; c.fillRect(0, FLOOR_Y, BATH_X, RH - FLOOR_Y);
+  const altFloor = drawDecorFloor(c, RW, RH, FLOOR_Y, BATH_X);
   // planks get wider toward you (perspective)
-  let py = FLOOR_Y, row = 0;
+  let py = altFloor ? RH : FLOOR_Y, row = 0;
   while (py < RH) {
     const ph = 7 + row * 2.6;
     const offset = (row * 137) % 160;
@@ -219,6 +220,7 @@ function drawRoom(cv, fixedW) {
   // floor shine
   const shine = c.createLinearGradient(0, FLOOR_Y, 0, RH); shine.addColorStop(0, 'rgba(255,255,255,0)'); shine.addColorStop(0.5, 'rgba(255,240,220,.07)'); shine.addColorStop(1, 'rgba(0,0,0,.1)');
   c.fillStyle = shine; c.fillRect(0, FLOOR_Y, BATH_X, RH - FLOOR_Y);
+  drawRug(c);
   // bathroom floor tiles
   c.fillStyle = '#c9d3d9'; c.fillRect(BATH_X, FLOOR_Y, RW - BATH_X, RH - FLOOR_Y);
   for (let y = FLOOR_Y, k = 0; y < RH; k++) { const h = 10 + k * 4; for (let x = BATH_X + (k % 2) * 15; x < RW; x += 30) { c.fillStyle = (k + x / 30) % 2 ? '#d7e0e5' : '#c3ced5'; c.fillRect(x, y, 29, h - 1); } y += h; }
@@ -289,6 +291,7 @@ function drawRoom(cv, fixedW) {
     metal(c, WX - 44, WY - 22, WW + 88, 5, 2, '#a68a5b');
   }
 
+  drawCurtains(c);
   // ---------- paintings ----------
   const spots = [[220, 46, 70, 54], [334, 34, 86, 66], [446, 56, 60, 46], [524, 40, 70, 54], [624, 32, 58, 44], [706, 40, 62, 48], [236, 124, 50, 38], [456, 124, 52, 38]];
   S.walls.forEach((w, i) => { const sp = spots[i]; if (sp) { wallShadow(c, sp[0] - 4, sp[1] - 4, sp[2] + 8, sp[3] + 8); drawArt(c, ...sp, w); } });
