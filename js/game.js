@@ -131,6 +131,7 @@ function newGame(name, look, talents) {
   ensureMoneyState();
   S.homeV2 = true;
   ensureHomeState();
+  ensureTripState();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();

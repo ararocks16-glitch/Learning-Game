@@ -130,6 +130,7 @@ const ITEMS = [
     desc: '5 canvases and paints. Paint at home, sell at the Mall.' },
   { id: 'mower', place: 'mall', cat: 'Hobbies', name: 'Lawn Mower', icon: '🌱', price: 180, desc: 'Mow neighbors\' lawns for $20 each.' },
   { id: 'guitar', place: 'mall', cat: 'Hobbies', name: 'Guitar', icon: '🎸', price: 150, desc: 'Play for tips at the Park.' },
+  { id: 'rod', place: 'mall', cat: 'Hobbies', name: 'Fishing Rod', icon: '🎣', price: 40, desc: 'Go fishing at Crystal Lake.' },
   { id: 'detector', place: 'mall', cat: 'Hobbies', name: 'Metal Detector', icon: '🔍', price: 120, desc: 'Hunt for treasure at the Park.' },
   // transport
   { id: 'bike', place: 'cars', cat: 'Transport', name: 'Bicycle', icon: '🚲', price: 250, desc: 'Free ride to work. Faster than the bus.' },
@@ -357,6 +358,7 @@ const ACHIEVEMENTS = [
   { id: 'author',        icon: '📕', name: 'Author',              desc: 'Publish a book.' },
   { id: 'decorator',     icon: '🖼️', name: 'Decorator',           desc: 'Hang 3 paintings on your walls.' },
   { id: 'cozy',          icon: '🏡', name: 'Home Sweet Home',     desc: 'Reach a coziness of 25.' },
+  { id: 'traveler',      icon: '🧭', name: 'World Traveler',      desc: 'Visit all 6 places outside of town.' },
   { id: 'sponsored',     icon: '🤝', name: 'Sponsored',           desc: 'Get a sponsor.' },
   { id: 'pro_athlete',   icon: '🌟', name: 'Going Pro',           desc: 'Get hired as a pro athlete.' },
 ];

@@ -111,6 +111,7 @@ function seeded(seed) {
 
 // ---------- static drawing ----------
 const WINDOWS = [];   // windows that light up at night
+let NO_REC = false;    // true while drawing the big world (don't record town windows)
 const LAMPS = [];
 let staticCanvas = null;
 const riverPts = [];
@@ -129,7 +130,7 @@ function signBoard(c, x, y, w, h, bg, fg, s, size = 9) { fillR(c, x, y, w, h, bg
 function win(c, x, y, w, h, glass = '#bfe3f5', frame = '#ffffff') {
   fillR(c, x - 1, y - 1, w + 2, h + 2, frame); fillR(c, x, y, w, h, glass);
   c.fillStyle = 'rgba(255,255,255,.5)'; c.fillRect(x + 1, y + 1, w * 0.35, h * 0.35);
-  WINDOWS.push([x, y, w, h]);
+  if (!NO_REC) WINDOWS.push([x, y, w, h]);
 }
 function winGrid(c, x, y, w, h, cols, rows, ww, wh, glass, frame) {
   const gx = (w - cols * ww) / (cols + 1), gy = (h - rows * wh) / (rows + 1);
@@ -143,7 +144,7 @@ function shadow(c, x, y, w, h) {
   c.beginPath(); c.moveTo(x + 2, y + h); c.lineTo(x + w, y + h); c.lineTo(x + w + 9, y + h + 7); c.lineTo(x + 9, y + h + 7); c.closePath(); c.fill();
   c.fillRect(x + w, y + 6, 9, h);
   c.restore();
-  SHADE.push([x, y, w, h]);
+  if (!NO_REC) SHADE.push([x, y, w, h]);
 }
 
 function tree(c, x, y, s, rnd) {
@@ -637,273 +638,12 @@ function finishLighting(c, rnd) {
   }
 }
 
-// ---------- dynamic layer ----------
-let mapCanvas, mapCtx, scale = 1, hover = null, lastT = 0;
-let traveler = null;   // { path, t, dur, how, resolve }
-const cars = [];
-const clouds = [];
-const ducks = [];
-const walkers = [];
-
-function initMovers() {
-  const rnd = seeded(7);
-  const cols = ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#fb8c00', '#8e24aa', '#ffffff', '#455a64'];
-  for (let i = 0; i < 9; i++) {
-    const e = EDGES[Math.floor(rnd() * EDGES.length)];
-    cars.push({ from: e[0], to: e[1], t: rnd(), speed: 70 + rnd() * 40, col: cols[i % cols.length] });
-  }
-  for (let i = 0; i < 5; i++) clouds.push({ x: rnd() * MAP_W, y: 40 + rnd() * (MAP_H - 80), s: 0.7 + rnd() * 0.8, v: 6 + rnd() * 6 });
-  for (let i = 0; i < 14; i++) {
-    const e = EDGES[Math.floor(rnd() * EDGES.length)];
-    walkers.push({ from: e[0], to: e[1], t: rnd(), speed: 14 + rnd() * 10, look: randomLook(rnd), side: rnd() < 0.5 ? -1 : 1, ph: rnd() * 10 });
-  }
-  for (let i = 0; i < 4; i++) ducks.push({ a: rnd() * Math.PI * 2, r: 0.4 + rnd() * 0.45, v: (rnd() < 0.5 ? -1 : 1) * (0.1 + rnd() * 0.15) });
-}
-function neighbors(n) { return EDGES.filter(e => e[0] === n || e[1] === n).map(e => (e[0] === n ? e[1] : e[0])); }
-
-function darkness() {
-  if (!S) return 0;
-  const h = S.hour;
-  if (h < 5) return 0.55;
-  if (h < 7) return 0.55 * (1 - (h - 5) / 2);
-  if (h < 18) return 0;
-  if (h < 20.5) return 0.55 * (h - 18) / 2.5;
-  return 0.55;
-}
-
-function drawDynamic(t, dt) {
-  const c = mapCtx;
-  c.setTransform(scale, 0, 0, scale, 0, 0);
-  c.drawImage(staticCanvas, 0, 0, MAP_W, MAP_H);
-
-  // river shimmer
-  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5;
-  for (let i = 0; i < 14; i++) {
-    const yy = ((i * 57 + t * 0.012) % (MAP_H + 40)) - 20;
-    const p = riverPts[Math.max(0, Math.min(riverPts.length - 1, Math.round((yy + 20) / 20)))];
-    if (H_ROADS.some(ry => Math.abs(yy - ry) < 26)) continue;
-    c.beginPath(); c.moveTo(p[0] - 6 + (i % 3) * 4, yy); c.lineTo(p[0] + 2 + (i % 3) * 4, yy + 4); c.stroke();
-  }
-  // ducks on the lake
-  const lake = [PLACES.park.r[0] + 135, PLACES.park.r[1] + 70];
-  ducks.forEach(d => {
-    d.a += d.v * dt;
-    const dx = lake[0] + Math.cos(d.a) * 42 * d.r, dy = lake[1] + Math.sin(d.a) * 24 * d.r;
-    ell(c, dx, dy, 4, 2.6, '#fff'); circ(c, dx + 3 * (Math.sign(-Math.sin(d.a) * d.v) || 1), dy - 2, 1.8, '#2e7d32');
-  });
-  // cars
-  cars.forEach(car => {
-    const A = NODES[car.from], B = NODES[car.to];
-    const L = dist(A, B);
-    car.t += car.speed * dt / L;
-    if (car.t >= 1) {
-      const opts = neighbors(car.to).filter(n => n !== car.from);
-      car.from = car.to; car.to = opts.length ? opts[Math.floor(Math.random() * opts.length)] : car.from; car.t = 0;
-      if (car.to === car.from) car.to = neighbors(car.from)[0];
-    }
-    const P0 = NODES[car.from], P1 = NODES[car.to];
-    const horiz = P0[1] === P1[1];
-    const dir = horiz ? Math.sign(P1[0] - P0[0]) : Math.sign(P1[1] - P0[1]);
-    const ox = horiz ? 0 : -dir * 7, oy = horiz ? dir * 7 : 0;
-    const cx = P0[0] + (P1[0] - P0[0]) * car.t + ox, cy = P0[1] + (P1[1] - P0[1]) * car.t + oy;
-    ell(c, cx + 2, cy + 3, horiz ? 11 : 6, horiz ? 6 : 11, 'rgba(0,0,0,.2)');
-    carShape(c, cx, cy, car.col, horiz);
-    if (darkness() > 0.25) { c.fillStyle = 'rgba(255,240,170,.35)'; c.beginPath(); c.arc(cx + (horiz ? dir * 18 : 0), cy + (horiz ? 0 : dir * 18), 9, 0, Math.PI * 2); c.fill(); }
-  });
-
-  // people walking on the sidewalks
-  const dkw = darkness();
-  walkers.forEach((w, i) => {
-    if (dkw > 0.4 && i % 3) return;   // fewer people out at night
-    const A = NODES[w.from], B = NODES[w.to];
-    w.t += w.speed * dt / dist(A, B);
-    if (w.t >= 1) {
-      const opts = neighbors(w.to).filter(n => n !== w.from);
-      w.from = w.to; w.to = opts.length ? opts[Math.floor(Math.random() * opts.length)] : w.from; w.t = 0;
-      if (w.to === w.from) w.to = neighbors(w.from)[0];
-    }
-    const P0 = NODES[w.from], P1 = NODES[w.to];
-    const horiz = P0[1] === P1[1];
-    const off = (ROAD_W / 2 + 3) * w.side;
-    const wx = P0[0] + (P1[0] - P0[0]) * w.t + (horiz ? 0 : off), wy = P0[1] + (P1[1] - P0[1]) * w.t + (horiz ? off : 0);
-    if (Math.abs(wx - RIVER_X) < 34 && horiz) return; // don't walk on the bridge rail
-    drawPerson(c, wx, wy + 4, 0.42, w.look, t / 110 + w.ph, true);
-  });
-
-  // night
-  const dk = darkness();
-  if (dk > 0) {
-    c.fillStyle = `rgba(15,25,60,${dk})`; c.fillRect(0, 0, MAP_W, MAP_H);
-    if (dk > 0.2) {
-      const r = seeded(99);
-      WINDOWS.forEach(([wx, wy, ww, wh]) => { if (r() < 0.65) { c.fillStyle = `rgba(255,214,110,${Math.min(0.9, dk * 1.6)})`; c.fillRect(wx, wy, ww, wh); } });
-      LAMPS.forEach(([lx, ly]) => {
-        const g = c.createRadialGradient(lx, ly - 13, 1, lx, ly - 13, 26);
-        g.addColorStop(0, `rgba(255,230,150,${dk * 1.3})`); g.addColorStop(1, 'rgba(255,230,150,0)');
-        c.fillStyle = g; c.beginPath(); c.arc(lx, ly - 13, 26, 0, Math.PI * 2); c.fill();
-      });
-      const sr = seeded(5);
-      for (let i = 0; i < 30; i++) circ(c, sr() * MAP_W, sr() * 60, 0.8, `rgba(255,255,255,${dk})`);
-    }
-  }
-  // weather
-  const wx = S.weather;
-  if (wx === 'rainy' || wx === 'cloudy') { c.fillStyle = wx === 'rainy' ? 'rgba(60,70,90,.28)' : 'rgba(120,130,150,.12)'; c.fillRect(0, 0, MAP_W, MAP_H); }
-  if (wx === 'hot') { c.fillStyle = 'rgba(255,170,60,.08)'; c.fillRect(0, 0, MAP_W, MAP_H); }
-  if (wx === 'rainy') {
-    c.strokeStyle = 'rgba(200,220,255,.55)'; c.lineWidth = 1.2; c.beginPath();
-    for (let i = 0; i < 180; i++) {
-      const rx = (i * 97.3 + t * 0.05 * (1 + i % 3)) % (MAP_W + 40) - 20;
-      const ry = (i * 53.7 + t * 0.6 * (1 + (i % 4) * 0.2)) % (MAP_H + 40) - 20;
-      c.moveTo(rx, ry); c.lineTo(rx - 3, ry + 11);
-    }
-    c.stroke();
-  }
-  // clouds
-  clouds.forEach(cl => {
-    cl.x += cl.v * dt; if (cl.x > MAP_W + 80) cl.x = -80;
-    const a = dk > 0.3 ? 0.25 : S.weather === 'rainy' ? 0.8 : 0.55;
-    ell(c, cl.x + 25, cl.y + 40, 40 * cl.s, 12 * cl.s, 'rgba(0,0,0,.07)');
-    [[0, 0, 22], [20, -6, 18], [38, 2, 16], [-18, 4, 14]].forEach(([ox, oy, r]) => circ(c, cl.x + ox * cl.s, cl.y + oy * cl.s, r * cl.s, `rgba(255,255,255,${a})`));
-  });
-
-  // labels
-  const myHome = HOME_PLACE[S.home];
-  const myWork = S.job ? workplaceOf(JOBS[S.job.id]) : null;
-  Object.entries(PLACES).forEach(([id, p]) => {
-    if (p.kind === 'deco' && hover !== id) return;
-    if (p.kind === 'home' && id !== myHome && hover !== id) return;
-    const isHover = hover === id;
-    let label = `${p.icon} ${p.name}`;
-    if (id === myHome) label = `🏠 Home`;
-    if (id === myWork) label = `💼 ${p.name} (Work)`;
-    c.font = `${isHover ? 800 : 700} ${isHover ? 12 : 10}px system-ui, sans-serif`;
-    const tw = c.measureText(label).width + 12;
-    const doorOnTop = p.door[1] < p.r[1] + p.r[3] / 2;
-    const lx = p.r[0] + p.r[2] / 2, ly = doorOnTop ? p.r[1] + p.r[3] - 8 : p.r[1] + 2;
-    const bg = id === myHome ? '#2f80ed' : id === myWork ? '#f2a516' : isHover ? '#1d2b3a' : 'rgba(255,255,255,.92)';
-    const fg = id === myHome || isHover ? '#fff' : '#1d2b3a';
-    fillR(c, lx - tw / 2, ly - 8, tw, isHover ? 18 : 15, bg, 8);
-    txt(c, label, lx, ly + (isHover ? 1 : -0.5), fg, isHover ? 12 : 10, isHover ? 800 : 700);
-    if (isHover) { c.strokeStyle = '#2f80ed'; c.lineWidth = 3; rr(c, p.r[0] - 3, p.r[1] - 3, p.r[2] + 6, p.r[3] + 6, 8); c.stroke(); }
-  });
-
-  // player
-  let px, py, moving = false, segDir = [1, 0];
-  if (traveler) {
-    traveler.t += dt;
-    const k = Math.min(1, traveler.t / traveler.dur);
-    const L = traveler.len * k;
-    let acc = 0, pt = traveler.path[0];
-    for (let i = 1; i < traveler.path.length; i++) {
-      const seg = dist(traveler.path[i - 1], traveler.path[i]);
-      if (acc + seg >= L) { segDir = [traveler.path[i][0] - traveler.path[i - 1][0], traveler.path[i][1] - traveler.path[i - 1][1]]; const f = seg ? (L - acc) / seg : 0; pt = [traveler.path[i - 1][0] + (traveler.path[i][0] - traveler.path[i - 1][0]) * f, traveler.path[i - 1][1] + (traveler.path[i][1] - traveler.path[i - 1][1]) * f]; break; }
-      acc += seg; pt = traveler.path[i];
-    }
-    [px, py] = pt; moving = true;
-    if (k >= 1) { const r = traveler.resolve; traveler = null; r(); }
-  } else {
-    [px, py] = placeOf(S.loc).door;
-  }
-  const mode = moving && traveler ? traveler.icon : '';
-  let headY = py - 34;
-  if (mode === '🚙' || mode === '🚌') {
-    const horiz = Math.abs(segDir[0]) >= Math.abs(segDir[1]);
-    c.save(); c.filter = 'blur(2px)'; ell(c, px + 3, py + 4, horiz ? 20 : 10, horiz ? 9 : 18, 'rgba(0,0,0,.35)'); c.restore();
-    if (mode === '🚌') {
-      if (horiz) { fillR(c, px - 22, py - 9, 44, 18, '#f2b705', 4); for (let k = 0; k < 5; k++) fillR(c, px - 18 + k * 8, py - 7, 6, 5, '#bfe3f5', 1); }
-      else { fillR(c, px - 9, py - 22, 18, 44, '#f2b705', 4); for (let k = 0; k < 5; k++) fillR(c, px - 7, py - 18 + k * 8, 5, 6, '#bfe3f5', 1); }
-    } else {
-      if (horiz) { fillR(c, px - 15, py - 8, 30, 16, '#2f80ed', 5); fillR(c, px - 7, py - 7, 14, 14, 'rgba(190,230,255,.9)', 3); }
-      else { fillR(c, px - 8, py - 15, 16, 30, '#2f80ed', 5); fillR(c, px - 7, py - 7, 14, 14, 'rgba(190,230,255,.9)', 3); }
-    }
-    headY = py - 20;
-  } else {
-    if (mode === '🚲') {
-      c.strokeStyle = '#333'; c.lineWidth = 1.5;
-      c.beginPath(); c.arc(px - 7, py - 2, 4.5, 0, Math.PI * 2); c.arc(px + 7, py - 2, 4.5, 0, Math.PI * 2); c.stroke();
-      c.strokeStyle = '#e53935'; c.beginPath(); c.moveTo(px - 7, py - 2); c.lineTo(px, py - 9); c.lineTo(px + 7, py - 2); c.stroke();
-    }
-    drawPerson(c, px, py, 0.95, S.look, t / 90, moving);
-  }
-  // a little arrow so you can always find yourself
-  const ab = Math.sin(t / 250) * 2;
-  tri(c, [[px - 5, headY - 6 + ab], [px + 5, headY - 6 + ab], [px, headY + ab]], '#2f80ed');
-  c.font = '800 10px system-ui, sans-serif'; const nw = c.measureText(S.name).width + 10;
-  fillR(c, px - nw / 2, py + 5, nw, 13, '#2f80ed', 6); txt(c, S.name, px, py + 11.5, '#fff', 10, 800);
-}
-
-function loop(t) {
-  const dt = Math.min(0.05, (t - (lastT || t)) / 1000);
-  lastT = t;
-  if (S && mapCanvas && !document.hidden) drawDynamic(t, dt);
-  requestAnimationFrame(loop);
-}
-
-function resizeMap() {
-  if (!mapCanvas) return;
-  const wrap = mapCanvas.parentElement;
-  const cssW = wrap.clientWidth;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  mapCanvas.style.height = (cssW * MAP_H / MAP_W) + 'px';
-  mapCanvas.width = Math.round(cssW * dpr);
-  mapCanvas.height = Math.round(cssW * dpr * MAP_H / MAP_W);
-  scale = mapCanvas.width / MAP_W;
-  staticCanvas = document.createElement('canvas');
-  staticCanvas.width = mapCanvas.width; staticCanvas.height = mapCanvas.height;
-  const sc = staticCanvas.getContext('2d');
-  sc.setTransform(scale, 0, 0, scale, 0, 0);
-  drawStatic(sc);
-}
-
-function mapPoint(e) {
-  const b = mapCanvas.getBoundingClientRect();
-  return [(e.clientX - b.left) / b.width * MAP_W, (e.clientY - b.top) / b.height * MAP_H];
-}
-function placeAt([x, y]) {
-  for (const [id, p] of Object.entries(PLACES)) {
-    const [rx, ry, rw, rh] = p.r;
-    if (x >= rx && x <= rx + rw && y >= ry - 8 && y <= ry + rh) return id;
-  }
-  return null;
-}
-
-function initMap() {
-  mapCanvas = $('#map');
-  mapCtx = mapCanvas.getContext('2d');
-  initMovers();
-  resizeMap();
-  window.addEventListener('resize', () => { clearTimeout(initMap._t); initMap._t = setTimeout(resizeMap, 150); });
-  mapCanvas.addEventListener('mousemove', e => {
-    const id = placeAt(mapPoint(e));
-    hover = id;
-    mapCanvas.style.cursor = id ? 'pointer' : 'default';
-  });
-  mapCanvas.addEventListener('mouseleave', () => { hover = null; });
-  mapCanvas.addEventListener('click', e => {
-    const id = placeAt(mapPoint(e));
-    if (id) clickPlace(id);
-  });
-  requestAnimationFrame(loop);
-}
-
-function clickPlace(id) {
-  if (!S || traveler) return;
-  const p = PLACES[id];
-  if (p.kind === 'home') {
-    if (id === HOME_PLACE[S.home]) return travelTo('home');
-    toast(`${p.icon} That's the ${p.name}. Visit 🔑 Real Estate to live there.`);
-    return;
-  }
-  if (p.kind === 'deco') { toast(`${p.icon} ${p.name}`); return; }
-  travelTo(id);
-}
-
 // ---------- travel ----------
 function transportFor(len) {
   if ((has('car') || has('newcar')) && S.skills.drive >= 20) return { how: 'drove', icon: '🚙', speed: 3000, cost: 0, wait: 0 };
   if (has('bike')) return { how: 'biked', icon: '🚲', speed: 1500, cost: 0, wait: 0 };
-  if (len > 350 && S.money >= 2) return { how: 'took the bus', icon: '🚌', speed: 2200, cost: 2, wait: 0.15 };
+  const fare = len > 2500 ? 8 : 2;
+  if (len > 350 && S.money >= fare) return { how: 'took the bus', icon: '🚌', speed: len > 2500 ? 2800 : 2200, cost: fare, wait: 0.15 };
   return { how: 'walked', icon: '🚶', speed: 800, cost: 0, wait: 0 };
 }
 function travelInfo(fromLoc, toLoc) {
@@ -921,7 +661,8 @@ function travelTo(dest, opts = {}) {
     if (placeId(dest) === placeId(S.loc)) { S.loc = dest; if (!opts.keepTab) tab = dest; render(); return resolve(true); }
     const info = travelInfo(S.loc, dest);
     document.body.classList.add('traveling');
-    traveler = { path: info.path, len: info.len, t: 0, dur: Math.max(0.7, Math.min(2.6, info.len / 650)), icon: info.icon, resolve: () => {
+    cam.follow = true;
+    traveler = { path: info.path, len: info.len, t: 0, dur: Math.max(0.7, Math.min(4.5, info.len / 700)), icon: info.icon, resolve: () => {
       document.body.classList.remove('traveling');
       if (info.cost) charge(info.cost, 'Bus fare');
       S.loc = dest;

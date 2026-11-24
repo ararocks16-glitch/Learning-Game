@@ -16,6 +16,12 @@ const TABS = [
   { id: 'park',       icon: '🌳', name: 'Park' },
   { id: 'cityhall',   icon: '🏛️', name: 'City Hall' },
   { id: 'theater',    icon: '🎭', name: 'Theater' },
+  { id: 'beach',      icon: '🏖️', name: 'Beach' },
+  { id: 'trailhead',  icon: '🏔️', name: 'Mountain' },
+  { id: 'lake',       icon: '🎣', name: 'Lake' },
+  { id: 'campground', icon: '🏕️', name: 'Camp' },
+  { id: 'village',    icon: '🧺', name: 'Village' },
+  { id: 'zoo',        icon: '🦒', name: 'Wildlife' },
   { id: 'money',      icon: '💰', name: 'Money', personal: true },
   { id: 'me',         icon: '🧑', name: 'Me', personal: true },
   { id: 'goals',      icon: '🏆', name: 'Goals', personal: true },
@@ -85,6 +91,8 @@ const PLACE_VIEWS = {
   park: () => viewPark(),
   cityhall: () => viewWorkplace('cityhall'),
   theater: () => viewWorkplace('theater'),
+  beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
+  campground: () => viewTrip('campground'), village: () => viewTrip('village'), zoo: () => viewTrip('zoo'),
 };
 
 function viewFor(t) {
@@ -107,7 +115,10 @@ function viewGoThere(t) {
     sports: 'Practice sports, pay for lessons and enter tournaments.', market: 'Buy groceries to eat at home.',
     mall: 'Clothes, electronics and stuff for your home.', diner: 'Eat out: burgers, salads, pancakes and milkshakes.',
     cars: 'Buy a bike or a car to get around faster.', bank: 'Savings, loans, health insurance and the stock market.',
-    realestate: 'Rent an apartment, buy a house, or buy rental houses.', cityhall: 'Start a business, enter the Invention Fair, buy raffle tickets.', theater: 'Talent Show every Saturday evening!', hospital: 'See a doctor when you feel sick.', park: 'Relax by the lake, feed the ducks, hang out with friends.',
+    realestate: 'Rent an apartment, buy a house, or buy rental houses.', cityhall: 'Start a business, enter the Invention Fair, buy raffle tickets.', theater: 'Talent Show every Saturday evening!',
+    beach: 'Swim in the ocean, surf, build sandcastles, collect seashells.', trailhead: 'Hike to the snowy top or go skiing.',
+    lake: 'Go fishing and paddle a canoe.', campground: 'Camp overnight in the forest and roast marshmallows.',
+    village: 'A farmers market: buy fresh food, sell veggies, shells and fish.', zoo: 'See elephants, giraffes and zebras.', hospital: 'See a doctor when you feel sick.', park: 'Relax by the lake, feed the ducks, hang out with friends.',
   }[t] || 'A place in town.';
   const isWork = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
   return `<div class="card goto">
@@ -460,6 +471,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!S.look) S.look = randomLook();
     ensureMoneyState();
     ensureHomeState();
+    ensureTripState();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();

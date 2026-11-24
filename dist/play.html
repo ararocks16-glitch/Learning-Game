@@ -9,7 +9,17 @@
     <div id="warnings"></div>
     <div class="main">
       <div class="left">
-        <div id="mapwrap"><canvas id="map" aria-label="Town map. Click a building to go there."></canvas></div>
+        <div id="mapwrap">
+          <canvas id="map" aria-label="World map. Drag to move, scroll or pinch to zoom, click a place to go there."></canvas>
+          <div class="mapctl">
+            <button type="button" onclick="zoomAt(1.4)" aria-label="Zoom in">＋</button>
+            <button type="button" onclick="zoomAt(1 / 1.4)" aria-label="Zoom out">－</button>
+            <button type="button" onclick="findMe()" aria-label="Find me">📍</button>
+            <button type="button" onclick="showWorld()" aria-label="Show the whole world">🗺️</button>
+          </div>
+          <canvas id="minimap" aria-label="Minimap. Click to jump there."></canvas>
+          <div class="maphint">Drag to explore · scroll or pinch to zoom</div>
+        </div>
         <nav id="tabs"></nav>
         <main id="view"></main>
       </div>
@@ -28,7 +38,9 @@
   <script src="js/game.js"></script>
   <script src="js/people.js"></script>
   <script src="js/map.js"></script>
+  <script src="js/world.js"></script>
   <script src="js/money.js"></script>
   <script src="js/home.js"></script>
   <script src="js/room.js"></script>
+  <script src="js/trips.js"></script>
   <script src="js/ui.js"></script>
