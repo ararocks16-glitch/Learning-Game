@@ -136,6 +136,7 @@ function getPet(kind, adopt) {
 
 // ---------- caring ----------
 function petAct(i, what) {
+  chartMark('pets');
   const p = S.pets[i]; if (!p) return;
   const t = PET_TYPES[p.kind], b = t.base;
   if (!atHome()) return nope('You can only do that at home.');

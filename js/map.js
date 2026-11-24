@@ -672,6 +672,7 @@ function travelTo(dest, opts = {}) {
   return new Promise(resolve => {
     if (!S || traveler) return resolve(false);
     if (placeId(dest) === placeId(S.loc)) { S.loc = dest; if (!opts.keepTab) tab = dest; render(); return resolve(true); }
+    if (S.loc === 'home' && typeof leavingHome === 'function') leavingHome();
     const info = travelInfo(S.loc, dest);
     document.body.classList.add('traveling');
     cam.follow = true;

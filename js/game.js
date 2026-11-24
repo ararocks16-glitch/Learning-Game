@@ -192,6 +192,7 @@ function tick(h, mode) {
   if (n.food <= 0) n.health -= 3 * h;
   petTick(h);
   lifeTick(h, mode);
+  jetlagTick(h, mode);
   if (mode !== 'sleep') sunTick(h);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
@@ -246,6 +247,7 @@ function newDay() {
   taxNewDay();
   buildNewDay();
   realNewDay();
+  town3NewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -548,6 +550,7 @@ function weeklyBills() {
   S.kwh = 0;
   if (has('phone')) { charge(20, 'Phone bill'); bills.push(['Phone bill', 20]); }
   realWeekly(bills);
+  waterWeekly(bills);
   if (has('car')) { charge(35, 'Car insurance'); bills.push(['Car insurance', 35]); }
   if (has('newcar')) { charge(45, 'New car insurance'); bills.push(['New car insurance', 45]); }
   if (S.insurance && !(S.job && JOBS[S.job.id].insurance)) { charge(35, 'Health insurance'); bills.push(['Health insurance', 35]); }
@@ -683,6 +686,7 @@ const PARK_ACTIONS = [
 
 function brushTeeth() {
   pass(2 / 60);
+  if (S.water) S.water.gallons += S.water.tapOff ? 0.5 : 4;
   S.needs.hygiene = clamp(S.needs.hygiene + 6);
   const morning = S.hour >= 4 && S.hour < 15;
   const slot = morning ? 'brushAM' : 'brushPM';
@@ -718,6 +722,20 @@ const HOME_ACTIONS = [
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
   { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
     fn: () => drink('tap') },
+  { id: 'makebed', icon: '🛏️', name: 'Make Your Bed', hint: '5 min · chore chart ⭐',
+    fn: () => makeBed() },
+  { id: 'homework', icon: '📝', name: 'Do Homework at Your Desk', hint: () => has('desk') ? '1 hr · Math, Writing, Science' : 'Needs a desk (Mall)',
+    fn: () => homework() },
+  { id: 'music', icon: '🎹', name: 'Practice Music', hint: () => Object.values(INSTRUMENTS).some(i => has(i[2])) ? '30 min · keep your streak!' : 'Needs an instrument (Mall)',
+    fn: () => practiceMusic() },
+  { id: 'birds', icon: '🐦', name: 'Watch the Bird Feeder', hint: () => has('birdfeeder') ? `30 min · ${S.hob ? S.hob.journal.length : 0} kinds spotted` : 'Needs a bird feeder (Mall)',
+    fn: () => watchBirds() },
+  { id: 'kittens', icon: '🍼', name: 'Feed Foster Kittens', hint: () => S.hob && S.hob.foster ? `${S.hob.foster.n} kittens · 30 min` : 'Foster kittens at the Pet Shop',
+    fn: () => feedKittens() },
+  { id: 'gamenight', icon: '🎲', name: 'Host Game Night', hint: '5–10 PM · neighbors, family & friends',
+    fn: () => gameNight() },
+  { id: 'photo', icon: '📷', name: 'Take a Photo', hint: () => has('camera') ? `${S.hob ? S.hob.photos.length : 0} in your album` : 'Needs a camera (Mall)',
+    fn: () => takePhoto() },
   { id: 'mailbox', icon: '📬', name: 'Check the Mailbox', hint: () => { const n = S.mail ? unreadMail() : 0; return n ? `${n} new!` : 'Letters, bills, packages'; },
     fn: () => mailbox() },
   { id: 'libbook', icon: '📚', name: 'Read a Library Book', hint: () => S.lib && S.lib.books.length ? `${S.lib.books.length} borrowed · 1 hr` : 'Borrow free books at the Library',
@@ -741,7 +759,7 @@ const HOME_ACTIONS = [
   { id: 'hands', icon: '🧼', name: 'Wash Your Hands', hint: '2 min · stops germs',
     fn: () => washHands() },
   { id: 'shower', icon: '🚿', name: 'Take a Shower', hint: () => hasF('shower') ? '30 min' : '⚠️ You don\'t have a shower!',
-    fn: () => homeShower() },
+    fn: () => homeShowerChoice() },
   { id: 'bath', icon: '🛁', name: 'Bubble Bath', hint: '1 hr · clean & relaxed', need: 'bathtub',
     fn: () => takeBath() },
   { id: 'teeth', icon: '🪥', name: 'Brush Teeth', hint: () => `2 min · ${S.today.brushAM ? '✅' : '⬜'} after breakfast · ${S.today.brushPM ? '✅' : '⬜'} after dinner`,
@@ -913,7 +931,8 @@ function buy(itemId) {
   if (it.clothes && S.clothes >= it.clothes) return nope('You already have clothes this nice.');
   if (!it.consumable && !it.clothes && has(it.id)) return nope('You already own this.');
   if ((it.id === 'car' || it.id === 'newcar') && !S.license) return nope('You need a driver\'s license first! Get one at the 🪪 License Office.');
-  if (!spend(it.price, it.name)) return;
+  const cost = taxedPlace(it) ? withTax(it.price) : it.price;
+  if (!spend(cost, it.name + (cost !== it.price ? ` (${money(it.price)} + ${money(cost - it.price)} tax)` : ''))) return;
   pass(0.5);
   if (it.id === 'groceries') { S.groceries += 7; log('🛒 You bought groceries. 7 meals at home!'); }
   else if (it.id === 'fastfood') { ateFood(45); S.needs.health = clamp(S.needs.health - 1); log('🍔 You ate fast food. Yum, but greasy.'); }

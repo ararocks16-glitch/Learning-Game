@@ -47,6 +47,7 @@ function ensureRealLife() {
   ensureBuildState();
   ensureToyState();
   ensureTown2State();
+  ensureTown3State();
 }
 
 function render() {
@@ -64,6 +65,9 @@ function render() {
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
+  { const lc = lostChip(); if (lc) warn.push(lc); }
+  if (S.roadwork) warn.push('<span class="chip">🚧 Road work in town — trips take a bit longer</span>');
+  if (S.t3 && S.t3.jetlag > 0) warn.push('<span class="chip warn">😵 Jet lag! You feel extra tired.</span>');
   if (S.mail && unreadMail() && S.loc === 'home') warn.push(`<button class="chip warn" onclick="mailbox()">📬 You have mail! (${unreadMail()}) tap to open</button>`);
   if (S.moving) warn.push(`<button class="chip warn" onclick="movingModal()">📦 Moving day! ${S.moving.boxes} boxes to move (tap)</button>`);
   if (S.broken) warn.push(`<span class="chip warn">${BREAKS[S.broken.kind].icon} Broken at home: ${BREAKS[S.broken.kind].name}</span>`);
@@ -121,10 +125,10 @@ function render() {
 
 const PLACE_VIEWS = {
   home: () => viewHome(),
-  jobcenter: () => viewJobs(),
-  school: () => viewSchool(),
+  jobcenter: () => teenJobsCard() + viewJobs(),
+  school: () => viewSchool() + `<div class="grid two">${musicCard()}${langCard()}</div>`,
   library: () => libraryCard() + viewLibrary(),
-  sports: () => viewSports(),
+  sports: () => `<div class="grid two">${teamCard()}${poolCard()}</div>` + viewSports(),
   market: () => treeCard() + groceryAisle() + viewShopAt('market'),
   mall: () => viewShopAt('mall'),
   diner: () => `<div class="card"><h3>🍽️ Sit Down & Order</h3><p>Get a table, order from the menu, and leave a tip for your server.</p><button class="btn primary" onclick="sitDown()">🍽️ Get a table</button></div>` + viewShopAt('diner'),
@@ -132,15 +136,15 @@ const PLACE_VIEWS = {
   bank: () => viewBank() + `<div class="grid two">${statementCard()}${jarsCard()}</div>` + `<div class="grid two">${creditCard()}<div class="card"><h3>📊 Weekly Budget</h3>${budgetHtml()}</div></div>`,
   realestate: () => viewHousing() + viewLand(),
   hospital: () => checkupCard() + viewHospital(),
-  park: () => viewParkEvent() + viewPark(),
+  park: () => viewParkEvent() + farmersMarketCard() + petShowCard() + cookoffCard() + viewPark(),
   gasstation: () => viewGas(), salon: () => viewSalon(), dmv: () => viewDmv(), airport: () => viewAirport(),
   h_parents: () => viewFamilyVisit() + `<div class="card"><h3>👵 Grandma (age ${S.family.grandma.age})</h3><p>${S.grandmaAsk ? `Grandma needs help with <b>${S.grandmaAsk.what}</b>!` : 'Grandma is knitting and loves visitors.'}</p><button class="btn sm primary" onclick="helpGrandma()">${S.grandmaAsk ? `🤝 Help with ${S.grandmaAsk.what}${S.grandmaAsk.what === 'groceries' ? ' ($30)' : S.grandmaAsk.what === 'medicine' ? ' ($10)' : ''}` : '☕ Visit Grandma (1.5 hrs)'}</button></div>`,
   lot_country: () => viewLot('lot_country'), lot_river: () => viewLot('lot_river'), lot_sea: () => viewLot('lot_sea'),
-  petshop: () => viewPetShop(),
+  petshop: () => shelterCard() + viewPetShop(),
   vet: () => viewVet(),
-  cityhall: () => viewCivic() + companyCard() + viewWorkplace('cityhall'),
-  postoffice: () => viewPostOffice(), recycling: () => viewRecycling(),
-  theater: () => movieCard() + viewWorkplace('theater'),
+  cityhall: () => viewCivic() + artShowCard() + paradeCard() + charityCard() + companyCard() + viewWorkplace('cityhall'),
+  postoffice: () => viewPostOffice(), museum: () => viewMuseum(), police: () => '', firestation: () => '', recycling: () => viewRecycling(),
+  theater: () => recitalCard() + movieCard() + viewWorkplace('theater'),
   beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
   campground: () => viewTrip('campground'), village: () => viewTrip('village'), zoo: () => viewTrip('zoo'),
 };
@@ -157,7 +161,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -204,6 +208,7 @@ function restroomBar() {
     <button class="btn ghost sm" onclick="useToilet();done()">🚽 Use the toilet</button>
     <button class="btn ghost sm" onclick="washHands();done()">🧼 Wash hands</button>
     <button class="btn ghost sm" onclick="goToBed()">😴 Go to bed</button>
+    ${photoButton()}
     <button class="btn ghost sm" onclick="travelTo('home')">🏠 Go home</button></div>`;
 }
 
@@ -264,17 +269,18 @@ function viewHome() {
     <div class="row info"><span class="chip">${S.handsDirty ? '⚠️ Hands are dirty' : '✅ Hands are clean'}</span>
       <span class="chip ${S.mess > 60 ? 'warn' : ''}">🧹 Mess: ${Math.round(S.mess)}%</span><span class="chip ${S.dishes > 5 ? 'warn' : ''}">🍽️ ${S.dishes} dirty dishes</span><span class="chip ${S.trash > 80 ? 'warn' : ''}">🗑️ Trash ${Math.round(S.trash)}%</span>
       ${S.home !== 'parents' ? `<button class="chip" onclick="binsToCurb()">🚛 Bin: ${S.bin ? S.bin + ' bags (trash day is Tuesday)' : 'empty'}</button>` : `<button class="chip" onclick="choreAllowance()">💵 Ask Mom for chore money</button>`}
-      ${S.bugs ? '<button class="chip warn" onclick="bugSpray()">🐜 Spray the ants</button>' : ''}</div>
+      ${S.bugs ? '<button class="chip warn" onclick="bugSpray()">🐜 Spray the ants</button>' : ''}${lockChip()}</div>
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${energyCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
+    ${snowFunCard()}${teenJobsAt('home')}${chartCard()}${petTricksCard()}${energyCard()}${waterCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);
   if (S.powerOut && ['tv', 'games', 'laptop', 'computer', 'movie'].includes(id)) return nope('🔌 The power is out! That needs electricity.');
   const before = S.hour + S.day * 24;
   a.fn();
+  if (['clean', 'dishes', 'laundry'].includes(id)) chartMark(id);
   if (['tv', 'games', 'laptop', 'computer', 'movie', 'music'].includes(id)) { S.kwh += 0.3; if (S.hour >= 22 || S.hour < 6) S.lateNoise = true; }
   if (S.hour + S.day * 24 !== before) done(); else render();
 }
@@ -376,7 +382,7 @@ function viewShopAt(place) {
       const owned = !it.consumable && !it.clothes && has(it.id);
       const clothesOwned = it.clothes && S.clothes >= it.clothes;
       return `<div class="card item ${owned || clothesOwned ? 'owned' : ''}">
-        <div class="jt"><b>${it.icon} ${it.name}</b><span class="pay">${money(it.price)}</span></div>
+        <div class="jt"><b>${it.icon} ${it.name}</b><span class="pay">${money(it.price)}${taxedPlace(it) ? '<small class="muted"> + tax</small>' : ''}</span></div>
         <p class="muted small">${it.desc}</p>
         ${owned ? `<div class="row"><span class="chip good">✅ Owned</span><button class="btn ghost sm" onclick="sellItem('${it.id}')">Sell</button></div>`
           : clothesOwned ? '<span class="chip good">✅ Owned</span>'
@@ -491,7 +497,7 @@ function viewMe() {
     <details class="card"><summary>✂️ Change your look (new haircut, new clothes!)</summary><div id="restyle"></div></details>
     <p>🎂 Age ${S.age} (birthday ${MONTHS[S.bday.m]} ${S.bday.d}) · 🎓 ${EDU_NAMES[S.edu]} · ${dateText(S.day, true)} · Jobs held: ${S.jobsWorked.length}</p>
     <p>${S.license ? '🪪 Driver\'s license ✅' : S.permit ? '📝 Learner\'s permit — take the road test at the 🪪 License Office' : '🪪 No driver\'s license yet'} · 📈 Credit ${S.credit} · 🗳️ ${S.registered ? 'Registered voter' : 'Not registered to vote'} · 🤝 Volunteered ${S.volunteerHours} hrs${S.age >= 65 ? ' · 👴 You can retire any time!' : ''}</p>
-    ${peopleCard()}
+    ${peopleCard()}${refsCard()}${journalCard()}${albumCard()}
     <p class="muted">These are the things you can tell a boss in a job interview. They want a level that's high enough!</p>
     <h3>Skills</h3>
     <div class="grid skills">${all.map(([k, v]) => `<div class="card skill"><div class="jt"><b>${skillName(k)}</b><span>${Math.round(v)}</span></div>${lvlBar(v)}</div>`).join('')}</div>

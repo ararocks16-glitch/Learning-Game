@@ -163,7 +163,7 @@ function takeOutTrash() {
       let right = 0; const notes = [];
       pick.forEach((it, i) => { const v = (document.querySelector(`input[name="s${i}"]:checked`) || {}).value; if (v === it[2]) right++; else notes.push(`${it[0]} ${it[1]} goes in <b>${{ trash: '🗑️ trash', recycle: '♻️ recycling', compost: '🍂 compost' }[it[2]]}</b>.`); });
       closeModal();
-      pass(0.2); S.trash = 0; S.bin += 1; S.eco += right; S.mess = clamp(S.mess - 5);
+      pass(0.2); S.trash = 0; chartMark('trash'); S.bin += 1; S.eco += right; S.mess = clamp(S.mess - 5);
       if (S.eco >= 20) unlock('eco');
       log(`🗑️ You took out the trash and sorted it: ${right}/4 right.`, right === 4 ? 'good' : '');
       showModal(`<h2>${right === 4 ? '🌍 Perfect sorting!' : `♻️ ${right} out of 4`}</h2>${notes.length ? `<ul class="notes">${notes.map(n => `<li>${n}</li>`).join('')}</ul>` : '<p>Everything went in the right bin. The planet thanks you!</p>'}

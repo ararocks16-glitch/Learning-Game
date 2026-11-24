@@ -291,6 +291,7 @@ function drawRoom(cv, fixedW) {
     metal(c, WX - 44, WY - 22, WW + 88, 5, 2, '#a68a5b');
   }
 
+  drawSnowman(c);
   drawCurtains(c);
   // ---------- paintings ----------
   const spots = [[220, 46, 70, 54], [334, 34, 86, 66], [446, 56, 60, 46], [524, 40, 70, 54], [624, 32, 58, 44], [706, 40, 62, 48], [236, 124, 50, 38], [456, 124, 52, 38]];
@@ -617,6 +618,7 @@ function drawRoom(cv, fixedW) {
     } else { c.fillStyle = '#c7b59a'; rrect(c, 872, 192, 8, 12, 2); c.fill(); }
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
+  drawFurniture3(c);
   drawHolidayTree(c);
   drawToys(c);
   drawPets(c);
