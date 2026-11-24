@@ -45,6 +45,7 @@ function ensureRealLife() {
   ensureWorkState();
   ensureCarState();
   ensureBuildState();
+  ensureToyState();
 }
 
 function render() {
@@ -150,7 +151,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {

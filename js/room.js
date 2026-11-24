@@ -614,6 +614,7 @@ function drawRoom(cv, fixedW) {
     } else { c.fillStyle = '#c7b59a'; rrect(c, 872, 192, 8, 12, 2); c.fill(); }
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
+  drawToys(c);
   drawPets(c);
   drawMess(c);
 

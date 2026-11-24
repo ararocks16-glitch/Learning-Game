@@ -711,6 +711,8 @@ const HOME_ACTIONS = [
     fn: () => { if (!hasF('stove')) return nope('You need a stove to cook! Buy one at the 🛍️ Mall.'); if (S.groceries < 1) return nope('No groceries to cook with!'); S.groceries--; pass(1); ateFood(40 + S.skills.cook / 4); S.needs.fun = clamp(S.needs.fun + 5); S.needs.health = clamp(S.needs.health + 3); addSkill('cook', 2); log('🍳 You cooked a tasty meal. Cooking skill up!'); } },
   { id: 'drink', icon: '💧', name: 'Drink Water', hint: '2 min · from the tap',
     fn: () => drink('tap') },
+  { id: 'toys', icon: '🧸', name: 'Play With Toys', hint: () => { ensureToyState(); const n = toyCount(); return n ? `${n} toy${n > 1 ? 's' : ''} in your toy box` : 'Buy toys at the Mall'; },
+    fn: () => toyBox() },
   { id: 'dinnerparty', icon: '🍽️', name: 'Invite Friends to Dinner', hint: () => S.friends && S.friends.length ? `5–9 PM · ${S.friends.length} friends to invite` : 'Make some friends first!',
     fn: () => dinnerParty() },
   { id: 'recipe', icon: '👩‍🍳', name: 'Cook a Recipe', hint: () => `Real ingredients · ${S.fridgeFood.length} items in your kitchen`,
@@ -900,7 +902,7 @@ function buy(itemId) {
   else if (it.id === 'salad') { ateFood(40); S.needs.health = clamp(S.needs.health + 4); log('🥗 You ate a healthy lunch.'); }
   else if (it.id === 'pancakes') { ateFood(35); S.needs.fun = clamp(S.needs.fun + 6); log('🥞 You ate a big stack of pancakes!'); }
   else if (it.id === 'milkshake') { S.needs.bladder = clamp(S.needs.bladder - 15); S.needs.fun = clamp(S.needs.fun + 10); S.needs.food = clamp(S.needs.food + 10); log('🥤 You drank a milkshake. Delicious!'); }
-  else if (moneyBuy(it.id) || homeBuy(it.id)) { /* supplies, snacks */ }
+  else if (moneyBuy(it.id) || homeBuy(it.id) || toyBuy(it.id)) { /* supplies, snacks, toys */ }
   else if (it.id === 'gift') { S.giftsBought = (S.giftsBought || 0) + 1; log('🎁 You bought a gift and wrapped it with a bow.'); }
   else if (it.clothes) { S.clothes = it.clothes; S.laundryDays = 0; log(`${it.icon} You bought ${it.name}. Looking good!`); }
   else {
