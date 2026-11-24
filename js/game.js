@@ -132,6 +132,7 @@ function newGame(name, look, talents) {
   S.homeV2 = true;
   ensureHomeState();
   ensureTripState();
+  ensurePetState();
   log(`👋 Welcome, ${name}! You just finished high school and live with your parents. Time to start your life!`, 'good');
   log(`💡 Click the 💼 Job Center on the map, pick a job, and tell them what you can do.`);
   save();
@@ -184,6 +185,7 @@ function tick(h, mode) {
     n.energy += r[1] * h;
   }
   if (n.food <= 0) n.health -= 3 * h;
+  petTick(h);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
   if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
@@ -227,6 +229,7 @@ function newDay() {
   S.day++;
   moneyNewDay();
   homeNewDay();
+  petNewDay();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
   if (weekday() === 0) weeklyBills();
@@ -865,6 +868,7 @@ function moveTo(hid) {
   const h = HOMES[hid];
   if (hid === S.home) return;
   if (S.home !== 'parents' && home().type === 'buy') return nope('Sell your house first.');
+  if (!petsOkFor(hid)) return;
   if (h.type === 'free') {
     confirmModal('Move back in with your parents? (No rent, but less fun.)', () => { S.home = 'parents'; log('🏡 You moved back home.'); pass(3); done(); });
     return;

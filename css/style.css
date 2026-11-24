@@ -303,3 +303,11 @@ details.walls summary { cursor: pointer; }
 /* front door */
 .doorbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); margin-bottom: 10px; }
 .btn.big-door { font-size: 1.05rem; padding: 12px 22px; }
+
+/* pets */
+.card.pets { margin: 10px 0; border-color: #9fdcb4; }
+.card.pets h3 { margin-top: 0; }
+.grid.petgrid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.petcard { background: var(--bg); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 3px; }
+.pbar { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 6px; font-size: .78rem; }
+.pbar .bar { margin: 0; }

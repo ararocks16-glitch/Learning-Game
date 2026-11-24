@@ -14,6 +14,8 @@ const TABS = [
   { id: 'realestate', icon: '🔑', name: 'Homes' },
   { id: 'hospital',   icon: '🏥', name: 'Hospital' },
   { id: 'park',       icon: '🌳', name: 'Park' },
+  { id: 'petshop',    icon: '🐾', name: 'Pets' },
+  { id: 'vet',        icon: '🩺', name: 'Vet' },
   { id: 'cityhall',   icon: '🏛️', name: 'City Hall' },
   { id: 'theater',    icon: '🎭', name: 'Theater' },
   { id: 'places',     icon: '🧭', name: 'All Places', personal: true },
@@ -50,6 +52,11 @@ function render() {
   const warn = [];
   if (S.needs.bladder < 25) warn.push(`<button class="chip warn" onclick="quickToilet()">🚽 You really need the bathroom! (tap to go)</button>`);
   if (S.handsDirty) warn.push(`<button class="chip warn" onclick="washHands();done()">🧼 Wash your hands! (tap)</button>`);
+  (S.pets || []).forEach(p => {
+    if (p.food < 25) warn.push(`<span class="chip warn">${PET_TYPES[p.kind].icon} ${esc(p.name)} is hungry!</span>`);
+    else if (p.clean < 25) warn.push(`<span class="chip warn">${PET_TYPES[p.kind].icon} ${esc(p.name)}'s home is dirty!</span>`);
+    if (PET_TYPES[p.kind].walks && !p.walked && S.hour >= 16) warn.push(`<span class="chip warn">🦮 ${esc(p.name)} needs a walk!</span>`);
+  });
   if (S.needs.food < 25) warn.push('<span class="chip warn">🍽️ You are hungry!</span>');
   if (S.needs.energy < 20) warn.push('<span class="chip warn">⚡ You are exhausted!</span>');
   if (S.needs.hygiene < 30) warn.push('<span class="chip warn">🧼 You need a shower!</span>');
@@ -93,6 +100,8 @@ const PLACE_VIEWS = {
   realestate: () => viewHousing(),
   hospital: () => viewHospital(),
   park: () => viewPark(),
+  petshop: () => viewPetShop(),
+  vet: () => viewVet(),
   cityhall: () => viewWorkplace('cityhall'),
   theater: () => viewWorkplace('theater'),
   beach: () => viewTrip('beach'), trailhead: () => viewTrip('trailhead'), lake: () => viewTrip('lake'),
@@ -139,7 +148,7 @@ function viewGoThere(t) {
 }
 
 function viewDirectory() {
-  const groups = [['🏙️ Maple Town', id => !PLACES[id].far && PLACES[id].kind === 'place']];
+  const groups = [['🏙️ Maple Town', id => (!PLACES[id].far && PLACES[id].kind === 'place') || PLACES[id].town === 'maple']];
   TOWN_NAMES.slice(1).forEach(tn => groups.push([tn.name, id => PLACES[id].town && tn.name.toLowerCase().includes(PLACES[id].town === 'seaside' ? 'seaside' : PLACES[id].town)]));
   groups.push(['🌳 Outdoors', id => PLACES[id].far && !PLACES[id].town]);
   const row = id => {
@@ -201,7 +210,7 @@ function viewHome() {
   }).join('');
   if (!S.doorOpen) return `${doorSection()}${jobCard()}`;
   const [ti, tl, tc] = teethStatus();
-  return `${homeSection()}${jobCard()}
+  return `${homeSection()}${petsSection()}${jobCard()}
     <div class="row info">
       <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
       <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>
@@ -503,6 +512,7 @@ window.addEventListener('DOMContentLoaded', () => {
     ensureMoneyState();
     ensureHomeState();
     ensureTripState();
+    ensurePetState();
     tab = S.loc;
     $('#setup').classList.add('hidden');
     initMapOnce();

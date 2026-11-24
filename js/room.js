@@ -601,6 +601,8 @@ function drawRoom(cv, fixedW) {
     } else { c.fillStyle = '#c7b59a'; rrect(c, 872, 192, 8, 12, 2); c.fill(); }
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
+  drawPets(c);
+
   // ---------- you ----------
   if (atHome()) {
     c.save(); c.filter = 'blur(3px)'; c.fillStyle = 'rgba(30,20,10,.35)'; c.beginPath(); c.ellipse(306, 334, 26, 6, 0, 0, Math.PI * 2); c.fill(); c.restore();
