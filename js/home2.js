@@ -131,6 +131,7 @@ function harvest() {
   ready.forEach(p => {
     const c = CROPS[p.kind] || CROPS.carrot, n = c.n[0] + Math.floor(Math.random() * (c.n[1] - c.n[0] + 1));
     got.push(`${n} ${c.icon}`);
+    if (p.kind === 'pumpkin' && S.m2) { const w = Math.round(25 + Math.random() * 70 + (S.day - p.lastWatered < 2 ? 35 : 0)); S.m2.pumpkin = Math.max(S.m2.pumpkin, w); log(`🎃 Your biggest pumpkin weighs ${w} pounds! Enter it in the October pumpkin contest at the Park.`); }
     if (c.flower) { fun2(8); S.vasesDay = S.day; }
     else { S.inv.veggies += n; S.fridgeFood.push({ id: 'veggies', exp: S.day + 7 }); }
   });

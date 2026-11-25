@@ -48,6 +48,7 @@ function ensureRealLife() {
   ensureToyState();
   ensureTown2State();
   ensureTown3State();
+  ensureMoney2State();
 }
 
 function render() {
@@ -152,7 +153,7 @@ const PLACE_VIEWS = {
 function viewFor(t) {
   if (t === 'me') return viewMe();
   if (t === 'goals') return viewGoals();
-  if (t === 'money') return jarsCard() + viewMoney();
+  if (t === 'money') return jarsCard() + moneyIdeas2Card() + viewMoney();
   if (t === 'places') return viewDirectory();
   if (placeId(t) !== placeId(S.loc)) return viewGoThere(t);
   const place = placeOf(t);
@@ -161,7 +162,7 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + body + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {

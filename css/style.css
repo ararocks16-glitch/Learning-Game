@@ -360,3 +360,7 @@ details.walls summary { cursor: pointer; }
 .nicelist { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
 .nicelist .btn { text-align: left; white-space: normal; }
 .card.money h4 { margin: 10px 0 4px; font-size: .9rem; color: var(--muted); }
+
+.ideas { columns: 2; column-gap: 24px; padding-left: 22px; }
+.ideas li { margin: 3px 0; break-inside: avoid; }
+@media (max-width: 600px) { .ideas { columns: 1; } }

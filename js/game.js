@@ -248,6 +248,7 @@ function newDay() {
   buildNewDay();
   realNewDay();
   town3NewDay();
+  money2NewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -551,6 +552,7 @@ function weeklyBills() {
   if (has('phone')) { charge(20, 'Phone bill'); bills.push(['Phone bill', 20]); }
   realWeekly(bills);
   waterWeekly(bills);
+  money2Weekly();
   if (has('car')) { charge(35, 'Car insurance'); bills.push(['Car insurance', 35]); }
   if (has('newcar')) { charge(45, 'New car insurance'); bills.push(['New car insurance', 45]); }
   if (S.insurance && !(S.job && JOBS[S.job.id].insurance)) { charge(35, 'Health insurance'); bills.push(['Health insurance', 35]); }
