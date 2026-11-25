@@ -53,6 +53,7 @@ function ensureRealLife() {
   ensureHolidayState();
   ensureLife4State();
   ensureTown4State();
+  ensureMoney3State();
 }
 
 function render() {
@@ -157,7 +158,7 @@ const PLACE_VIEWS = {
 function viewFor(t) {
   if (t === 'me') return viewMe();
   if (t === 'goals') return viewGoals();
-  if (t === 'money') return jarsCard() + moneyIdeas2Card() + viewMoney();
+  if (t === 'money') return jarsCard() + moneyIdeas3Card() + moneyIdeas2Card() + viewMoney();
   if (t === 'places') return viewDirectory();
   if (placeId(t) !== placeId(S.loc)) return viewGoThere(t);
   const place = placeOf(t);
@@ -213,6 +214,7 @@ function restroomBar() {
   return `<div class="card restroom"><b>🚻 Restroom</b>
     <button class="btn ghost sm" onclick="useToilet();done()">🚽 Use the toilet</button>
     <button class="btn ghost sm" onclick="washHands();done()">🧼 Wash hands</button>
+    <button class="btn ghost sm" onclick="brushTeeth();done()">🪥 Brush teeth</button>
     <button class="btn ghost sm" onclick="goToBed()">😴 Go to bed</button>
     ${photoButton()}
     <button class="btn ghost sm" onclick="travelTo('home')">🏠 Go home</button></div>`;

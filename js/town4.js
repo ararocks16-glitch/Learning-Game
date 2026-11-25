@@ -308,6 +308,7 @@ function town4Cards(pid, isHome) {
   if (pid === 'hospital') out += hospitalVisitCard();
   if (pid === 'campground') out += campJobsCard() + familyCampCard();
   if (pid === 'postoffice') out += passportCard();
+  if (pid === 'bank') out += savingsChallengeCard();
   if (pid === 'beach') out += tideCard();
   if (pid === 'vet') out += petCareCard(true);
   if (pid === 'library') out += libraryClubCard();

@@ -283,7 +283,7 @@ function drawHeld(c, px) {
 }
 
 // ---------- action buttons: cook, cut, eat, drink, hold, read, write, draw, sing, dance, clean, sleep ----------
-const VERBS = [['🍳', 'Cook', 'verbCook()'], ['🔪', 'Cut', 'verbCut()'], ['🍽️', 'Eat', 'verbEat()'], ['💧', 'Drink', 'verbDrink()'], ['🤲', 'Hold', 'verbHold()'], ['📖', 'Read', 'verbRead()'],
+const VERBS = [['🪥', 'Brush Teeth', 'verbBrush()'], ['🍳', 'Cook', 'verbCook()'], ['🔪', 'Cut', 'verbCut()'], ['🍽️', 'Eat', 'verbEat()'], ['💧', 'Drink', 'verbDrink()'], ['🤲', 'Hold', 'verbHold()'], ['📖', 'Read', 'verbRead()'],
   ['✍️', 'Write', 'verbWrite()'], ['🖍️', 'Draw', 'verbDraw()'], ['🎤', 'Sing', 'verbSing()'], ['💃', 'Dance', 'verbDance()'], ['🧹', 'Clean', "homeAct('clean')"], ['😴', 'Sleep', "homeAct('sleep')"]];
 function verbBar() { return `<div class="verbs">${VERBS.map(v => `<button class="verb" onclick="${v[2]}"><span>${v[0]}</span>${v[1]}</button>`).join('')}</div>`; }
 function verbCook() {
