@@ -37,6 +37,13 @@ A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools neede
 - `js/town4.js`: horse riding, farm seasons, aquarium, bowling, roller rink, ice cream truck, car show, hospital visits, mini golf, water park, family camping, stargazing, more countries and passports, beach tides, nature walks
 - `js/ui.js`: screens
 
+## What the game must never have (the owner's rules)
+
+- No dating, boyfriends/girlfriends, weddings or getting married. Valentine's Day is only about friendship cards with friends and family.
+- No having babies.
+- Nothing pretend that isn't real, like dragons (the Bearded Dragon lizard is OK because it's a real animal).
+- Everything should be like the real world and kind; players can only say nice things.
+
 ## The game lives in Artifacts, and only the owner plays it
 
 - The game is played in the owner's claude.ai Artifacts (pinned in their sidebar). That is the only place it's played.

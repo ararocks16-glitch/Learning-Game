@@ -40,7 +40,7 @@ function helpGrandma() {
   const a = S.grandmaAsk, g = S.family.grandma;
   if (!a) {
     pass(1.5, 'relax'); g.rel = clamp(g.rel + 8); fun2(8);
-    log(`👵 You visited Grandma. She told you a story about when she was ${S.age}: "${pickR(['We didn\'t have phones — we wrote letters!', 'I rode my bike 3 miles to school, uphill!', 'I worked at a bakery and ate too many donuts.', 'A movie ticket cost 50 cents!', 'I met Grandpa at a dance.'])}"`, 'good');
+    log(`👵 You visited Grandma. She told you a story about when she was ${S.age}: "${pickR(['We didn\'t have phones — we wrote letters!', 'I rode my bike 3 miles to school, uphill!', 'I worked at a bakery and ate too many donuts.', 'A movie ticket cost 50 cents!', 'I won the town spelling bee when I was your age!'])}"`, 'good');
     return done();
   }
   if (a.what === 'groceries' && !spend(30, 'Groceries for Grandma')) return;

@@ -43,7 +43,7 @@ const GIGS2 = {
     hours: 1.5, go: () => { addSkill('comp', 1.5); if (Math.random() < 0.15) return '🔧 You tried to fix a cracked phone screen but couldn\'t. You didn\'t charge them — that\'s fair. Keep practicing!'; m2pay(35, 'Tech repair'); return `🔧 You ${pickR(['replaced a cracked phone screen', 'got rid of a computer virus', 'fixed a laptop that wouldn\'t turn on', 'made a slow computer fast again'])}. $35!`; } },
   photogig: { weekly: true, icon: '📷', name: 'Photography gig', where: ['home'], note: 'Weekends 10 AM–6 PM · needs a camera · 3 hrs · $70',
     check: () => weekday() < 5 ? 'Parties are on weekends' : !has('camera') ? 'Needs a camera' : S.hour < 10 || S.hour >= 18 ? '10 AM – 6 PM' : '',
-    hours: 3, go: () => { m2pay(70 + Math.round(S.skills.art / 2), 'Photography gig'); addSkill('art', 1.5); return `📷 You took photos at a ${pickR(['birthday party 🎂', 'wedding 💐', 'graduation 🎓', 'family reunion 👨‍👩‍👧'])}. Everyone loved them! You earned ${money(70 + Math.round(S.skills.art / 2))}.`; } },
+    hours: 3, go: () => { m2pay(70 + Math.round(S.skills.art / 2), 'Photography gig'); addSkill('art', 1.5); return `📷 You took photos at a ${pickR(['birthday party 🎂', 'school play 🎭', 'graduation 🎓', 'family reunion 👨‍👩‍👧'])}. Everyone loved them! You earned ${money(70 + Math.round(S.skills.art / 2))}.`; } },
   teachmusic: { weekly: true, icon: '🎹', name: 'Teach music lessons', where: ['school'], note: 'Needs Music 40 · 2 hrs · $50',
     check: () => S.skills.music < 40 ? 'Needs Music 40' : S.hour < 9 || S.hour > 19 ? '9 AM – 7 PM' : '', hours: 2, go: () => { m2pay(50, 'Teaching music'); addSkill('music', 1); addSkill('lead', 0.6); return '🎹 You taught two kids how to play "Twinkle Twinkle Little Star." They were so proud! $50.'; } },
   swimcoach: { weekly: true, icon: '🏊', name: 'Swim coach for little kids', where: ['sports'], note: 'Needs swim level 5 · 2 hrs · $40',
@@ -193,7 +193,7 @@ function farmNewDay() {
 function ordersNewDay() {
   S.m2.orders = S.m2.orders.filter(o => { if (S.day > o.due) { log(`🧁 ${o.who} got cupcakes somewhere else. No problem — orders are optional!`); return false; } return true; });
   if (S.m2.orders.length < 2 && S.skills.cook >= 15 && Math.random() < 0.12) {
-    const o = { who: pickR(FIRST_NAMES), kind: pickR(['birthday', 'graduation', 'baby shower', 'class party']), due: S.day + 3, pay: 36 };
+    const o = { who: pickR(FIRST_NAMES), kind: pickR(['birthday', 'graduation', 'school bake sale', 'class party']), due: S.day + 3, pay: 36 };
     S.m2.orders.push(o);
     if (has('phone')) text(`🧁 ${o.who}`, `Hi! Could you bake 12 cupcakes for my ${o.kind}? I'll pay $36. I need them in 3 days!`);
     log(`🧁 New cupcake order from ${o.who} for a ${o.kind} — $36, due in 3 days. (Check Home)`);
