@@ -32,6 +32,7 @@ A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools neede
 - `js/town3.js`: fire and police station tours, museum, farmers' market, marching in the parade, road work, storm warnings, teen jobs, job references, sales tax, charity, time zones and jet lag, language classes
 - `js/money2.js`: 38 more ways to make money (gigs, crafts, bees and chickens, videos and games, flipping, cards, CDs, contests, lost pets)
 - `js/interact.js`: walking around your home; Grab / Put in (fridge, snack cabinet, stove, microwave), Play, toilet Use + Flush, sink and shower Use + Turn off; search bars in shops; tip jars
+- `js/holidays2.js`: $5 of game money each day you play; holiday events you join or miss (Christmas presents, Thanksgiving give-out, Easter egg hunt, New Year's party, birthday party...), the big town Christmas tree
 - `js/ui.js`: screens
 
 ## The game lives in Artifacts, and only the owner plays it
@@ -49,7 +50,7 @@ https://claude.ai/artifact/Faqvr9mFAk22ZSvkjTXGEs
 After ANY change to the game:
 1. Run `python3 tools/build-artifact.py` (writes `dist/play.html`).
 2. Republish with the Artifact tool to the URL above: `file_path` = `dist/play.html`, `url` = the URL above,
-   and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/world.js": "js/world.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/room.js": "js/room.js", "js/door.js": "js/door.js", "js/entrance.js": "js/entrance.js", "js/interior.js": "js/interior.js", "js/trips.js": "js/trips.js", "js/towns.js": "js/towns.js", "js/pets.js": "js/pets.js", "js/calendar.js": "js/calendar.js", "js/life.js": "js/life.js", "js/social.js": "js/social.js", "js/work2.js": "js/work2.js", "js/cars.js": "js/cars.js", "js/build.js": "js/build.js", "js/toys.js": "js/toys.js", "js/everyday.js": "js/everyday.js", "js/home2.js": "js/home2.js", "js/people2.js": "js/people2.js", "js/town2.js": "js/town2.js", "js/home3.js": "js/home3.js", "js/hobbies.js": "js/hobbies.js", "js/town3.js": "js/town3.js", "js/money2.js": "js/money2.js", "js/interact.js": "js/interact.js", "js/ui.js": "js/ui.js"}`.
+   and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/world.js": "js/world.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/room.js": "js/room.js", "js/door.js": "js/door.js", "js/entrance.js": "js/entrance.js", "js/interior.js": "js/interior.js", "js/trips.js": "js/trips.js", "js/towns.js": "js/towns.js", "js/pets.js": "js/pets.js", "js/calendar.js": "js/calendar.js", "js/life.js": "js/life.js", "js/social.js": "js/social.js", "js/work2.js": "js/work2.js", "js/cars.js": "js/cars.js", "js/build.js": "js/build.js", "js/toys.js": "js/toys.js", "js/everyday.js": "js/everyday.js", "js/home2.js": "js/home2.js", "js/people2.js": "js/people2.js", "js/town2.js": "js/town2.js", "js/home3.js": "js/home3.js", "js/hobbies.js": "js/hobbies.js", "js/town3.js": "js/town3.js", "js/money2.js": "js/money2.js", "js/interact.js": "js/interact.js", "js/holidays2.js": "js/holidays2.js", "js/ui.js": "js/ui.js"}`.
    (Read the artifact first if this session hasn't, as the tool requires.)
 3. Commit and push.
 

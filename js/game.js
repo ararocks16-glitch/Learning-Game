@@ -249,6 +249,7 @@ function newDay() {
   realNewDay();
   town3NewDay();
   money2NewDay();
+  holidaysNewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;

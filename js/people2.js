@@ -26,7 +26,7 @@ function siblingNewDay() {
     s.rel = clamp(s.rel - 0.3);
   });
   const h = holidayToday();
-  if (h && (h.name.includes('Thanksgiving') || h.name.includes('Winter'))) { log(`👨‍👩‍👧 ${F.sis.name} and ${F.bro.name} came home for ${h.name}! The whole family ate together.`, 'good'); fun2(10); F.sis.rel = clamp(F.sis.rel + 10); F.bro.rel = clamp(F.bro.rel + 10); }
+  if (h && (h.name.includes('Thanksgiving') || h.name.includes('Christmas'))) { log(`👨‍👩‍👧 ${F.sis.name} and ${F.bro.name} came home for ${h.name}! The whole family ate together.`, 'good'); fun2(10); F.sis.rel = clamp(F.sis.rel + 10); F.bro.rel = clamp(F.bro.rel + 10); }
 }
 
 // ---------- 10. grandma gets older ----------

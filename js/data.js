@@ -670,6 +670,8 @@ const ACHIEVEMENTS = [
   { id: 'gamedev',       icon: '🎮', name: 'Game Maker',          desc: 'Publish your own phone game.' },
   { id: 'investor',      icon: '🏦', name: 'Patient Saver',       desc: 'Let a CD or savings bond finish.' },
   { id: 'petrescue',     icon: '🐶', name: 'Pet Rescuer',         desc: 'Find a lost pet and bring it home.' },
+  { id: 'holidayfun',    icon: '🎉', name: 'Holiday Spirit',      desc: 'Join a holiday event.' },
+  { id: 'treestar',      icon: '⭐', name: 'Star of the Town',    desc: 'Put the star on the big town Christmas tree.' },
   { id: 'voter',         icon: '🗳️', name: 'Voter',               desc: 'Vote in an election.' },
   { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
   { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },

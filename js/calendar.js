@@ -31,11 +31,12 @@ function weatherText() { return S.storm ? '⛈️ Thunderstorm' : `${WEATHER[S.w
 const HOLIDAYS = [
   { m: 0, d: 1, name: "New Year's Day", icon: '🎆', about: 'A brand new year! Fireworks light up the sky tonight.', closed: true },
   { m: 1, d: 14, name: "Valentine's Day", icon: '💝', about: 'Send cards to the people you care about.' },
+  { m: 3, d: 5, name: 'Easter', icon: '🐣', about: 'The Easter egg hunt is at Lakeside Park, 9 AM – 1 PM!' },
   { m: 3, d: 22, name: 'Earth Day', icon: '🌍', about: 'A day to take care of our planet. Help clean up the park!' },
   { m: 6, d: 4, name: 'Independence Day', icon: '🎇', about: 'A parade in Maple Town and fireworks at night!', closed: true },
   { m: 9, d: 31, name: 'Halloween', icon: '🎃', about: 'Wear a costume and go trick-or-treating tonight!' },
   { m: 10, d: 26, name: 'Thanksgiving', icon: '🦃', about: 'A big family dinner at your parents\' house.', closed: true },
-  { m: 11, d: 25, name: 'Winter Holiday', icon: '🎁', about: 'Give gifts to family and friends!', closed: true },
+  { m: 11, d: 25, name: 'Christmas', icon: '🎄', about: 'Open presents with your family and friends at home in the morning!', closed: true },
 ];
 function holidayToday(day = S.day) { return HOLIDAYS.find(h => isDate(h.m, h.d, day)) || null; }
 function isBirthday(day = S.day) { return S.bday && isDate(S.bday.m, S.bday.d, day); }
@@ -176,7 +177,6 @@ function calendarNewDay() {
   if (h) {
     queueModal(`<h2>${h.icon} Happy ${h.name}!</h2><p>${h.about}</p>${h.closed ? '<p class="muted">Many offices are closed today. People with day jobs get a paid holiday!</p>' : ''}`);
     addNews(`${h.icon} Happy ${h.name}!`);
-    if (h.m === 11) giftExchange();
   }
   const ev = eventToday();
   if (ev && dateOf().d === ev.from) { addNews(`${ev.icon} The ${ev.name} opens today at Lakeside Park!`); log(`${ev.icon} The ${ev.name} is at Lakeside Park!`, 'good'); }
