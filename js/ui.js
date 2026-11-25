@@ -51,6 +51,8 @@ function ensureRealLife() {
   ensureMoney2State();
   ensureInteractState();
   ensureHolidayState();
+  ensureLife4State();
+  ensureTown4State();
 }
 
 function render() {
@@ -68,7 +70,7 @@ function render() {
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
-  { const lc = lostChip(); if (lc) warn.push(lc); const hc2 = holidayChip(); if (hc2) warn.push(hc2); }
+  { const it = iceTruckChip(); if (it) warn.push(it); const lc = lostChip(); if (lc) warn.push(lc); const hc2 = holidayChip(); if (hc2) warn.push(hc2); }
   if (S.roadwork) warn.push('<span class="chip">🚧 Road work in town — trips take a bit longer</span>');
   if (S.t3 && S.t3.jetlag > 0) warn.push('<span class="chip warn">😵 Jet lag! You feel extra tired.</span>');
   if (S.mail && unreadMail() && S.loc === 'home') warn.push(`<button class="chip warn" onclick="mailbox()">📬 You have mail! (${unreadMail()}) tap to open</button>`);
@@ -165,7 +167,7 @@ function viewFor(t) {
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
-  return head + search + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + search + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + (t !== 'home' || S.doorOpen ? town4Cards(t === 'home' ? 'home' : pid, t === 'home') : '') + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -277,7 +279,7 @@ function viewHome() {
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${snowFunCard()}${teenJobsAt('home')}${chartCard()}${petTricksCard()}${energyCard()}${waterCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
+    ${snowFunCard()}${teenJobsAt('home')}${homeCards4()}${chartCard()}${petTricksCard()}${energyCard()}${waterCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);

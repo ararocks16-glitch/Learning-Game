@@ -193,6 +193,7 @@ function tick(h, mode) {
   petTick(h);
   lifeTick(h, mode);
   jetlagTick(h, mode);
+  if (S.l4) outfitTick(h, mode);
   if (mode !== 'sleep') sunTick(h);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
@@ -250,6 +251,8 @@ function newDay() {
   town3NewDay();
   money2NewDay();
   holidaysNewDay();
+  life4NewDay();
+  town4NewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -431,7 +434,9 @@ async function goWork() {
   if (!j.boss) setupWorkplace(j);
   if (j.boss.style === 'strict') perf -= 4; else if (j.boss.style === 'nice') perf += 3;
   S.today.worked = true;
-  pass(8, 'work');
+  ensureLife4State(); if (S.outfit !== 'work') { wearOutfit('work', true); log(`🦺 You put on your work ${UNIFORMS[JOBS[j.id].cat] ? 'uniform' : 'clothes'}.`); }
+  pass(4, 'work'); lunchAtWork(); pass(4, 'work');
+  wearOutfit('casual', true);
   const extra = workEvent(j);
   if (j.daysWorked === 0) firstDayTraining(j);
 
@@ -728,7 +733,7 @@ const HOME_ACTIONS = [
   { id: 'makebed', icon: '🛏️', name: 'Make Your Bed', hint: '5 min · chore chart ⭐',
     fn: () => makeBed() },
   { id: 'homework', icon: '📝', name: 'Do Homework at Your Desk', hint: () => has('desk') ? '1 hr · Math, Writing, Science' : 'Needs a desk (Mall)',
-    fn: () => homework() },
+    fn: () => realHomework() },
   { id: 'music', icon: '🎹', name: 'Practice Music', hint: () => Object.values(INSTRUMENTS).some(i => has(i[2])) ? '30 min · keep your streak!' : 'Needs an instrument (Mall)',
     fn: () => practiceMusic() },
   { id: 'birds', icon: '🐦', name: 'Watch the Bird Feeder', hint: () => has('birdfeeder') ? `30 min · ${S.hob ? S.hob.journal.length : 0} kinds spotted` : 'Needs a bird feeder (Mall)',

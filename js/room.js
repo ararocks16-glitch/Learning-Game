@@ -620,6 +620,8 @@ function drawRoom(cv, fixedW) {
 
   drawRoomDetails(c);
   drawKitchenBits(c);
+  drawHeightChart(c);
+  drawPhotoWall(c);
   drawFurniture3(c);
   drawHolidayTree(c);
   drawToys(c);

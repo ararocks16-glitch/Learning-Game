@@ -1309,6 +1309,7 @@ function tick(h, mode) {
   petTick(h);
   lifeTick(h, mode);
   jetlagTick(h, mode);
+  if (S.l4) outfitTick(h, mode);
   if (mode !== 'sleep') sunTick(h);
   if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
   if (n.fun < 10) n.health -= 0.3 * h;
@@ -1366,6 +1367,8 @@ function newDay() {
   town3NewDay();
   money2NewDay();
   holidaysNewDay();
+  life4NewDay();
+  town4NewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -1547,7 +1550,9 @@ async function goWork() {
   if (!j.boss) setupWorkplace(j);
   if (j.boss.style === 'strict') perf -= 4; else if (j.boss.style === 'nice') perf += 3;
   S.today.worked = true;
-  pass(8, 'work');
+  ensureLife4State(); if (S.outfit !== 'work') { wearOutfit('work', true); log(`🦺 You put on your work ${UNIFORMS[JOBS[j.id].cat] ? 'uniform' : 'clothes'}.`); }
+  pass(4, 'work'); lunchAtWork(); pass(4, 'work');
+  wearOutfit('casual', true);
   const extra = workEvent(j);
   if (j.daysWorked === 0) firstDayTraining(j);
 
@@ -1844,7 +1849,7 @@ const HOME_ACTIONS = [
   { id: 'makebed', icon: '🛏️', name: 'Make Your Bed', hint: '5 min · chore chart ⭐',
     fn: () => makeBed() },
   { id: 'homework', icon: '📝', name: 'Do Homework at Your Desk', hint: () => has('desk') ? '1 hr · Math, Writing, Science' : 'Needs a desk (Mall)',
-    fn: () => homework() },
+    fn: () => realHomework() },
   { id: 'music', icon: '🎹', name: 'Practice Music', hint: () => Object.values(INSTRUMENTS).some(i => has(i[2])) ? '30 min · keep your streak!' : 'Needs an instrument (Mall)',
     fn: () => practiceMusic() },
   { id: 'birds', icon: '🐦', name: 'Watch the Bird Feeder', hint: () => has('birdfeeder') ? `30 min · ${S.hob ? S.hob.journal.length : 0} kinds spotted` : 'Needs a bird feeder (Mall)',
@@ -3240,6 +3245,7 @@ function travelTo(dest, opts = {}) {
       afterDrive(info);
       if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
       safetyAfterTravel(info);
+      if (typeof carpoolRide === 'function') carpoolRide(dest);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
       if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
       if (!opts.keepTab) tab = dest;
@@ -3925,7 +3931,7 @@ function drawDynamic(t, dt) {
     c.restore();
   });
   if (detail) drawTrafficLights(c, t, inView);
-  if (townVisible && detail) { drawParkEvent(c, t); drawTownTree(c, t); }
+  if (townVisible && detail) { drawParkEvent(c, t); drawTownTree(c, t); drawIceTruck(c, t); }
   { const ap = PLACES.airport.r; if (inView(ap[0] + 300, ap[1] + 250, 600) && detail) { const ph = (t / 9000) % 1; const px = ap[0] + 160 + ph * 700, py = ap[1] + 253 - Math.max(0, ph - 0.45) * 500; drawPlane(c, px, py, 0.9 + Math.max(0, ph - 0.45), -Math.max(0, ph - 0.45) * 1.2); } }
   // people walking in town
   if (detail) walkers.forEach((w, i) => {
@@ -5919,6 +5925,8 @@ function drawRoom(cv, fixedW) {
 
   drawRoomDetails(c);
   drawKitchenBits(c);
+  drawHeightChart(c);
+  drawPhotoWall(c);
   drawFurniture3(c);
   drawHolidayTree(c);
   drawToys(c);
@@ -12655,7 +12663,7 @@ function joinEvent(id) {
   if (!atEventPlace(e)) return nope(`Go ${e.whereText} to join!`);
   if (S.hour < e.from || S.hour >= e.to) return nope('It\'s not happening right now.');
   S.hev[hevKey(e)] = 'done';
-  e.join(); unlock('holidayfun'); done();
+  e.join(); unlock('holidayfun'); if (typeof addPhoto === 'function') addPhoto(e.icon, e.name); done();
 }
 // a reminder chip at the top on holiday days
 function holidayChip() {
@@ -12801,6 +12809,732 @@ function drawTownTree(c, t) {
 
 </script>
   <script>
+// ===================== LIFE 4: height chart, getting dressed & uniforms, wisdom tooth, photo wall, baking with Grandma, sleepovers,
+// pets growing up, aquarium care, science experiments, bike lessons, life-skill lessons, real homework, book club, model kits,
+// gardening club, lunch breaks, carpooling, counting change =====================
+
+function ensureLife4State() {
+  if (!S.l4) S.l4 = { heights: [], photos: [], recipes: [], models: [], kits: 0, sci: 0, bike: 0, lessons: {}, tank: { clean: 90 }, gardenRibbons: 0, lunch: null, carpool: false };
+  if (!S.adultHeight) S.adultHeight = 60 + Math.floor(Math.random() * 14);
+  if (!S.outfit) { S.outfit = 'casual'; S.baseLook = { shirt: S.look.shirt, pants: S.look.pants }; }
+  if (S.l4.bike === 0 && has('bike') && !S.l4.bikeChecked) S.l4.bike = 3;
+  S.l4.bikeChecked = true;
+  if (!S.l4.heights.length) S.l4.heights.push({ age: S.age, h: heightAt(S.age) });
+}
+
+// ---------- 1. growing taller: a height chart on the wall ----------
+function heightAt(age) { const a = S.adultHeight; return age >= 21 ? (age >= 65 ? a - Math.floor((age - 60) / 10) : a) : a - (21 - age) * 0.6; }
+function inchesText(h) { return `${Math.floor(h / 12)} ft ${Math.round(h % 12)} in`; }
+function heightBirthday() { ensureLife4State(); const h = heightAt(S.age); const last = S.l4.heights[S.l4.heights.length - 1]; S.l4.heights.push({ age: S.age, h }); if (h > last.h) log(`📏 Mom measured you against the wall: you're ${inchesText(h)} tall now — you grew ${Math.round((h - last.h) * 10) / 10} inches!`, 'good'); else log(`📏 You measured yourself on your height chart: ${inchesText(h)}.`); }
+function drawHeightChart(c) {
+  if (!S.l4) return;
+  const x = 773, top = 58, bot = 188;
+  c.fillStyle = '#fff8e1'; c.fillRect(x, top, 14, bot - top); c.strokeStyle = '#bcaaa4'; c.lineWidth = 0.6; c.strokeRect(x, top, 14, bot - top);
+  c.fillStyle = '#8d6e63'; for (let k = 0; k <= 14; k++) c.fillRect(x, top + k * (bot - top) / 14, k % 2 ? 4 : 8, 0.7);
+  S.l4.heights.slice(-6).forEach((e, i) => { const y = bot - (e.h - 40) / 40 * (bot - top); c.fillStyle = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00897b'][i % 6]; c.fillRect(x - 3, y, 20, 1.6); });
+}
+
+// ---------- 2 & 26. getting dressed, and work uniforms ----------
+const OUTFITS = {
+  casual:   ['👕', 'Everyday clothes', null],
+  rain:     ['🧥', 'Raincoat & rain boots', { shirt: '#fdd835', pants: '#1e3a5f' }, 'raincoat'],
+  warm:     ['🧣', 'Winter coat & hat', { shirt: '#c62828', pants: '#3d4650' }, 'coat'],
+  fancy:    ['👔', 'Nice outfit', { shirt: '#f5f5f5', pants: '#1e1e1e' }],
+  pajamas:  ['🩳', 'Pajamas', { shirt: '#90caf9', pants: '#90caf9' }],
+  swim:     ['🩱', 'Swimsuit', { shirt: '#00acc1', pants: '#00acc1' }],
+  work:     ['🦺', 'Work uniform', null],
+};
+const UNIFORMS = { Food: ['#ffffff', '#212121'], Health: ['#4db6ac', '#4db6ac'], Trades: ['#ff9800', '#3e5a7a'], 'Public Service': ['#1a3a6b', '#1a3a6b'], Stores: ['#c62828', '#3d4650'], Transport: ['#455a64', '#263238'], Hospitality: ['#5d4037', '#212121'], Animals: ['#6d8b3a', '#5d4037'], Sports: ['#1565c0', '#eceff1'] };
+function outfitColors(k) {
+  if (k === 'work') { const job = S.job && JOBS[S.job.id]; const u = job && UNIFORMS[job.cat]; return u ? { shirt: u[0], pants: u[1] } : { shirt: '#f5f5f5', pants: '#24395e' }; }
+  if (k === 'casual') return S.baseLook;
+  return OUTFITS[k][2];
+}
+function wearOutfit(k, quiet) {
+  ensureLife4State();
+  const o = OUTFITS[k];
+  if (o[3] && !has(o[3])) return nope(`You don't have a ${o[3] === 'raincoat' ? 'raincoat' : 'winter coat'}. Buy one at the Mall!`);
+  if (k === 'fancy' && S.clothes < 2) return nope('You need a nice outfit from the Mall first.');
+  if (k === 'work' && !S.job) return nope('You don\'t have a job yet!');
+  if (S.outfit === 'casual' || !S.baseLook) S.baseLook = { shirt: S.look.shirt, pants: S.look.pants };
+  Object.assign(S.look, outfitColors(k)); S.outfit = k;
+  if (k === 'warm') S.today.warm = true;
+  if (!quiet) { pass(5 / 60); log(`${o[0]} You got dressed: ${o[1].toLowerCase()}.`); done(); }
+}
+function dressModal() {
+  ensureLife4State();
+  const w = S.weather, tip = w === 'rainy' ? '🌧️ It\'s raining — wear rain gear!' : seasonOf() === 'winter' ? '❄️ It\'s cold — bundle up!' : w === 'hot' ? '☀️ It\'s hot — wear something cool!' : '';
+  showModal(`<h2>👕 What will you wear?</h2>${tip ? `<p><b>${tip}</b></p>` : ''}<div class="grid actions">${Object.entries(OUTFITS).map(([k, o]) => `<button class="action ${S.outfit === k ? 'sel' : ''}" onclick="closeModal();wearOutfit('${k}')"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[3] && !has(o[3]) ? 'buy at the Mall' : k === 'work' ? (S.job ? 'for your job' : 'get a job first') : S.outfit === k ? 'wearing now' : ''}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function outfitTick(h, mode) {
+  if (!S.outfit || mode === 'sleep') return;
+  const outside = !atHome() && !S.insideOf;
+  if (outside && S.weather === 'rainy' && S.outfit !== 'rain' && !S.today.soaked && Math.random() < 0.5) { S.today.soaked = true; S.needs.hygiene = clamp(S.needs.hygiene - 10); fun2(-6); log('🌧️ You got SOAKED in the rain! Wear your raincoat and boots next time.', 'bad'); }
+  if (outside && S.outfit === 'pajamas' && !S.today.pjOut) { S.today.pjOut = true; fun2(-4); log('😳 You went out in your pajamas! People giggled. Get dressed before you leave!'); }
+}
+
+// ---------- 3. wisdom tooth (you're too old for baby teeth, so this is the grown-up version!) ----------
+function toothNewDay() {
+  if (S.l4.wisdom || S.age < 18 || Math.random() > 0.004) return;
+  S.l4.wisdom = 'sore';
+  log('🦷 Ouch! One of your back teeth is sore. It\'s a wisdom tooth coming in. Go see the dentist at the Hospital!', 'bad');
+}
+function wisdomCard() {
+  if (S.l4.wisdom !== 'sore') return '';
+  return `<div class="card warnbox"><h3>🦷 Sore Wisdom Tooth</h3><p>Grown-ups get extra teeth in the back called wisdom teeth. Yours needs to come out!</p><button class="btn sm primary" onclick="pullWisdom()">🦷 Have the dentist take it out (${insured() ? '$40' : '$250'})</button></div>`;
+}
+function pullWisdom() {
+  if (!spend(insured() ? 40 : 250, 'Wisdom tooth removal')) return;
+  pass(2); S.l4.wisdom = 'out'; S.needs.health = clamp(S.needs.health - 5);
+  queueModal('<h2>🦷 All Done!</h2><p>The dentist took out your wisdom tooth. Your cheeks are a little puffy like a chipmunk 🐿️ — eat soft food like ice cream and soup for a few days!</p><p>That night you found a note from Mom under your pillow: <b>"From the Tooth Fairy — for being brave!"</b> with $5. 😄</p>');
+  earn(5, 'A note under your pillow'); done();
+}
+
+// ---------- 4. family photo wall ----------
+function addPhoto(icon, caption) { ensureLife4State(); S.l4.photos.push({ icon, caption, day: S.day }); if (S.l4.photos.length > 24) S.l4.photos.shift(); }
+function drawPhotoWall(c) {
+  if (!S.l4 || !S.l4.photos.length) return;
+  const ph = S.l4.photos.slice(-6);
+  ph.forEach((p, i) => {
+    const x = 282 + (i % 3) * 24, y = 30 + Math.floor(i / 3) * 28;
+    c.fillStyle = 'rgba(0,0,0,.15)'; c.fillRect(x + 1.5, y + 2, 20, 23);
+    c.fillStyle = ['#5d4037', '#f5f5f5', '#d4af37'][i % 3]; c.fillRect(x, y, 20, 23);
+    c.fillStyle = ['#bbdefb', '#c8e6c9', '#ffe0b2', '#f8bbd0'][i % 4]; c.fillRect(x + 2.5, y + 2.5, 15, 18);
+    c.font = '10px system-ui, "Apple Color Emoji", "Segoe UI Emoji"'; c.textAlign = 'center'; c.fillText(p.icon, x + 10, y + 16); c.textAlign = 'start';
+  });
+}
+function photoWallCard() {
+  if (!S.l4 || !S.l4.photos.length) return '';
+  return `<div class="card"><h3>🖼️ Family Photo Wall</h3><div class="album">${S.l4.photos.slice().reverse().map(p => `<div class="photo"><span>${p.icon}</span><small>${esc(p.caption)}<br>${dateText(p.day)}</small></div>`).join('')}</div></div>`;
+}
+
+// ---------- 5. baking with Grandma ----------
+const GRANDMA_RECIPES = [['🍪', 'Secret chocolate chip cookies', 'The secret: a pinch of cinnamon and brown butter!'], ['🥧', 'Apple pie', 'Cut the apples thin and add a little lemon juice.'], ['🍞', 'Banana bread', 'Use the brownest, spottiest bananas — they\'re sweetest!'], ['🧁', 'Lemon cupcakes', 'Zest the lemon before you squeeze it.'], ['🥞', 'Fluffy pancakes', 'Don\'t stir too much — lumps are OK!']];
+function bakeWithGrandma() {
+  if (S.hour < 9 || S.hour > 19) return nope('Grandma bakes in the daytime.');
+  ensureLife4State();
+  const next = GRANDMA_RECIPES.find(r => !S.l4.recipes.includes(r[1])) || pickR(GRANDMA_RECIPES);
+  const isNew = !S.l4.recipes.includes(next[1]);
+  pass(2, 'relax'); S.family.grandma.rel = clamp(S.family.grandma.rel + 12); addSkill('cook', 2); fun2(15); ateFood(15);
+  if (isNew) S.l4.recipes.push(next[1]);
+  S.pantry.cookies = (S.pantry.cookies || 0) + 4;
+  addPhoto('👵', `Baking ${next[1].toLowerCase()} with Grandma`);
+  log(`${next[0]} You baked ${next[1].toLowerCase()} with Grandma! ${isNew ? `She told you her secret: "${next[2]}"` : 'It came out perfect!'} She sent 4 treats home with you.`, 'good');
+  done();
+}
+
+// ---------- 6. sleepovers ----------
+function sleepover() {
+  const fr = (S.friends || []).filter(f => f.f > 30);
+  if (!fr.length) return nope('Invite a close friend — make friends first, then hang out with them a lot!');
+  if (S.hour < 17 || S.hour > 21) return nope('Sleepovers start between 5 and 9 PM.');
+  showModal(`<h2>🛏️ Who's sleeping over?</h2><div class="guestpick">${fr.map((f, i) => `<button class="guest" onclick="closeModal();doSleepover(${S.friends.indexOf(f)})"><img class="avatar" src="${avatarURL(f.look, 56)}" alt=""><b>${esc(f.name)}</b><small>Age ${f.age}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function doSleepover(i) {
+  const f = S.friends[i];
+  pass(3, 'relax'); fun2(30); f.f = clamp(f.f + 25); S.mess = clamp(S.mess + 15); S.lateNoise = S.home !== 'parents' && Math.random() < 0.4;
+  const movie = pickR(['Space Puppies 3', 'Penguin Party', 'Robot Pals', 'Captain Kindness']);
+  const h = S.hour < 7 ? 7 - S.hour : 31 - S.hour; pass(h, 'sleep');
+  ateFood(30);
+  addPhoto('🛏️', `Sleepover with ${f.name}`);
+  queueModal(`<h2>🛏️ Sleepover with ${esc(f.name)}!</h2><p>You built a giant blanket fort with couch cushions 🏰, made popcorn 🍿 and watched "${movie}" with flashlights.</p><p>You stayed up telling jokes until you both fell asleep. In the morning you made pancakes! 🥞</p>`);
+  log(`🛏️ ${f.name} slept over! Blanket fort, movie and pancakes. Best friends forever! 💛`, 'good');
+  done();
+}
+
+// ---------- 7. pets grow up & need checkups ----------
+function petStage(p) { const b = baseOf(p); const young = b === 'dog' ? ['Puppy', 'Dog', 'Senior dog'] : b === 'cat' ? ['Kitten', 'Cat', 'Senior cat'] : b === 'bird' ? ['Chick', 'Bird', 'Senior bird'] : ['Baby', 'Grown-up', 'Senior']; return p.age < 270 ? young[0] : p.age < 2900 ? young[1] : young[2]; }
+function petCareCard(atVet) {
+  if (!S.pets || !S.pets.length) return '';
+  const yr = dateOf().year;
+  return `<div class="card"><h3>🐾 Growing Up & Checkups</h3><div class="mrows">${S.pets.map((p, i) => mrow(PET_TYPES[p.kind].icon, `${esc(p.name)} · ${petStage(p)}`, `${p.age > 365 ? Math.floor(p.age / 365) + ' years' : p.age + ' days'} old · yearly checkup: ${p.checkup === yr ? '✅ done' : '❗ due this year'}`, atVet ? b(p.checkup === yr ? 'Done ✅' : '🩺 Checkup ($60)', `petCheckup(${i})`, 'primary', p.checkup === yr) : '')).join('')}</div>${atVet ? '' : '<p class="muted small">Take your pets to the 🏥 Vet once a year for a checkup and shots.</p>'}</div>`;
+}
+function petCheckup(i) {
+  const p = S.pets[i]; if (!spend(60, `Checkup for ${p.name}`)) return;
+  pass(1); p.checkup = dateOf().year; p.health = 100;
+  log(`🩺 The vet checked ${p.name}'s ears, teeth and heart and gave them their yearly shots. ${p.name} got a treat for being brave!`, 'good'); done();
+}
+function petAgeNewDay() {
+  (S.pets || []).forEach(p => {
+    if (p.age === 270) log(`🎉 ${p.name} is all grown up now! No longer a ${petStage({ ...p, age: 1 }).toLowerCase()}.`, 'good');
+    if (p.checkup !== dateOf().year && dateOf().m >= 6 && Math.random() < 0.01) { p.health = clamp(p.health - 8); log(`🐾 ${p.name} seems a little under the weather. Have they had their yearly vet checkup?`); }
+  });
+}
+
+// ---------- 8. aquarium care ----------
+function hasTank() { return has('aquarium') || (S.pets || []).some(p => baseOf(p) === 'fish'); }
+function tankCard() {
+  if (!hasTank() || S.loc !== 'home') return '';
+  const t = S.l4.tank;
+  return `<div class="card"><h3>🐠 Aquarium Care</h3><div class="pbar"><span>💧 Water</span><div class="bar small"><div class="fill ${t.clean < 30 ? 'low' : t.clean < 60 ? 'mid' : 'ok'}" style="width:${t.clean}%"></div></div></div>
+    <div class="row"><button class="btn sm ghost" onclick="tankAct('test')">🧪 Test the water</button><button class="btn sm primary" onclick="tankAct('clean')">🧽 Clean the tank (1 hr)</button><button class="btn sm ghost" onclick="tankAct('pinch')">🤏 Feed a pinch</button><button class="btn sm ghost" onclick="tankAct('lots')">🥄 Feed a LOT</button></div></div>`;
+}
+function tankAct(k) {
+  const t = S.l4.tank;
+  if (k === 'test') { pass(0.1); log(`🧪 Water test: ${t.clean > 70 ? 'perfect! Clear water, good pH 🟢' : t.clean > 40 ? 'a little dirty — clean it soon 🟡' : 'too dirty! The fish need clean water NOW 🔴'}`); addSkill('sci', 0.5); }
+  if (k === 'clean') { pass(1); t.clean = 100; addSkill('animal', 1); log('🧽 You scrubbed the glass, vacuumed the gravel and changed some of the water. Sparkly clean! The fish zoom around happily.', 'good'); }
+  if (k === 'pinch') { pass(0.05); t.fed = S.day; (S.pets || []).filter(p => baseOf(p) === 'fish').forEach(p => p.food = 100); log('🤏 You fed the fish a small pinch. They ate it all in 2 minutes — just right!'); }
+  if (k === 'lots') { pass(0.05); t.clean = Math.max(0, t.clean - 30); log('🥄 Too much food! The extra food sank and made the water cloudy. Fish only need a pinch they can eat in 2 minutes.', 'bad'); }
+  done();
+}
+function tankNewDay() { if (hasTank()) { S.l4.tank.clean = Math.max(0, S.l4.tank.clean - 4); if (S.l4.tank.clean < 25 && Math.random() < 0.3) log('🐠 Your aquarium water is getting dirty and green. Clean the tank!', 'bad'); } }
+
+// ---------- 11. science experiments at home ----------
+const EXPERIMENTS = {
+  volcano: ['🌋', 'Baking Soda Volcano', ['Build a volcano out of clay around a cup', 'Add 2 spoons of baking soda', 'Add a squirt of dish soap and red food coloring', 'Pour in the vinegar... and stand back!'], 'WHOOSH! Red foam bubbled out like lava! (Baking soda + vinegar make a gas called carbon dioxide.)'],
+  crystals: ['💎', 'Grow Salt Crystals', ['Ask a grown-up for hot water', 'Stir in salt until no more will dissolve', 'Hang a string into the jar', 'Wait a few days and watch'], 'Sparkly crystals grew on the string! (When the water evaporates, the salt makes crystal shapes.)'],
+  slime: ['🟢', 'Make Slime', ['Pour glue into a bowl', 'Add a little water and food coloring', 'Slowly add contact solution and stir', 'Knead it with your hands'], 'Stretchy, squishy slime! (The glue molecules link together like a chain.)'],
+  egg: ['🥚', 'Egg in Vinegar', ['Put a raw egg in a cup', 'Cover it with vinegar', 'Watch the bubbles form', 'Wait 2 days and gently squeeze it'], 'The shell disappeared and the egg became bouncy! (Vinegar dissolves the shell.)'],
+  rainbow: ['🌈', 'Walking Rainbow', ['Line up 5 cups, some with colored water', 'Fold paper towels into strips', 'Bridge the cups with the paper towels', 'Watch the colors walk and mix'], 'The colors climbed the paper and mixed into a rainbow! (Water moves up tiny gaps — that\'s called capillary action.)'],
+};
+function scienceKit() {
+  if (!(S.l4.kits > 0)) return nope('You need a Science Kit! Buy one at the Mall (Toys aisle).');
+  showModal(`<h2>🔬 Science Experiments</h2><p class="muted">You have ${S.l4.kits} experiment kit${S.l4.kits > 1 ? 's' : ''}. Safety goggles on! 🥽</p><div class="grid actions">${Object.entries(EXPERIMENTS).map(([k, e]) => `<button class="action" onclick="closeModal();doExperiment('${k}',0)"><span class="ic">${e[0]}</span><b>${e[1]}</b></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function doExperiment(k, step) {
+  const e = EXPERIMENTS[k];
+  if (step < e[2].length) return showModal(`<h2>${e[0]} ${e[1]}</h2><p class="muted">Step ${step + 1} of ${e[2].length}</p><p style="font-size:1.1rem">${e[2][step]}</p>`, [{ label: step + 1 < e[2].length ? 'Next step ▶' : 'Do it! ✨', cls: 'primary', fn: () => doExperiment(k, step + 1) }]);
+  S.l4.kits--; S.l4.sci++; pass(1, 'study'); addSkill('sci', 2.5); fun2(15);
+  log(`${e[0]} ${e[1]}: ${e[3]}`, 'good');
+  queueModal(`<h2>${e[0]} It Worked!</h2><p>${e[3]}</p>`); done();
+}
+
+// ---------- 12. learning to ride a bike ----------
+function bikeCard() {
+  if (!has('bike') || S.l4.bike >= 3) return '';
+  const L = ['Training wheels on', 'Training wheels off — with a grown-up holding on', 'Riding by yourself (wobbly!)', 'Bike pro!'];
+  return `<div class="card"><h3>🚲 Learn to Ride Your Bike</h3><p>Level: <b>${L[S.l4.bike]}</b> (${S.l4.bike}/3). You can ride your bike around town once you finish!</p><button class="btn sm primary" onclick="bikePractice()">🚲 Practice (1 hr)</button>${has('helmet') ? '' : '<p class="muted small">⛑️ Wear a helmet! (Car Shop)</p>'}</div>`;
+}
+function bikePractice() {
+  if (S.hour < 8 || S.hour > 19) return nope('Practice in the daytime.');
+  pass(1, 'awake'); addSkill('fit', 1); fun2(10);
+  if (Math.random() < 0.3 && S.l4.bike > 0) { S.needs.health = clamp(S.needs.health - (has('helmet') ? 1 : 5)); log(`🩹 You wobbled and fell over! ${has('helmet') ? 'Your helmet protected you.' : 'You scraped your knee.'} Get back on and try again!`); return done(); }
+  S.l4.bike++;
+  log(['', '🚲 You took the training wheels off! Dad held the back of the seat while you pedaled.', '🚲 Dad let go... and you kept going all by yourself!', '🎉 You can ride your bike! Now you can bike anywhere in town.'][S.l4.bike], 'good');
+  if (S.l4.bike >= 3) { unlock('biker'); addPhoto('🚲', 'Learned to ride a bike!'); }
+  done();
+}
+
+// ---------- 13. life-skill lessons: tie shoes, tell time, count money ----------
+function lifeSkillsCard() {
+  const L = S.l4.lessons;
+  return `<div class="card"><h3>🎓 Life Skills Practice</h3><div class="row">
+    <button class="btn sm ${L.shoes ? 'ghost' : 'primary'}" onclick="lessonShoes()">👟 Tie your shoes ${L.shoes ? '✅' : ''}</button>
+    <button class="btn sm ${L.time ? 'ghost' : 'primary'}" onclick="lessonTime()">🕐 Tell time ${L.time ? '✅' : ''}</button>
+    <button class="btn sm ${L.money ? 'ghost' : 'primary'}" onclick="lessonMoney()">🪙 Count money ${L.money ? '✅' : ''}</button></div></div>`;
+}
+function lessonShoes() {
+  const steps = ['Cross the laces into an X', 'Tuck one under and pull tight', 'Make a bunny ear loop', 'Wrap the other lace around the loop', 'Push it through the hole', 'Pull both loops tight'];
+  const shuffled = steps.map((s, i) => [s, i]).sort(() => Math.random() - 0.5);
+  S.l4.shoeOrder = [];
+  showModal(`<h2>👟 Tie Your Shoes</h2><p>Tap the steps in the right order!</p><div class="nicelist" id="shoesteps">${shuffled.map(([s, i]) => `<button class="btn sm ghost" onclick="shoeStep(${i}, this)">${s}</button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function shoeStep(i, el) {
+  if (i !== S.l4.shoeOrder.length) { el.classList.add('danger'); toast('Not that one yet — what comes next?', 'bad'); return; }
+  S.l4.shoeOrder.push(i); el.disabled = true; el.textContent = '✅ ' + el.textContent;
+  if (S.l4.shoeOrder.length === 6) { closeModal(); S.l4.lessons.shoes = true; pass(0.1); fun2(8); log('👟 You tied your shoes with a perfect double knot! 🎉', 'good'); done(); }
+}
+function lessonTime() {
+  const h = 1 + Math.floor(Math.random() * 12), m = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+  const right = `${h}:${String(m).padStart(2, '0')}`;
+  const opts = [right, `${(h % 12) + 1}:${String(m).padStart(2, '0')}`, `${h}:${String((m + 30) % 60).padStart(2, '0')}`].sort(() => Math.random() - 0.5);
+  S.l4.timeAns = right;
+  showModal(`<h2>🕐 What time is it?</h2><canvas id="lclock" width="160" height="160" style="display:block;margin:0 auto"></canvas><div class="row" style="justify-content:center">${opts.map(o => `<button class="btn primary" onclick="answerTime('${o}')">${o}</button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+  const c = $('#lclock').getContext('2d'), cx = 80, cy = 80;
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(cx, cy, 70, 0, Math.PI * 2); c.fill(); c.strokeStyle = '#333'; c.lineWidth = 4; c.stroke();
+  c.fillStyle = '#222'; c.font = '700 14px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (let k = 1; k <= 12; k++) { const a = k / 12 * Math.PI * 2; c.fillText(k, cx + Math.sin(a) * 55, cy - Math.cos(a) * 55); }
+  const hand = (ang, len, w, col) => { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.sin(ang) * len, cy - Math.cos(ang) * len); c.stroke(); };
+  hand(((h % 12) + m / 60) / 12 * Math.PI * 2, 32, 6, '#222'); hand(m / 60 * Math.PI * 2, 50, 3, '#1565c0');
+}
+function answerTime(o) { closeModal(); if (o === S.l4.timeAns) { S.l4.lessons.time = true; addSkill('math', 1); fun2(5); log(`🕐 Correct! It's ${o}. The short hand shows the hour, the long hand shows the minutes.`, 'good'); } else log(`🕐 Not quite — it was ${S.l4.timeAns}. The short hand is the hour, the long hand is the minutes. Try again!`); done(); }
+function lessonMoney() {
+  const coins = []; const kinds = [['🪙 quarter', 25], ['🪙 dime', 10], ['🪙 nickel', 5], ['🪙 penny', 1]];
+  let total = 0; for (let k = 0; k < 5; k++) { const c = pickR(kinds); coins.push(c[0]); total += c[1]; }
+  const ans = total, opts = [ans, ans + 5, Math.max(1, ans - 10)].sort(() => Math.random() - 0.5);
+  S.l4.moneyAns = ans;
+  showModal(`<h2>🪙 Count the Money</h2><p>You have: <b>${coins.join(', ')}</b></p><p class="muted small">Quarter = 25¢ · Dime = 10¢ · Nickel = 5¢ · Penny = 1¢</p><div class="row">${opts.map(o => `<button class="btn primary" onclick="answerMoney(${o})">${o}¢</button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function answerMoney(o) { closeModal(); if (o === S.l4.moneyAns) { S.l4.lessons.money = true; addSkill('math', 1); log(`🪙 Yes! That's ${o}¢. You're great with money!`, 'good'); } else log(`🪙 Close! It was ${S.l4.moneyAns}¢. Add the big coins first, then the small ones.`); done(); }
+
+// ---------- 14. real homework questions ----------
+function realHomework() {
+  if (!has('desk')) return nope('You need a desk to do homework. Buy one at the Mall!');
+  const qs = [];
+  for (let k = 0; k < 3; k++) { const a = 2 + Math.floor(Math.random() * 11), b2 = 2 + Math.floor(Math.random() * 11), op = pickR(['+', '−', '×']); const ans = op === '+' ? a + b2 : op === '−' ? Math.max(a, b2) - Math.min(a, b2) : a * b2; qs.push({ q: op === '−' ? `${Math.max(a, b2)} − ${Math.min(a, b2)} = ?` : `${a} ${op} ${b2} = ?`, ans: String(ans), kind: 'math' }); }
+  SPELL.slice().sort(() => Math.random() - 0.5).slice(0, 2).forEach(w => qs.push({ q: 'Which is spelled right?', opts: w.slice().sort(() => Math.random() - 0.5), ans: w[0], kind: 'write' }));
+  S.l4.hw = qs;
+  showModal(`<h2>📝 Homework</h2>${qs.map((q, i) => `<div class="quiz"><b>${i + 1}. ${q.q}</b>${q.opts ? q.opts.map(o => `<label><input type="radio" name="hw${i}" value="${o}"> ${o}</label>`).join('') : `<input type="number" id="hw${i}" style="width:90px;padding:4px 8px">`}</div>`).join('')}`, [{ label: 'Cancel', cls: 'ghost' }, { label: 'Turn it in ✏️', cls: 'primary', fn: gradeHomework }]);
+}
+function gradeHomework() {
+  let right = 0; S.l4.hw.forEach((q, i) => { const v = q.opts ? (document.querySelector(`input[name="hw${i}"]:checked`) || {}).value : ($(`#hw${i}`) || {}).value; if (String(v).trim() === q.ans) right++; });
+  pass(1, 'study'); addSkill('math', 0.6 * right); addSkill('write', 0.4 * right);
+  const grade = ['F', 'D', 'C', 'B', 'A', 'A+'][right];
+  log(`📝 Homework: ${right}/5 right — grade ${grade}! ${right === 5 ? '⭐ Perfect score!' : 'Check your mistakes and learn from them.'}`, right >= 4 ? 'good' : '');
+  queueModal(`<h2>📝 Grade: ${grade}</h2><ul class="notes">${S.l4.hw.map(q => `<li>${q.q.replace('= ?', '=')} <b>${q.ans}</b></li>`).join('')}</ul>`);
+  done();
+}
+
+// ---------- 15. library storytime & book club ----------
+function libraryClubCard() {
+  const club = weekday() === 3 && S.hour >= 16 && S.hour < 18;
+  return `<div class="card"><h3>📖 Storytime & Book Club</h3><div class="mrows">
+    ${mrow('🧸', 'Read to little kids at storytime', 'Volunteer · 1 hr · they love silly voices!', b('Read aloud', 'storytime()'))}
+    ${mrow('📚', 'Book club', 'Thursdays 4–6 PM · talk about a book you finished', b(club ? 'Join' : 'Thursdays only', 'bookClub()', 'primary', !club))}</div></div>`;
+}
+function storytime() { if (S.hour < 9 || S.hour > 17) return nope('Storytime is during the day.'); pass(1, 'awake'); addSkill('comm', 1); addSkill('write', 0.6); fun2(10); S.volunteerHours = (S.volunteerHours || 0) + 1; log(`🧸 You read "${pickR(['The Very Hungry Caterpillar', 'Goodnight Moon', 'a book about trucks', 'a story about a brave little duck'])}" to the little kids using funny voices. They giggled the whole time!`, 'good'); done(); }
+function bookClub() {
+  if (!(S.lib && S.lib.read > (S.l4.clubRead || 0))) return nope('Finish reading a library book first so you have something to talk about!');
+  S.l4.clubRead = S.lib.read; pass(1.5, 'relax'); addSkill('comm', 1.5); fun2(12);
+  (S.friends || []).slice(0, 2).forEach(f => f.f = clamp(f.f + 8));
+  log(`📚 Book club: everyone shared their favorite part of the book. ${pickR(['You all agreed the ending was a surprise!', 'There was a big debate about the main character!', 'You picked next month\'s book together.'])}`, 'good'); done();
+}
+
+// ---------- 16. model kits ----------
+const MODELS = { car: ['🏎️', 'Model race car'], plane: ['🛩️', 'Model airplane'], ship: ['⛵', 'Model sailboat'], rocket: ['🚀', 'Model rocket'], train: ['🚂', 'Model steam train'] };
+function modelCard() {
+  const cur = S.l4.model;
+  return `<div class="card"><h3>🛠️ Model Building</h3>${cur ? `<p>Building: ${MODELS[cur.k][0]} ${MODELS[cur.k][1]} — step ${cur.step}/3 (${['glue the pieces', 'paint it', 'add the stickers'][cur.step]})</p><button class="btn sm primary" onclick="buildModel()">🛠️ Keep building (1 hr)</button>` : '<p class="muted">Buy a model kit at the Mall (Toys aisle).</p>'}
+    ${S.l4.models.length ? `<p>Your shelf: ${S.l4.models.map(k => MODELS[k][0]).join(' ')}</p>` : ''}</div>`;
+}
+function buildModel() {
+  const cur = S.l4.model; if (!cur) return;
+  pass(1, 'relax'); addSkill('build', 1.5); addSkill('art', 0.6); fun2(8);
+  log(`🛠️ You ${['glued all the tiny pieces together (carefully!)', 'painted it with a tiny brush', 'added the stickers and decals'][cur.step]}.`);
+  cur.step++;
+  if (cur.step >= 3) { S.l4.models.push(cur.k); log(`🎉 Your ${MODELS[cur.k][1].toLowerCase()} is finished! It's on your shelf now.`, 'good'); S.l4.model = null; }
+  done();
+}
+
+// ---------- 17. gardening club ----------
+function gardenClubCard() {
+  if (gardenSize() === 0 || S.loc !== 'home') return '';
+  const judge = weekday() === 6 && dateOf().d > MDAYS[dateOf().m] - 7 && ['spring', 'summer'].includes(seasonOf());
+  return `<div class="card"><h3>🌷 Street Gardening Club</h3><p class="muted">Every spring and summer month, the judges walk down the street on the last Sunday and pick the prettiest garden. Ribbons won: ${S.l4.gardenRibbons} 🎀</p>${judge ? '<button class="btn sm primary" onclick="gardenJudge()">🌷 Show the judges your garden!</button>' : ''}</div>`;
+}
+function gardenJudge() {
+  if (S.l4.judged === S.day) return nope('The judges already came today.');
+  S.l4.judged = S.day; pass(0.5);
+  const live = S.garden.filter(p => !p.dead).length, flowers = S.garden.filter(p => !p.dead && p.kind === 'sunflower').length;
+  const score = live * 15 + flowers * 15 + (has('fence') ? 10 : 0) + (S.mess < 40 ? 10 : 0) + Math.random() * 20;
+  if (score >= 60) { S.l4.gardenRibbons++; earn(30, 'Gardening club prize'); log('🎀 The judges loved your garden! You won the "Prettiest Garden on the Street" ribbon and $30!', 'good'); }
+  else log(`🌷 The judges said your garden is off to a nice start. Plant more (sunflowers are pretty!) and keep it watered.`);
+  done();
+}
+
+// ---------- 27. lunch break at work ----------
+function packLunch() {
+  if (S.l4.lunch === S.day) return nope('You already packed a lunch today!');
+  const items = ['bread', 'cheese', 'apples', 'bananas'].filter(id => countFood(id) > 0);
+  if (!items.length) return nope('Nothing to pack! Buy bread, cheese or fruit at the Supermarket.');
+  useFood(items[0]); if (items[1]) useFood(items[1]);
+  S.l4.lunch = S.day; pass(0.2);
+  log(`🥪 You packed a lunch (${items.slice(0, 2).map(i => FOODS[i].name.toLowerCase()).join(' and ')}) in a lunch box. That saves money!`); done();
+}
+function lunchAtWork() {
+  if (S.l4.lunch === S.day) { ateFood(35); log('🥪 Lunch break: you ate the lunch you packed. Yum, and it was free!'); }
+  else { charge(9, 'Lunch at work'); ateFood(35); log('🍔 Lunch break: you forgot to pack a lunch, so you bought one for $9. Packing lunch saves money!'); }
+}
+
+// ---------- 28. carpooling ----------
+function carpoolCard() {
+  if (!S.job || !S.job.coworkers || !S.job.coworkers.length) return '';
+  const w = S.job.coworkers[0];
+  return `<div class="card"><h3>🚗 Carpool</h3><p>${S.l4.carpool ? `✅ You carpool with ${esc(w.name)}. You take turns driving and share gas money!` : `Your coworker ${esc(w.name)} lives near you. Ride together to save gas and have someone to talk to!`}</p><button class="btn sm ${S.l4.carpool ? 'ghost' : 'primary'}" onclick="S.l4.carpool=!S.l4.carpool;log(S.l4.carpool?'🚗 You started carpooling with ${esc(w.name).replace(/'/g, '')}!':'🚗 You stopped carpooling.');render()">${S.l4.carpool ? 'Stop carpooling' : 'Start carpooling'}</button></div>`;
+}
+function carpoolRide(dest) {
+  if (!S.l4 || !S.l4.carpool || !S.job || dest !== workplaceOf(JOBS[S.job.id])) return false;
+  const w = S.job.coworkers && S.job.coworkers[0]; if (!w) return false;
+  if (hasCar()) S.fuel = Math.min(100, S.fuel + 3);
+  fun2(3); if (Math.random() < 0.2) log(`🚗 Carpool: you and ${w.name} sang along to the radio on the way to work. 🎶`);
+  return true;
+}
+
+// ---------- 29. counting your change at the store ----------
+function changeQuiz(price) {
+  if (Math.random() > 0.35 || price >= 500) return;
+  const paid = price < 5 ? 5 : price < 10 ? 10 : price < 20 ? 20 : price < 50 ? 50 : price < 100 ? 100 : Math.ceil(price / 100) * 100;
+  const change = Math.round((paid - price) * 100) / 100;
+  const wrong = Math.random() < 0.25, given = wrong ? Math.round((change - 1) * 100) / 100 : change;
+  S.l4.changeQ = { change, given, wrong };
+  queueModal(`<h2>💵 Count Your Change</h2><p>The total was <b>${money(price)}</b>. You paid with a <b>$${paid} bill</b>.</p><p>The cashier gave you <b>${money(given)}</b> back. Is that right?</p>
+    <div class="row"><button class="btn primary" onclick="closeModal();changeAnswer(true)">✅ Yes, that's right</button><button class="btn ghost" onclick="closeModal();changeAnswer(false)">❌ No, that's wrong</button></div><p class="muted small">Hint: ${paid} − ${price} = ?</p>`);
+}
+function changeAnswer(saysRight) {
+  const q = S.l4.changeQ; if (!q) return;
+  const correct = saysRight === !q.wrong;
+  if (correct) { addSkill('math', 0.8); if (q.wrong) { earn(1, 'Correct change'); log(`💵 Good catch! The cashier gave you $1 too little. They said sorry and gave you the right change: ${money(q.change)}.`, 'good'); } else log(`💵 You counted your change: ${money(q.change)}. Correct!`, 'good'); }
+  else log(q.wrong ? `💵 Oops — the cashier gave you $1 too little and you didn't notice. Always count your change!` : `💵 Actually, ${money(q.change)} WAS right. Count carefully: subtract the price from what you paid.`);
+  S.l4.changeQ = null; done();
+}
+
+function life4NewDay() { ensureLife4State(); toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
+
+</script>
+  <script>
+// ===================== TOWN 4: horse riding, aquarium, bowling, roller rink, ice cream truck, car show, hospital visits, mini golf,
+// water park, family camping, stargazing, farm seasons, new countries & passports, beach tides, nature walks =====================
+
+function ensureTown4State() { if (!S.t4) S.t4 = { horse: 0, sky: [], plants: [], shells: [], bowlBest: 0, golfBest: 0, skate: 0, passport: 0 }; ensureLife4State(); }
+
+// ---------- new places ----------
+PLACES.farm.kind = 'place'; PLACES.farm.blurb = 'Horses, cows and chickens. Take riding lessons and help on the farm!';
+Object.assign(PLACES, {
+  bowling:   { kind: 'place', far: true, shop: true, town: 'maple', name: 'Strike Zone Bowling', icon: '🎳', r: [2460, 226, 200, 150], door: [2560, 386], blurb: 'Bowling lanes, shoes and snacks.' },
+  rink:      { kind: 'place', far: true, shop: true, town: 'maple', name: 'Roller Rink', icon: '🛼', r: [2460, 414, 200, 140], door: [2560, 414], blurb: 'Roller skating with music and disco lights.' },
+  minigolf:  { kind: 'place', far: true, shop: true, town: 'maple', name: 'Mini Golf', icon: '⛳', r: [2700, 226, 220, 150], door: [2810, 386], blurb: '9 holes with windmills and ramps.' },
+  waterpark: { kind: 'place', far: true, shop: true, town: 'maple', name: 'Splash Water Park', icon: '🌊', r: [2700, 414, 260, 170], door: [2830, 414], blurb: 'Water slides, a lazy river and a wave pool (summer).' },
+});
+Object.assign(ENTRANCE, {
+  bowling:   { facade: 'store', wall: '#ede7f6', door: 'double', doorCol: '#4527a0', signBg: '#4527a0', signFg: '#fff', hours: [10, 23], inside: '#2a1f4a', awning: '#7e57c2', keeper: true },
+  rink:      { facade: 'store', wall: '#fce4ec', door: 'double', doorCol: '#ad1457', signBg: '#ec407a', signFg: '#fff', hours: [12, 22], inside: '#2b1830', awning: '#f06292', keeper: true },
+  minigolf:  { facade: 'wood', wall: '#c8e6c9', door: 'swing', doorCol: '#2e7d32', signBg: '#2e7d32', signFg: '#fff', hours: [10, 21], inside: '#a5d6a7', keeper: true },
+  waterpark: { facade: 'store', wall: '#b3e5fc', door: 'slide', doorCol: '#bfe3f5', signBg: '#0277bd', signFg: '#fff', hours: [10, 18], inside: '#e1f5fe', awning: '#29b6f6', keeper: true },
+});
+INTERIORS.bowling = c => {
+  iWall(c, '#2a1f4a'); iFloor(c, 'wood', ['#c49a5a', '#e0bb7a']);
+  for (let k = 0; k < 4; k++) { const x = 120 + k * 200; c.fillStyle = '#e7c58a'; c.beginPath(); c.moveTo(x, 380); c.lineTo(x + 140, 380); c.lineTo(x + 95, 150); c.lineTo(x + 45, 150); c.closePath(); c.fill(); c.fillStyle = '#5d4037'; c.fillRect(x + 40, 140, 60, 10); for (let p = 0; p < 4; p++) for (let q = 0; q <= p; q++) { c.fillStyle = '#fff'; c.beginPath(); c.ellipse(x + 70 - p * 5 + q * 10, 120 + p * 5, 3.5, 7, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#e53935'; c.fillRect(x + 67 - p * 5 + q * 10, 118 + p * 5, 6, 1.5); } }
+  iSign(c, 360, 30, 280, 30, '#7e57c2', '#fff', '🎳 STRIKE ZONE', 15);
+};
+INTERIORS.rink = c => {
+  iWall(c, '#2b1830'); iFloor(c, 'wood', ['#8d6e63', '#bcaaa4']);
+  const t = Date.now() / 500; for (let k = 0; k < 30; k++) { c.fillStyle = ['#ff4081', '#40c4ff', '#ffd740', '#69f0ae'][(k + Math.floor(t)) % 4]; c.beginPath(); c.arc(40 + k * 32, 40 + (k % 3) * 25, 4, 0, Math.PI * 2); c.fill(); }
+  c.fillStyle = '#ccc'; c.beginPath(); c.arc(500, 90, 28, 0, Math.PI * 2); c.fill(); for (let k = 0; k < 16; k++) { c.fillStyle = k % 2 ? '#fff' : '#90a4ae'; c.fillRect(480 + (k % 4) * 10, 72 + Math.floor(k / 4) * 9, 9, 8); }
+  iSign(c, 360, 130, 280, 26, '#ec407a', '#fff', '🛼 ROLLER RINK · ALL SKATE', 12);
+};
+INTERIORS.minigolf = c => {
+  c.fillStyle = '#90caf9'; c.fillRect(0, 0, RW, RH); c.fillStyle = '#66bb6a'; c.fillRect(0, 170, RW, RH);
+  [[150, 260, 160, 50], [420, 230, 180, 40], [700, 270, 200, 50]].forEach(([x, y, w, h]) => { c.fillStyle = '#2e7d32'; c.beginPath(); c.ellipse(x, y, w / 2, h / 2, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#111'; c.beginPath(); c.arc(x + w / 3, y, 4, 0, Math.PI * 2); c.fill(); });
+  c.fillStyle = '#d32f2f'; c.fillRect(470, 90, 40, 80); c.fillStyle = '#5d4037'; c.beginPath(); c.moveTo(462, 92); c.lineTo(490, 60); c.lineTo(518, 92); c.fill();
+  c.save(); c.translate(490, 100); c.rotate(Date.now() / 1500); c.fillStyle = '#fff'; for (let k = 0; k < 4; k++) { c.rotate(Math.PI / 2); c.fillRect(0, -4, 45, 8); } c.restore();
+};
+INTERIORS.waterpark = c => {
+  c.fillStyle = '#81d4fa'; c.fillRect(0, 0, RW, RH); c.fillStyle = '#ffe0b2'; c.fillRect(0, 220, RW, RH);
+  c.fillStyle = '#29b6f6'; c.beginPath(); c.ellipse(350, 300, 260, 55, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 2; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(250 + k * 50, 300, 20, Math.PI, 0); c.stroke(); }
+  [['#ff7043', 700], ['#ab47bc', 820]].forEach(([col, x]) => { c.strokeStyle = col; c.lineWidth = 16; c.lineCap = 'round'; c.beginPath(); c.moveTo(x, 40); c.bezierCurveTo(x + 100, 80, x - 80, 160, x + 40, 280); c.stroke(); });
+  fillR(c, 690, 30, 160, 12, '#78909c');
+};
+function fun4(n) { fun2(n); }
+
+// ---------- 9. horse riding at the farm ----------
+const RIDE = ['Brush and feed the horse', 'Walk', 'Trot', 'Canter', 'Jump a small fence'];
+function horseCard() {
+  const L = S.t4.horse;
+  return `<div class="card"><h3>🐴 Horse Riding Lessons <span class="muted small">· $30 · 1 hr</span></h3><p>Your horse is <b>Maple</b>, a gentle brown mare. Level: <b>${RIDE[Math.min(L, 4)]}</b> (${L}/5)</p>
+    <button class="btn sm primary" onclick="rideLesson()">🐴 Take a lesson</button><p class="muted small">Always wear a riding helmet and boots, and walk beside the horse, never behind it!</p></div>`;
+}
+function rideLesson() {
+  if (S.hour < 8 || S.hour > 17) return nope('Lessons are 8 AM – 5 PM.');
+  if (!spend(30, 'Riding lesson')) return;
+  pass(1, 'awake'); addSkill('animal', 1.5); addSkill('fit', 1); fun2(18);
+  const L = S.t4.horse;
+  const msg = ['You brushed Maple\'s coat until it shined and gave her a carrot 🥕. She nuzzled you!', 'You walked Maple around the ring. Heels down, back straight!', 'Bumpity-bump! You learned to trot and post up and down.', 'Maple cantered smoothly around the ring. It felt like flying!', 'You and Maple jumped over a small fence together! 🎉'][Math.min(L, 4)];
+  if (L < 5) S.t4.horse++;
+  if (S.t4.horse === 5) { unlock('rider'); addPhoto('🐴', 'Jumping with Maple'); }
+  log(`🐴 ${msg}`, 'good'); done();
+}
+
+// ---------- 32. seasons on the farm ----------
+const FARM_SEASON = { spring: ['🐑', 'Bottle-feed the baby lambs', 'The baby lambs drank their milk and wagged their tails!'], summer: ['🌱', 'Pull weeds and pick berries', 'You pulled weeds in the hot sun and picked a basket of berries.'], fall: ['🍎', 'Harvest apples and pumpkins', 'You climbed a ladder to pick apples and loaded the wagon with pumpkins!'], winter: ['🐄', 'Feed the animals hay', 'You carried hay to the cows and broke the ice on the water trough.'] };
+function farmChoreCard() {
+  const f = FARM_SEASON[seasonOf()];
+  return `<div class="card"><h3>🚜 ${SEASONS[seasonOf()].name} on the Farm</h3><p>Every season brings different farm work!</p><button class="btn sm primary" onclick="farmChore()">${f[0]} ${f[1]} (2 hrs · $15)</button></div>`;
+}
+function farmChore() {
+  if (S.hour < 6 || S.hour > 17) return nope('Farm work happens in the daytime.');
+  if (S.t4.farmDay === S.day) return nope('You already helped today!');
+  S.t4.farmDay = S.day; const f = FARM_SEASON[seasonOf()];
+  pass(2, 'work'); addSkill('animal', 1); addSkill('fit', 1); earn(15, 'Farm help');
+  if (seasonOf() === 'fall') S.fridgeFood.push({ id: 'apples', exp: S.day + 12 }, { id: 'apples', exp: S.day + 12 });
+  log(`${f[0]} ${f[2]} The farmer paid you $15.`, 'good'); done();
+}
+
+// ---------- 10. visit the aquarium (at the wildlife park) ----------
+const AQUA = [['🦈', 'Shark tunnel', 'Sharks have been around since before the dinosaurs!'], ['🪼', 'Jellyfish room', 'Jellyfish have no brain, heart or bones!'], ['⭐', 'Touch pool', 'You gently touched a starfish — they can regrow their arms!'], ['🐧', 'Penguin feeding', 'Penguins can\'t fly, but they "fly" underwater!'], ['🐙', 'Octopus tank', 'An octopus has three hearts and blue blood!'], ['🐢', 'Sea turtle lagoon', 'Some sea turtles live over 100 years!']];
+function aquariumCard() {
+  return `<div class="card"><h3>🐠 The Aquarium <span class="muted small">· $14 · inside the Wildlife Park</span></h3><div class="row">${AQUA.map((a, i) => b(`${a[0]} ${a[1]}`, `aquaVisit(${i})`, 'ghost')).join('')}</div></div>`;
+}
+function aquaVisit(i) {
+  if (S.t4.aquaDay !== S.day) { if (!spend(14, 'Aquarium ticket')) return; S.t4.aquaDay = S.day; }
+  const a = AQUA[i]; pass(0.5, 'relax'); fun2(10); addSkill('sci', 0.8);
+  if (typeof journalAdd === 'function') journalAdd(a[0], a[1].replace(/ (tunnel|room|pool|feeding|tank|lagoon)/, ''));
+  log(`${a[0]} ${a[1]}: ${a[2]}`, 'good'); done();
+}
+
+// ---------- 18. bowling ----------
+function bowlingCard() {
+  return `<div class="card"><h3>🎳 Bowling <span class="muted small">· $8 a game + $3 shoe rental</span></h3><p>Your best score: <b>${S.t4.bowlBest || '—'}</b></p><button class="btn primary" onclick="startBowling()">🎳 Bowl a game (5 frames)</button></div>`;
+}
+function startBowling() { if (!spend(11, 'Bowling game & shoes')) return; S.t4.bowl = { frame: 0, score: 0, rolls: [] }; bowlFrame(); }
+function bowlFrame() {
+  const B = S.t4.bowl;
+  if (B.frame >= 5) { pass(1, 'relax'); fun2(20); addSkill('fit', 0.8); S.t4.bowlBest = Math.max(S.t4.bowlBest, B.score); log(`🎳 Game over! Your score: ${B.score} (${B.rolls.join(', ')}). ${B.score >= 120 ? 'AMAZING! 🔥' : B.score >= 70 ? 'Nice game!' : 'Keep practicing!'}`, 'good'); S.t4.bowl = null; return done(); }
+  showModal(`<h2>🎳 Frame ${B.frame + 1} of 5 · Score: ${B.score}</h2><p>Aim for the middle pin. How do you roll?</p><div class="grid actions">
+    ${[['⬅️', 'Aim left', 'left'], ['⬆️', 'Aim center', 'center'], ['➡️', 'Aim right', 'right']].map(a => `<button class="action" onclick="bowlRoll('${a[2]}')"><span class="ic">${a[0]}</span><b>${a[1]}</b></button>`).join('')}</div>`, []);
+}
+function bowlRoll(aim) {
+  const B = S.t4.bowl, skill = (S.skills.fit + 20) / 120;
+  let pins = aim === 'center' ? Math.round(5 + Math.random() * 5 * skill + Math.random() * 2) : Math.round(2 + Math.random() * 6);
+  pins = Math.min(10, pins);
+  let second = 0, txt;
+  if (pins === 10) { txt = 'STRIKE! 🎉 All 10 pins!'; B.score += 30; }
+  else { second = Math.min(10 - pins, Math.round(Math.random() * (10 - pins) * (0.5 + skill / 2))); txt = pins + second === 10 ? `${pins} pins, then you picked up the SPARE! ✨` : `${pins} pins, then ${second} more.`; B.score += pins + second + (pins + second === 10 ? 10 : 0); }
+  B.rolls.push(pins === 10 ? 'X' : pins + second === 10 ? `${pins}/` : pins + second); B.frame++;
+  toast(`🎳 ${txt}`);
+  bowlFrame();
+}
+
+// ---------- 19. roller rink ----------
+const SKATE_LV = ['Holding the wall', 'Wobbly but moving', 'Skating smoothly', 'Skating backwards', 'Spins and tricks!'];
+function rinkCard() {
+  return `<div class="card"><h3>🛼 Roller Skating <span class="muted small">· $9 with skate rental · 1.5 hrs</span></h3><p>Your level: <b>${SKATE_LV[S.t4.skate]}</b></p><button class="btn primary" onclick="rollerSkate()">🛼 Skate to the music</button></div>`;
+}
+function rollerSkate() {
+  if (!spend(9, 'Roller rink')) return;
+  pass(1.5, 'relax'); addSkill('fit', 1.2); fun2(22);
+  if (Math.random() < 0.25 && S.t4.skate < 2) { S.needs.health = clamp(S.needs.health - 2); log('🛼 You fell on your bottom! Everyone falls when they learn. You got back up and kept going.'); }
+  else if (S.t4.skate < 4 && Math.random() < 0.6) { S.t4.skate++; log(`🛼 Level up: ${SKATE_LV[S.t4.skate]}! The disco ball sparkled while you skated to the music. 🪩`, 'good'); }
+  else log(`🛼 You skated around and around to "${pickR(['a dance song', 'a 70s song', 'your favorite pop song'])}" under the disco lights! 🪩`, 'good');
+  done();
+}
+
+// ---------- 20. the ice cream truck ----------
+function iceTruckNewDay() { S.t4.truck = seasonOf() === 'summer' || (seasonOf() === 'spring' && S.weather === 'hot') ? (Math.random() < 0.5 ? 14 + Math.floor(Math.random() * 4) : null) : null; }
+function iceTruckHere() { return S.t4.truck && S.hour >= S.t4.truck && S.hour < S.t4.truck + 1 && S.weather !== 'rainy'; }
+function iceTruckChip() { return iceTruckHere() && S.loc === 'home' ? '<button class="chip warn" onclick="iceTruckCard_open()">🎵 Ding-ding! The ice cream truck is on your street! (tap)</button>' : ''; }
+function iceTruckCard_open() {
+  showModal(`<h2>🍦 The Ice Cream Truck!</h2><p>🎵 You hear the music and run outside. What do you want?</p><div class="grid actions">${[['🍦', 'Soft-serve cone', 3], ['🍫', 'Ice cream sandwich', 2], ['🍧', 'Rocket pop', 2], ['🍨', 'Sundae cup', 4]].map(t => `<button class="action" onclick="closeModal();iceTruckBuy('${t[1]}',${t[2]})"><span class="ic">${t[0]}</span><b>${t[1]}</b><small>${money(t[2])}</small></button>`).join('')}</div>`, [{ label: 'No thanks', cls: 'ghost' }]);
+}
+function iceTruckBuy(name, p) { if (!spend(p, name)) return; pass(0.2, 'relax'); fun2(12); ateFood(8); S.needs.thirst = clamp(S.needs.thirst + 8); log(`🍦 You got a ${name.toLowerCase()} from the ice cream truck. It dripped down your hand — so good!`, 'good'); done(); }
+function drawIceTruck(c, t) {
+  if (!S || !iceTruckHere()) return;
+  const hp = PLACES[HOME_PLACE[S.home]]; if (!hp) return;
+  const x = hp.r[0] + 20 + Math.sin(t / 4000) * 30, y = hp.r[1] + hp.r[3] + 14;
+  c.fillStyle = '#fff'; c.fillRect(x, y - 10, 26, 12); c.fillStyle = '#f48fb1'; c.fillRect(x, y - 4, 26, 3); c.fillStyle = '#90caf9'; c.fillRect(x + 19, y - 8, 6, 4);
+  c.fillStyle = '#222'; c.beginPath(); c.arc(x + 6, y + 2, 2.5, 0, Math.PI * 2); c.arc(x + 20, y + 2, 2.5, 0, Math.PI * 2); c.fill();
+  c.font = '9px system-ui, "Apple Color Emoji", "Segoe UI Emoji"'; c.fillText('🍦', x + 6, y - 12);
+}
+
+// ---------- 21. car show ----------
+function carShowCard() {
+  const on = weekday() === 6 && Math.ceil(dateOf().d / 7) === 2 && ['summer', 'spring'].includes(seasonOf()) && S.hour >= 10 && S.hour < 16;
+  return `<div class="card"><h3>🚗 Classic Car Show <span class="muted small">· 2nd Sunday in spring & summer, 10 AM – 4 PM</span></h3>${on ? `<div class="row"><button class="btn sm primary" onclick="carShow(false)">👀 Look at the cars (free)</button>${hasCar() ? '<button class="btn sm ghost" onclick="carShow(true)">🏆 Enter your car ($10)</button>' : ''}</div>` : '<p class="muted">Not today. Shiny old cars, race cars and fire trucks come to the park!</p>'}</div>`;
+}
+function carShow(enter) {
+  if (enter && !spend(10, 'Car show entry')) return;
+  pass(1.5, 'relax'); fun2(14); addSkill('build', 0.5);
+  const fav = pickR(['a shiny red 1957 convertible', 'an old fire truck with a brass bell', 'a tiny 1960s bubble car', 'a race car with stripes', 'a 1930s car with big round headlights']);
+  if (!enter) return log(`🚗 Car show: your favorite was ${fav}! You voted for it in "People's Choice."`, 'good'), done();
+  const clean = S.car && S.car.dirty < 30, win = clean && Math.random() < 0.4;
+  if (win) earn(50, 'Car show prize');
+  log(win ? `🏆 Your sparkling-clean car won "Best Shine" at the car show! $50 prize!` : clean ? '🚗 Your car looked great, but the judges picked a classic car this time.' : '🚗 The judges said your car was a little dirty. Wash it before the next show!', win ? 'good' : '');
+  done();
+}
+
+// ---------- 22. visiting sick kids at the hospital ----------
+function hospitalVisitCard() {
+  return `<div class="card"><h3>💌 Visit Kids in the Hospital</h3><p>Bring homemade cards and cheer up kids who are sick. ${S.m2 && S.m2.crafts.card && S.m2.crafts.card.n ? `You have ${S.m2.crafts.card.n} cards you made.` : 'You can make greeting cards at home (Craft Table), or draw some here.'}</p><button class="btn sm primary" onclick="visitKids()">💌 Visit (1 hr)</button></div>`;
+}
+function visitKids() {
+  if (S.hour < 10 || S.hour > 18) return nope('Visiting hours are 10 AM – 6 PM.');
+  pass(1, 'relax');
+  const cards = S.m2 && S.m2.crafts.card && S.m2.crafts.card.n ? Math.min(3, S.m2.crafts.card.n) : 0;
+  if (cards) S.m2.crafts.card.n -= cards;
+  S.volunteerHours = (S.volunteerHours || 0) + 1; addSkill('comm', 1); fun2(15);
+  log(`💌 You visited kids at the hospital${cards ? ` and gave them ${cards} cards you made` : ' and drew pictures with them'}. A little girl named ${pickR(['Mia', 'Sofia', 'Ava', 'Lily'])} said it was the best part of her week! ❤️`, 'good');
+  done();
+}
+
+// ---------- 24. mini golf ----------
+function minigolfCard() { return `<div class="card"><h3>⛳ Mini Golf <span class="muted small">· $10 · 9 holes</span></h3><p>Best score: <b>${S.t4.golfBest || '—'}</b> (par 27 — lower is better!)</p><button class="btn primary" onclick="startGolf()">⛳ Play 9 holes</button></div>`; }
+const HOLES = ['a windmill 🌬️', 'a ramp', 'a loop-de-loop', 'a little bridge', 'a castle', 'a pirate ship 🏴‍☠️', 'a twisty tunnel', 'a waterfall', 'a giant clown mouth 🤡'];
+function startGolf() { if (!spend(10, 'Mini golf')) return; S.t4.golf = { hole: 0, strokes: 0 }; golfHole(); }
+function golfHole() {
+  const G = S.t4.golf;
+  if (G.hole >= 9) { pass(1.2, 'relax'); fun2(20); S.t4.golfBest = S.t4.golfBest ? Math.min(S.t4.golfBest, G.strokes) : G.strokes; log(`⛳ You finished mini golf with ${G.strokes} strokes (par 27). ${G.strokes <= 27 ? 'Under par — awesome! 🏆' : 'Fun game!'}`, 'good'); S.t4.golf = null; return done(); }
+  showModal(`<h2>⛳ Hole ${G.hole + 1}: ${HOLES[G.hole]}</h2><p>Strokes so far: ${G.strokes}. How hard do you putt?</p><div class="grid actions">${[['🐢', 'Soft', 0], ['👌', 'Just right', 1], ['💥', 'Hard', 2]].map(p => `<button class="action" onclick="golfPutt(${p[2]})"><span class="ic">${p[0]}</span><b>${p[1]}</b></button>`).join('')}</div>`, []);
+}
+function golfPutt(power) {
+  const G = S.t4.golf, good = power === 1 ? 0.28 + S.skills.fit / 400 : 0.12;
+  const strokes = Math.random() < 0.06 + (power === 1 ? 0.06 : 0) ? 1 : Math.random() < good ? 2 : Math.random() < 0.6 ? 3 : 4 + Math.floor(Math.random() * 2);
+  G.strokes += strokes; G.hole++;
+  toast(strokes === 1 ? '⛳ HOLE IN ONE! 🎉' : `⛳ ${strokes} strokes`);
+  golfHole();
+}
+
+// ---------- 25. water park ----------
+function waterparkCard() {
+  const open = seasonOf() === 'summer';
+  return `<div class="card"><h3>🌊 Splash Water Park <span class="muted small">· ${open ? '$25 · open 10 AM – 6 PM' : 'closed until summer'}</span></h3>${open ? `<div class="grid actions">${[['🌀', 'Twister slide', 'big', 'You zoomed down the twisty slide and SPLASHED into the pool!'], ['🛟', 'Lazy river', 'easy', 'You floated around the lazy river on a tube. So relaxing!'], ['🌊', 'Wave pool', 'mid', 'Big waves knocked you over and you laughed every time!'], ['🪣', 'Giant tipping bucket', 'easy', 'The giant bucket tipped and dumped 500 gallons on everyone!']].map(r => `<button class="action" onclick="waterRide('${r[1]}','${r[2]}','${r[3].replace(/'/g, '\\u2019')}')"><span class="ic">${r[0]}</span><b>${r[1]}</b><small>${r[2] === 'big' ? 'needs swim level 2' : 'all swimmers'}</small></button>`).join('')}</div>` : '<p class="muted">See you in summer! ☀️</p>'}</div>`;
+}
+function waterRide(name, kind, msg) {
+  if (seasonOf() !== 'summer') return nope('The water park is closed until summer.');
+  if (S.t4.wpDay !== S.day) { if (!spend(25, 'Water park ticket')) return; S.t4.wpDay = S.day; }
+  if (kind === 'big' && (!S.hob || S.hob.swim < 2)) return nope('The lifeguard says you need swim level 2 for the big slides. Take swim lessons at the Sports Park!');
+  pass(0.75, 'relax'); fun2(18); S.needs.hygiene = clamp(S.needs.hygiene - 5); S.needs.thirst = clamp(S.needs.thirst - 8);
+  log(`🌊 ${name}: ${msg}`, 'good'); done();
+}
+
+// ---------- 30. family camping trip ----------
+function familyCampCard() {
+  return `<div class="card"><h3>⛺ Family Camping Trip</h3><p>Bring Mom, Dad, Grandma and your brother and sister for a night under the stars! (Spring, summer or fall · starts 3–6 PM · $25 campsite)</p><button class="btn sm primary" onclick="familyCamp()">⛺ Go camping with family</button></div>`;
+}
+function familyCamp() {
+  if (seasonOf() === 'winter') return nope('Too cold to camp in winter!');
+  if (S.hour < 15 || S.hour > 18) return nope('Start your camping trip between 3 and 6 PM.');
+  if (!spend(25, 'Family campsite')) return;
+  pass(1, 'awake');
+  const steps = ['⛺ You and Dad set up the tent (it took 3 tries!)', `🎣 You went fishing with ${S.family.bro ? S.family.bro.name : 'your brother'} and caught a ${pickR(['sunfish', 'little trout', 'boot (just kidding!)'])}`, '🔥 Mom built a campfire and you all made s\'mores', `✨ Grandma pointed out the Big Dipper and told stories about when she was little`, '🦉 You fell asleep listening to owls and crickets'];
+  const h = 31 - S.hour; pass(Math.max(1, h - 1), 'sleep');
+  Object.values(S.family).forEach(m => m.rel = clamp(m.rel + 15)); fun2(35); ateFood(40);
+  addPhoto('⛺', 'Family camping trip');
+  queueModal(`<h2>⛺ Family Camping Trip!</h2><ul class="notes">${steps.map(s => `<li>${s}</li>`).join('')}</ul>`);
+  log('⛺ You went camping with your whole family. A night to remember!', 'good'); done();
+}
+
+// ---------- 31. stargazing ----------
+const SKY = [['🌕', 'The full Moon', 'You can see craters on the Moon!'], ['🪐', 'Saturn', 'You could see Saturn\'s rings through the telescope!'], ['🟠', 'Jupiter', 'You spotted 4 of Jupiter\'s moons as tiny dots!'], ['🔴', 'Mars', 'Mars looks red because of rusty dust.'], ['✨', 'The Big Dipper', 'It looks like a giant spoon in the sky.'], ['🏹', 'Orion the Hunter', 'Look for the 3 stars in a row — Orion\'s belt!'], ['☄️', 'A shooting star', 'Make a wish! (It\'s really a tiny space rock burning up.)'], ['🌌', 'The Milky Way', 'That fuzzy band of light is billions of stars — our galaxy!'], ['⭐', 'The North Star', 'It always points north. Sailors used it to find their way.']];
+function stargaze() {
+  if (!has('telescope')) return nope('You need a telescope! Buy one at the Mall (Electronics).');
+  if (S.hour >= 5 && S.hour < 20.5) return nope('Wait until it\'s dark (after 8:30 PM).');
+  if (['rainy', 'cloudy', 'snowy'].includes(S.weather)) return nope('Too cloudy to see the stars tonight.');
+  const dark = ['campground', 'trailhead', 'lake'].includes(placeId(S.loc));
+  pass(1, 'relax'); fun2(12); addSkill('sci', 1.5);
+  const seen = SKY.filter(s => !S.t4.sky.includes(s[1]));
+  const s = (dark && seen.length ? pickR(seen) : pickR(SKY));
+  if (!S.t4.sky.includes(s[1])) { S.t4.sky.push(s[1]); if (S.t4.sky.length >= 8) unlock('stargazer'); }
+  log(`🔭 ${s[0]} ${s[1]}! ${s[2]}${dark ? ' (It\'s extra dark out here — you can see so many stars!)' : ''} (${S.t4.sky.length}/${SKY.length} found)`, 'good'); done();
+}
+
+// ---------- 33. more countries & passports ----------
+const NEW_DESTS = [
+  { id: 'mexico', name: 'Mexico City, Mexico', icon: '🇲🇽', price: 500, days: 4, facts: ['You climbed a giant ancient pyramid at Teotihuacán!', 'You ate real tacos al pastor from a street stand.', 'Mexico City was built on top of a lake long ago.'] },
+  { id: 'canada', name: 'Toronto & Niagara Falls, Canada', icon: '🇨🇦', price: 450, days: 3, facts: ['You rode a boat right up to Niagara Falls and got soaked!', 'You tried poutine: fries with gravy and cheese curds.', 'Canada has more lakes than the rest of the world combined!'] },
+  { id: 'london', name: 'London, England', icon: '🇬🇧', price: 850, days: 5, facts: ['You heard Big Ben\'s bell ring!', 'You watched the Changing of the Guard at Buckingham Palace.', 'You rode a red double-decker bus.'] },
+  { id: 'rome', name: 'Rome, Italy', icon: '🇮🇹', price: 900, days: 5, facts: ['You stood inside the Colosseum — almost 2,000 years old!', 'You threw a coin in the Trevi Fountain for good luck.', 'You ate gelato every single day. 🍨'] },
+  { id: 'egypt', name: 'Cairo, Egypt', icon: '🇪🇬', price: 1000, days: 6, facts: ['You saw the Great Pyramids and the Sphinx!', 'The Great Pyramid was the tallest building in the world for almost 4,000 years.', 'You rode a camel in the desert. 🐪'] },
+];
+NEW_DESTS.forEach(d => { if (!DESTS.some(x => x.id === d.id)) DESTS.push(d); });
+Object.assign(TZ, { mexico: 0, canada: 1, london: 6, rome: 7, egypt: 8 });
+if (typeof LANG_OF !== 'undefined') LANG_OF.mexico = 'spanish';
+const INTERNATIONAL = ['paris', 'tokyo', 'kenya', 'mexico', 'canada', 'london', 'rome', 'egypt'];
+const _bookTrip4 = bookTrip;
+bookTrip = function (id) {
+  if (INTERNATIONAL.includes(id) && !(S.t4.passport && S.day >= S.t4.passport)) return nope(S.t4.passport ? `Your passport isn't here yet. It arrives on ${dateText(S.t4.passport)}.` : '🛂 You need a passport to visit another country! Apply for one at the 📮 Post Office.');
+  return _bookTrip4(id);
+};
+const _goOnTrip4 = goOnTrip;
+goOnTrip = function (d, sec) { const r = _goOnTrip4(d, sec); addPhoto(d.icon, `Trip to ${d.name}`); return r; };
+function passportCard() {
+  const P = S.t4.passport;
+  return `<div class="card"><h3>🛂 Passport</h3><p>${P ? (S.day >= P ? '✅ You have a passport! You can fly to other countries.' : `Your passport is being made. It arrives ${dateText(P)}.`) : 'You need a passport to travel to other countries. It costs $130 and takes 2 weeks to arrive.'}</p>${P ? '' : '<button class="btn sm primary" onclick="applyPassport()">🛂 Apply for a passport ($130)</button>'}</div>`;
+}
+function applyPassport() {
+  if (!spend(130, 'Passport application')) return;
+  pass(1); S.t4.passport = S.day + 14;
+  log('📸 You filled out the form, got your passport photo taken (no smiling allowed!) and mailed it. Your passport arrives in 2 weeks.', 'good'); done();
+}
+
+// ---------- 34. beach tides, tide pools & seashells ----------
+function tideNow() { const phase = ((S.day * 0.8 + S.hour / 12.4) % 1); return phase < 0.25 || phase > 0.75 ? 'low' : 'high'; }
+const SHELLS = [['🐚', 'Conch shell'], ['🦪', 'Oyster shell'], ['🌀', 'Moon snail shell'], ['🪸', 'Sand dollar'], ['🐚', 'Scallop shell'], ['🦀', 'Hermit crab (you put it back!)'], ['⭐', 'Starfish (you put it back!)'], ['🟢', 'Sea glass']];
+function tideCard() {
+  const low = tideNow() === 'low';
+  return `<div class="card"><h3>🌊 The Tide is ${low ? 'LOW' : 'HIGH'}</h3><p>${low ? 'The water pulled way back! Tide pools are showing on the rocks — look for crabs and starfish.' : 'The water is up high on the beach. Sandcastles near the water will get washed away!'}</p>
+    <div class="row"><button class="btn sm primary" ${low ? '' : 'disabled'} onclick="tidePool()">🦀 Explore the tide pools</button><button class="btn sm ghost" onclick="shellHunt()">🐚 Look for seashells</button></div>
+    ${S.t4.shells.length ? `<p class="muted small">Your shell collection: ${S.t4.shells.map(s => SHELLS.find(x => x[1] === s)[0]).join(' ')} (${S.t4.shells.length}/${SHELLS.length})</p>` : ''}
+    <p class="lesson">💡 Tides are caused by the Moon pulling on the ocean! The tide goes in and out about twice a day.</p></div>`;
+}
+function tidePool() { if (tideNow() !== 'low') return nope('Wait for low tide!'); pass(0.75, 'relax'); fun2(12); addSkill('sci', 1); const a = pickR([['🦀', 'Shore crab'], ['⭐', 'Sea star'], ['🌺', 'Sea anemone'], ['🐌', 'Sea snail'], ['🐟', 'Tiny tide pool fish']]); if (typeof journalAdd === 'function') journalAdd(...a); log(`🦀 In the tide pools you found a ${a[1].toLowerCase()}! You looked closely, then left it right where it lives.`, 'good'); done(); }
+function shellHunt() { pass(0.5, 'relax'); fun2(8); const s = pickR(SHELLS); if (!S.t4.shells.includes(s[1])) { S.t4.shells.push(s[1]); log(`🐚 You found a ${s[1].toLowerCase()}! New for your collection.`, 'good'); } else log(`🐚 You found another ${s[1].toLowerCase()}.`); done(); }
+
+// ---------- 35. nature walks with real plants ----------
+const PLANTS = {
+  park: [['🌳', 'Red maple tree', 'Its leaves turn bright red in fall.'], ['🌼', 'Dandelion', 'Blow on the fluffy seeds and they fly away!'], ['🌳', 'White oak tree', 'Acorns grow on oak trees — squirrels love them!'], ['🍀', 'Clover', 'Finding a four-leaf clover is rare and lucky!']],
+  campground: [['🌲', 'White pine', 'Its needles grow in bunches of five.'], ['🌿', 'Fern', 'Ferns are older than dinosaurs and have no flowers!'], ['🍄', 'Mushroom (don\'t touch or eat!)', 'Some wild mushrooms are poisonous. Look, don\'t touch!'], ['🍃', 'Poison ivy', '"Leaves of three, let it be!" It makes you itchy.']],
+  trailhead: [['🌲', 'Blue spruce', 'A tall tree with bluish needles that loves cold mountains.'], ['🌸', 'Wildflowers', 'Mountain flowers bloom fast in the short summer.'], ['🪨', 'Moss', 'Moss soaks up water like a sponge.']],
+  lake: [['🌾', 'Cattails', 'Ducks and birds hide and nest in cattails.'], ['🪷', 'Water lily', 'Its big leaves float on top of the water.'], ['🌳', 'Weeping willow', 'Its long branches droop down toward the water.']],
+};
+function natureWalkCard(pid) {
+  if (!PLANTS[pid]) return '';
+  return `<div class="card"><h3>🌿 Nature Walk</h3><p class="muted">Learn the names of real plants and trees. You've found ${S.t4.plants.length} kinds.</p><button class="btn sm primary" onclick="natureWalk()">🥾 Go for a nature walk (1 hr)</button></div>`;
+}
+function natureWalk() {
+  const list = PLANTS[placeId(S.loc)]; if (!list) return;
+  pass(1, 'relax'); fun2(8); addSkill('sci', 1); addSkill('fit', 0.5);
+  const fresh = list.filter(p => !S.t4.plants.includes(p[1])), p = fresh.length ? pickR(fresh) : pickR(list);
+  if (!S.t4.plants.includes(p[1])) { S.t4.plants.push(p[1]); if (S.t4.plants.length >= 10) unlock('botanist'); }
+  log(`${p[0]} You found ${p[1].toLowerCase()}! ${p[2]}`, 'good'); done();
+}
+
+function town4NewDay() { ensureTown4State(); iceTruckNewDay(); }
+function town4Cards(pid, isHome) {
+  ensureTown4State();
+  let out = '';
+  if (pid === 'farm') out += horseCard() + farmChoreCard();
+  if (pid === 'zoo') out += aquariumCard();
+  if (pid === 'bowling') out += bowlingCard();
+  if (pid === 'rink') out += rinkCard();
+  if (pid === 'minigolf') out += minigolfCard();
+  if (pid === 'waterpark') out += waterparkCard();
+  if (pid === 'park') out += carShowCard();
+  if (pid === 'hospital') out += hospitalVisitCard();
+  if (pid === 'campground') out += familyCampCard();
+  if (pid === 'postoffice') out += passportCard();
+  if (pid === 'beach') out += tideCard();
+  if (pid === 'vet') out += petCareCard(true);
+  if (pid === 'library') out += libraryClubCard();
+  if (pid === 'h_parents' && !isHome) out += `<div class="card"><h3>👵 Bake with Grandma</h3><p>Learn Grandma's secret family recipes!</p><button class="btn sm primary" onclick="bakeWithGrandma()">🍪 Bake together (2 hrs)</button></div>`;
+  out += natureWalkCard(pid);
+  if (has('telescope') && ['campground', 'trailhead', 'lake'].includes(pid)) out += '<div class="card"><h3>🔭 Stargazing</h3><p class="muted">It\'s extra dark out here — perfect for stars! (after 8:30 PM)</p><button class="btn sm primary" onclick="stargaze()">🔭 Look at the sky</button></div>';
+  return out;
+}
+function homeCards4() {
+  ensureTown4State();
+  return wisdomCard() + bikeCard() + tankCard() + gardenClubCard() + petCareCard(false) + modelCard() + lifeSkillsCard() + photoWallCard()
+    + `<div class="card"><h3>✨ More Things to Do</h3><div class="row">
+      <button class="btn sm ghost" onclick="dressModal()">👕 Get dressed</button>
+      <button class="btn sm ghost" onclick="sleepover()">🛏️ Sleepover (5–9 PM)</button>
+      <button class="btn sm ghost" onclick="scienceKit()">🔬 Science experiment</button>
+      <button class="btn sm ghost" onclick="packLunch()">🥪 Pack a lunch</button>
+      ${has('telescope') ? '<button class="btn sm ghost" onclick="stargaze()">🔭 Stargaze</button>' : ''}
+      ${S.home !== 'parents' ? '' : '<button class="btn sm ghost" onclick="bakeWithGrandma()">🍪 Bake with Grandma</button>'}
+    </div></div>`;
+}
+
+// ---------- hooking into the rest of the game ----------
+// you can only ride your bike around town after you learn how
+const _transportFor4 = transportFor;
+transportFor = function (len) {
+  const noBike = S && has('bike') && !canDrive(len) && ((S.l4 && S.l4.bike < 3) || len > 2500);
+  if (noBike) { S.owned.bike = false; const r = _transportFor4(len); S.owned.bike = true; return r; }
+  return _transportFor4(len);
+};
+// new things to buy
+const _toyBuy4 = toyBuy;
+toyBuy = function (id) {
+  if (id === 'sciencekit') { ensureLife4State(); S.l4.kits += 3; log('🔬 You bought a science kit with goggles and supplies for 3 experiments!'); return true; }
+  if (id === 'modelkit') { ensureLife4State(); if (S.l4.model) { earn(25, 'Refund'); nope('Finish the model you\'re building first!'); return true; } const k = pickR(Object.keys(MODELS)); S.l4.model = { k, step: 0 }; log(`🛠️ You bought a ${MODELS[k][1].toLowerCase()} kit! Build it at home.`); return true; }
+  return _toyBuy4(id);
+};
+ITEMS.push({ id: 'sciencekit', place: 'mall', cat: 'Toys', name: 'Science Experiment Kit', icon: '🔬', price: 15, consumable: true, desc: 'Goggles and supplies for 3 experiments: volcanoes, crystals, slime and more!' });
+ITEMS.push({ id: 'modelkit', place: 'mall', cat: 'Toys', name: 'Model Kit', icon: '🛠️', price: 25, consumable: true, desc: 'Build a model car, airplane, boat, rocket or train.' });
+ITEMS.push({ id: 'telescope', place: 'mall', cat: 'Electronics', name: 'Telescope', icon: '🔭', price: 150, desc: 'See the Moon\'s craters, Saturn\'s rings and more on clear nights.' });
+ITEMS.push({ id: 'raincoat', place: 'mall', cat: 'Clothes', name: 'Raincoat & Rain Boots', icon: '🧥', price: 35, desc: 'Stay dry on rainy days. Get dressed in it before you go out!' });
+PANTRY.cookies = { name: 'Cookies', icon: '🍪', food: 10, fun: 6, health: -1 };
+ACHIEVEMENTS.push({ id: 'biker', icon: '🚲', name: 'Look, No Training Wheels!', desc: 'Learn to ride your bike.' }, { id: 'rider', icon: '🐴', name: 'Horse Rider', desc: 'Jump a fence on a horse.' }, { id: 'stargazer', icon: '🔭', name: 'Stargazer', desc: 'Find 8 things in the night sky.' }, { id: 'botanist', icon: '🌿', name: 'Plant Expert', desc: 'Learn 10 kinds of plants.' });
+// counting change after you buy something in a store
+const _buy4 = buy;
+buy = function (id) {
+  const before = S.money, it = ITEMS.find(i => i.id === id);
+  _buy4(id);
+  const spent = Math.round((before - S.money) * 100) / 100;
+  if (spent > 0 && it && ['mall', 'cars', 'market', 'diner'].includes(it.place)) { ensureLife4State(); changeQuiz(spent); nextModal(); }
+};
+
+</script>
+  <script>
 // ===================== RENDERING =====================
 // Places you can go (shown as buttons under the map) + personal screens
 const TABS = [
@@ -12854,6 +13588,8 @@ function ensureRealLife() {
   ensureMoney2State();
   ensureInteractState();
   ensureHolidayState();
+  ensureLife4State();
+  ensureTown4State();
 }
 
 function render() {
@@ -12871,7 +13607,7 @@ function render() {
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
   const warn = [];
-  { const lc = lostChip(); if (lc) warn.push(lc); const hc2 = holidayChip(); if (hc2) warn.push(hc2); }
+  { const it = iceTruckChip(); if (it) warn.push(it); const lc = lostChip(); if (lc) warn.push(lc); const hc2 = holidayChip(); if (hc2) warn.push(hc2); }
   if (S.roadwork) warn.push('<span class="chip">🚧 Road work in town — trips take a bit longer</span>');
   if (S.t3 && S.t3.jetlag > 0) warn.push('<span class="chip warn">😵 Jet lag! You feel extra tired.</span>');
   if (S.mail && unreadMail() && S.loc === 'home') warn.push(`<button class="chip warn" onclick="mailbox()">📬 You have mail! (${unreadMail()}) tap to open</button>`);
@@ -12968,7 +13704,7 @@ function viewFor(t) {
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
-  return head + search + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + search + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + (t !== 'home' || S.doorOpen ? town4Cards(t === 'home' ? 'home' : pid, t === 'home') : '') + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -13080,7 +13816,7 @@ function viewHome() {
     <div class="row info"><b class="small">🧊 Kitchen:</b> ${fridgeChips()}</div>
     ${holidayCard()}
     <h3>Things to do at home</h3><div class="grid actions">${acts}</div>
-    ${snowFunCard()}${teenJobsAt('home')}${chartCard()}${petTricksCard()}${energyCard()}${waterCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
+    ${snowFunCard()}${teenJobsAt('home')}${homeCards4()}${chartCard()}${petTricksCard()}${energyCard()}${waterCard()}${carCard()}${gardenCard()}${roommateCard()}${decorateCard()}${neighborsCard()}`;
 }
 function homeAct(id) {
   const a = HOME_ACTIONS.find(x => x.id === id);

@@ -760,6 +760,7 @@ function travelTo(dest, opts = {}) {
       afterDrive(info);
       if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
       safetyAfterTravel(info);
+      if (typeof carpoolRide === 'function') carpoolRide(dest);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
       if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
       if (!opts.keepTab) tab = dest;

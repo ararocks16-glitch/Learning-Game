@@ -672,7 +672,7 @@ function drawDynamic(t, dt) {
     c.restore();
   });
   if (detail) drawTrafficLights(c, t, inView);
-  if (townVisible && detail) { drawParkEvent(c, t); drawTownTree(c, t); }
+  if (townVisible && detail) { drawParkEvent(c, t); drawTownTree(c, t); drawIceTruck(c, t); }
   { const ap = PLACES.airport.r; if (inView(ap[0] + 300, ap[1] + 250, 600) && detail) { const ph = (t / 9000) % 1; const px = ap[0] + 160 + ph * 700, py = ap[1] + 253 - Math.max(0, ph - 0.45) * 500; drawPlane(c, px, py, 0.9 + Math.max(0, ph - 0.45), -Math.max(0, ph - 0.45) * 1.2); } }
   // people walking in town
   if (detail) walkers.forEach((w, i) => {

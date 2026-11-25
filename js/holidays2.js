@@ -55,7 +55,7 @@ function joinEvent(id) {
   if (!atEventPlace(e)) return nope(`Go ${e.whereText} to join!`);
   if (S.hour < e.from || S.hour >= e.to) return nope('It\'s not happening right now.');
   S.hev[hevKey(e)] = 'done';
-  e.join(); unlock('holidayfun'); done();
+  e.join(); unlock('holidayfun'); if (typeof addPhoto === 'function') addPhoto(e.icon, e.name); done();
 }
 // a reminder chip at the top on holiday days
 function holidayChip() {
