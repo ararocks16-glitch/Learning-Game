@@ -44,7 +44,17 @@ A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools neede
 - Nothing pretend that isn't real, like dragons (the Bearded Dragon lizard is OK because it's a real animal).
 - Everything should be like the real world and kind; players can only say nice things.
 
-## The game lives in Artifacts, and only the owner plays it
+## Where the game is played
+
+1. **Vercel website** (the owner connected Vercel to the GitHub repo `ararocks16-glitch/Learning-Game`).
+   Vercel serves the plain files as-is: `index.html` at the top of the repo, no build step.
+   Every push to the `main` branch updates the website automatically (about a minute).
+   Pushes to other branches only make "preview" links; they do not change the real website.
+2. **claude.ai Artifact** (below), and 3. the one-file download.
+
+The owner is not a programmer. Explain things simply, and tell them when they need to do something themselves.
+
+## The Artifact copy (only the owner plays it)
 
 - The game is played in the owner's claude.ai Artifacts (pinned in their sidebar). That is the only place it's played.
 - It must stay **private**: only the owner can play it. Never share it, never change who can open it, and never post it anywhere else.
@@ -61,6 +71,7 @@ After ANY change to the game:
 2. Republish with the Artifact tool to the URL above: `file_path` = `dist/play.html`, `url` = the URL above,
    and `files` = `{"css/style.css": "css/style.css", "js/data.js": "js/data.js", "js/game.js": "js/game.js", "js/people.js": "js/people.js", "js/map.js": "js/map.js", "js/world.js": "js/world.js", "js/money.js": "js/money.js", "js/home.js": "js/home.js", "js/room.js": "js/room.js", "js/door.js": "js/door.js", "js/entrance.js": "js/entrance.js", "js/interior.js": "js/interior.js", "js/trips.js": "js/trips.js", "js/towns.js": "js/towns.js", "js/pets.js": "js/pets.js", "js/calendar.js": "js/calendar.js", "js/life.js": "js/life.js", "js/social.js": "js/social.js", "js/work2.js": "js/work2.js", "js/cars.js": "js/cars.js", "js/build.js": "js/build.js", "js/toys.js": "js/toys.js", "js/everyday.js": "js/everyday.js", "js/home2.js": "js/home2.js", "js/people2.js": "js/people2.js", "js/town2.js": "js/town2.js", "js/home3.js": "js/home3.js", "js/hobbies.js": "js/hobbies.js", "js/town3.js": "js/town3.js", "js/money2.js": "js/money2.js", "js/interact.js": "js/interact.js", "js/holidays2.js": "js/holidays2.js", "js/life4.js": "js/life4.js", "js/town4.js": "js/town4.js", "js/ui.js": "js/ui.js"}`.
    (Read the artifact first if this session hasn't, as the tool requires.)
-3. Commit and push.
+3. Commit, then push to BOTH the session branch and `main` (`git push origin HEAD:main`).
+   Pushing to `main` is what updates the Vercel website. Check that the push said it worked.
 
 To give the owner a file to download (one file, works offline): run `python3 tools/build-download.py` and send `dist/The-Big-Game-of-Life.html`.
