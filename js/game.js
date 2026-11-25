@@ -295,8 +295,12 @@ function quitJob() {
 
 function startInterview(jobId) {
   const job = JOBS[jobId];
+  const campOffice = placeId(S.loc) === 'campground' && workplaceOf(job) === 'campground';
+  if (campOffice) { if (S.hour < 7 || S.hour >= 19) return nope('The camp office is open 7 AM – 7 PM.'); }
+  else {
   if (isWeekend()) return nope('Businesses do interviews on weekdays (Mon–Fri).');
   if (S.hour < 8 || S.hour > 16) return nope('Interviews happen between 8 AM and 4 PM.');
+  }
   if (S.cooldown[jobId] && S.cooldown[jobId] > S.day) return nope(`They said to wait. You can re-apply on Day ${S.cooldown[jobId]}.`);
   if (S.job && S.job.id === jobId) return nope('You already work here!');
 

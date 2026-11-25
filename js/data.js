@@ -567,6 +567,11 @@ const JOB_DATA = [
   ['Farmers Market Vendor', 'Hospitality', 13, 0, ['sales'], 'village'],
   ['Lighthouse Tour Guide', 'Hospitality', 13, 0, ['comm'], 'lighthouse'],
   ['Inn Breakfast Cook', 'Hospitality', 14, 0, ['cook'], 'pineinn'],
+  // ----- camp jobs (added later — keep new jobs at the END) -----
+  ['Camp Cook', 'Food', 14, 0, ['cook'], 'campground'],
+  ['Camp Lifeguard', 'Sports', 15, 0, ['swimming:30'], 'campground'],
+  ['Trail Guide', 'Sports', 15, 0, ['fit', 'animal'], 'campground'],
+  ['Camp Nurse', 'Health', 26, 2, ['aid:35'], 'campground'],
 ];
 
 const DEFAULT_REQ = [10, 15, 30, 45];

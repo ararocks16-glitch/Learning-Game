@@ -2,7 +2,7 @@
 
 A browser life-simulation game for kids. Plain HTML/CSS/JS, no build tools needed to play: open `index.html`.
 
-- `js/data.js`: jobs (388: the first 132 plus 256 more; only add new jobs at the END so saved games keep their job), skills, sports, items, homes, goals
+- `js/data.js`: jobs (392: the first 132, 256 more, then 4 camp jobs; only add new jobs at the END so saved games keep their job), skills, sports, items, homes, goals
 - `js/game.js`: game rules
 - `js/map.js`: the town (drawing, roads, travel)
 - `js/world.js`: the big world around the town (terrain tiles, highways, camera, minimap)

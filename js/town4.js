@@ -306,7 +306,7 @@ function town4Cards(pid, isHome) {
   if (pid === 'waterpark') out += waterparkCard();
   if (pid === 'park') out += carShowCard();
   if (pid === 'hospital') out += hospitalVisitCard();
-  if (pid === 'campground') out += familyCampCard();
+  if (pid === 'campground') out += campJobsCard() + familyCampCard();
   if (pid === 'postoffice') out += passportCard();
   if (pid === 'beach') out += tideCard();
   if (pid === 'vet') out += petCareCard(true);
@@ -358,3 +358,24 @@ buy = function (id) {
   const spent = Math.round((before - S.money) * 100) / 100;
   if (spent > 0 && it && ['mall', 'cars', 'market', 'diner'].includes(it.place)) { ensureLife4State(); changeQuiz(spent); nextModal(); }
 };
+
+
+// ---------- arriving at the camp: "Do you want a job here?" ----------
+function campJobOffer(force) {
+  if (!S) return;
+  if (!force && S.campAsked === S.day) return;
+  if (S.job && workplaceOf(JOBS[S.job.id]) === 'campground') return;
+  if (S.hour < 7 || S.hour >= 19) return;
+  S.campAsked = S.day;
+  const jobs = JOBS.filter(j => workplaceOf(j) === 'campground').sort((a, b2) => a.pay - b2.pay);
+  const counselor = typeof TEEN_JOBS !== 'undefined' && seasonOf() === 'summer';
+  queueModal(`<h2>🏕️ Welcome to Pine Forest Camp!</h2>
+    <p>The camp director waves at you: <b>"Hi there! We're hiring. Do you want a job here at the camp?"</b></p>
+    <div class="mrows">${jobs.map(j => { const ok = meetsReqs(j); return mrow(ok ? '✅' : '💼', `${j.name} · $${j.pay}/hr`, `${EDU_NAMES[j.edu]}${j.req.length ? ' · needs ' + j.req.map(r => `${skillName(r.s)} ${r.lvl}`).join(', ') : ''}${ok ? ' · you can do this!' : ''}`, b('🤝 Interview', `closeModal();startInterview(${j.id})`, ok ? 'primary' : 'ghost')); }).join('')}
+    ${counselor ? mrow('🏕️', 'Summer Camp Counselor · $80 a day', 'No interview! Lead campers on hikes. Needs First Aid 15 · starts 9 AM – noon', b('Work today', "closeModal();doTeenJob('counselor')", 'ghost')) : ''}</div>
+    <p class="muted small">${S.job ? `You already work as a ${JOBS[S.job.id].name}. If you take a camp job, you'll leave that one.` : 'Tap OK if you just came to have fun!'}</p>`);
+}
+function campJobsCard() {
+  if (S.job && workplaceOf(JOBS[S.job.id]) === 'campground') return '';
+  return `<div class="card"><h3>🏕️ Camp Jobs</h3><p class="muted">The camp is hiring! Interviews any day, 7 AM – 7 PM.</p><button class="btn sm primary" onclick="campJobOffer(true);nextModal()">💼 Ask about a job</button></div>`;
+}

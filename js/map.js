@@ -758,7 +758,8 @@ function travelTo(dest, opts = {}) {
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
       afterDrive(info);
-      if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
+      if (placeId(dest) === 'campground' && typeof campJobOffer === 'function') campJobOffer();
+      else if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
       safetyAfterTravel(info);
       if (typeof carpoolRide === 'function') carpoolRide(dest);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
