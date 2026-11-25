@@ -358,3 +358,61 @@ function changeAnswer(saysRight) {
 }
 
 function life4NewDay() { ensureLife4State(); toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
+
+// ---------- the "Do Work" button: go to your job, then do your job's tasks ----------
+const WORK_TASKS = {
+  Food: ['🧑‍🍳 Prep the ingredients', '🍳 Cook the orders', '🍽️ Serve the customers', '🧽 Clean the kitchen'],
+  Stores: ['📦 Stock the shelves', '🛒 Help customers find things', '💵 Run the cash register', '🧹 Tidy the aisles'],
+  Office: ['📧 Answer emails', '📊 Make a report', '📞 Call customers', '🗂️ File papers'],
+  Health: ['🩺 Check on patients', '💊 Help with medicine', '📝 Update the charts', '🧼 Clean and sanitize'],
+  Education: ['📚 Plan the lesson', '👩‍🏫 Teach the class', '✏️ Grade papers', '🤝 Help students one-on-one'],
+  Trades: ['📏 Measure twice', '🔨 Build and fix', '🦺 Check safety gear', '🧹 Clean up the work site'],
+  Transport: ['🗺️ Check the route', '📦 Load up', '🛣️ Drive safely', '✅ Deliver everything'],
+  Tech: ['💻 Write code', '🐞 Fix bugs', '🧪 Test everything', '🤝 Team meeting'],
+  Arts: ['🎨 Brainstorm ideas', '🎭 Practice and rehearse', '✨ Create', '🎤 Show your work'],
+  Science: ['🔬 Set up the experiment', '📈 Collect data', '🧪 Test the samples', '📝 Write up the results'],
+  Animals: ['🥕 Feed the animals', '🧽 Clean the pens', '🩺 Check their health', '🐾 Exercise and play with them'],
+  'Public Service': ['📻 Morning team meeting', '🚶 Help people in town', '📋 Write reports', '🛡️ Safety check'],
+  Sports: ['🏃 Warm up', '⚽ Practice drills', '🏆 Coach or play', '🧊 Cool down and stretch'],
+  Hospitality: ['🛎️ Greet guests', '🛏️ Get rooms ready', '📞 Answer questions', '🧹 Tidy the lobby'],
+};
+const TASK_CHEERS = ['Great job! 👏', 'Nailed it! ✅', 'Your boss noticed! 👀', 'Smooth work! 😎', 'Done and done! 💪'];
+function atWork() { return S.job && placeId(S.loc) === workplaceOf(JOBS[S.job.id]); }
+function canWorkNow() { const j = S.job; if (!j) return false; const sh = shiftNow(); return worksToday() && !S.today.worked && !S.today.sick && S.day >= j.startDay && S.hour >= sh.from && S.hour < sh.to; }
+async function goToJob() {
+  const j = S.job; if (!j) return;
+  const sh = shiftNow();
+  if (S.day < j.startDay) return nope('Your first day is tomorrow!');
+  if (!worksToday()) return nope('You don\'t work today. Enjoy your day off! 🎉');
+  if (S.today.worked) return nope('You already worked today.');
+  if (S.hour < sh.from - 1.5) return nope(`It's too early. Your shift starts at ${fmtTime(sh.from + 0.5)}.`);
+  await travelTo(workplaceOf(JOBS[j.id]));
+  S.insideOf = workplaceOf(JOBS[j.id]); render();
+}
+function doWork() {
+  if (!S.job) return nope('Get a job first!');
+  if (!atWork()) return nope('Go to your workplace first!');
+  if (!canWorkNow()) { const sh = shiftNow(); return nope(S.today.worked ? 'You already worked today. Great job!' : S.hour < shiftNow().from ? `Your shift starts at ${fmtTime(sh.from + 0.5)}.` : !worksToday() ? 'You don\'t work today.' : 'It\'s too late to start your shift today.'); }
+  S.workTasks = 0;
+  showWorkTasks();
+}
+function showWorkTasks() {
+  const job = JOBS[S.job.id], list = WORK_TASKS[job.cat] || WORK_TASKS.Office, n = S.workTasks || 0;
+  showModal(`<h2>💼 Work: ${esc(jobTitle(S.job))}</h2><p class="muted">Do your tasks one at a time. Lunch break comes after task 2!</p>
+    <div class="mrows">${list.map((t, i) => mrow(i < n ? '✅' : i === n ? '👉' : '⬜', t, i < n ? 'Done!' : i === n ? '2 hours' : '', i === n ? b('Do it', `workTask()`) : '')).join('')}</div>
+    ${n >= list.length ? '<p><b>All done! 🎉</b> Time to clock out.</p>' : ''}`,
+    n >= list.length ? [{ label: '🕔 Clock out', cls: 'primary', fn: () => { goWork(); } }] : [{ label: 'Take a break (come back later)', cls: 'ghost' }]);
+}
+function workTask() {
+  const list = WORK_TASKS[JOBS[S.job.id].cat] || WORK_TASKS.Office;
+  S.workTasks = (S.workTasks || 0) + 1;
+  toast(`${list[S.workTasks - 1]} — ${pickR(TASK_CHEERS)}`);
+  showWorkTasks();
+}
+function doWorkCard(pid) {
+  if (!S.job || workplaceOf(JOBS[S.job.id]) !== pid) return '';
+  const ok = canWorkNow();
+  return `<div class="card job"><h3>💼 You work here: ${esc(jobTitle(S.job))}</h3>
+    <p class="muted">${S.today.worked ? '✅ You already worked today. See you next shift!' : ok ? 'Your shift is now! Press the button to start working.' : `Shift: ${SHIFTS[shiftOf(JOBS[S.job.id])].label}`}</p>
+    <button class="btn primary big" ${ok ? '' : 'disabled'} onclick="doWork()">💼 Do Work</button></div>`;
+}

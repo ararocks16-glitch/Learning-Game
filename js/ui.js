@@ -103,7 +103,7 @@ function render() {
   if (S.laundryDays > 7) warn.push('<span class="chip warn">👕 Your clothes are dirty!</span>');
   if (!S.today.brushAM && S.hour >= 8.5 && S.hour < 15) warn.push('<span class="chip warn">🪥 Brush your teeth after breakfast (2 minutes)!</span>');
   if (!S.today.brushPM && S.hour >= 19) warn.push('<span class="chip warn">🪥 Brush your teeth after dinner!</span>');
-  if (workDue()) warn.push(`<button class="chip warn" onclick="goWork()">💼 Time to go to work! (tap to go)</button>`);
+  if (workDue()) warn.push(`<button class="chip warn" onclick="${atWork() ? 'doWork()' : 'goToJob()'}">💼 ${atWork() ? 'You\'re at work — tap Do Work!' : 'Time to go to work! (tap to go)'}</button>`);
   $('#warnings').innerHTML = warn.join('');
 
   const curP = PLACES[placeId(S.loc)];
@@ -167,7 +167,7 @@ function viewFor(t) {
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
-  return head + search + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + (t !== 'home' || S.doorOpen ? town4Cards(t === 'home' ? 'home' : pid, t === 'home') : '') + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + search + (t !== 'home' && !outside ? doWorkCard(pid) : '') + holidayEventCard(t === 'home', pid) + townTreeCard(pid) + body + (t !== 'home' || S.doorOpen ? town4Cards(t === 'home' ? 'home' : pid, t === 'home') : '') + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -248,7 +248,7 @@ function jobCard() {
     <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
     <p class="muted">🏖️ Vacation days: ${j.pto || 0} · 🤒 Paid sick days: ${j.sickDays || 0}${j.boss ? ` · 👔 Boss: ${esc(j.boss.name)} (${j.boss.style}) · 👥 Coworkers: ${j.coworkers.map(w => esc(w.name)).join(', ')}` : ''}</p>
     <div class="row">
-      <button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goWork()">${c.icon} Go to Work (8 hrs)</button>
+      ${atWork() ? `<button class="btn primary" ${canWorkNow() ? '' : 'disabled'} onclick="doWork()">💼 Do Work</button>` : `<button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goToJob()">${c.icon} Go to Work</button>`}
       <button class="btn ghost" ${canWork && j.pto > 0 ? '' : 'disabled'} onclick="takeVacationDay()">🏖️ Take a Vacation Day</button>
       <button class="btn ghost" ${canWork ? '' : 'disabled'} onclick="callInSick()">📞 Call in Sick</button>
       ${canRetire() ? '<button class="btn primary" onclick="retire()">🏖️ Retire</button>' : ''}

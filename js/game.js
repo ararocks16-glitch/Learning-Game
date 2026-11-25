@@ -431,6 +431,7 @@ async function goWork() {
   if (n.bladder < 20) perf -= 5;
   if (n.thirst < 20) perf -= 5;
   if (S.ill) perf -= ILLNESS[S.ill.type].perf;
+  if (S.workTasks >= 4) perf += 6; S.workTasks = 0;
   if (!j.boss) setupWorkplace(j);
   if (j.boss.style === 'strict') perf -= 4; else if (j.boss.style === 'nice') perf += 3;
   S.today.worked = true;
