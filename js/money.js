@@ -629,7 +629,7 @@ function buyRaffle() {
 }
 
 // ---------- 21. write a book ----------
-const GENRES = { adventure: '🗺️ Adventure', mystery: '🔎 Mystery', fantasy: '🐉 Fantasy', funny: '😂 Funny', science: '🚀 Sci-fi' };
+const GENRES = { adventure: '🗺️ Adventure', mystery: '🔎 Mystery', animals: '🐾 Animal story', funny: '😂 Funny', science: '🚀 Sci-fi' };
 function writeChapter() {
   if (!needEnergy(20)) return;
   if (!S.book) S.book = { chapters: [] };

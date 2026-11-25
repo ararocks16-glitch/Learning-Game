@@ -239,7 +239,7 @@ function filmVideo(topic, sk) {
 }
 function newGameDev() {
   if (!has('laptop') && !has('computer')) return nope('You need a laptop to make a game.');
-  S.m2.game = { name: `${pickR(['Super', 'Mega', 'Tiny', 'Cosmic', 'Turbo'])} ${pickR(['Frog', 'Rocket', 'Pizza', 'Dragon', 'Penguin'])} ${pickR(['Jump', 'Dash', 'Quest', 'Party', 'Run'])}`, progress: 0, done: false, q: 0, weeks: 0, total: 0, qs: [] };
+  S.m2.game = { name: `${pickR(['Super', 'Mega', 'Tiny', 'Cosmic', 'Turbo'])} ${pickR(['Frog', 'Rocket', 'Pizza', 'Turtle', 'Penguin'])} ${pickR(['Jump', 'Dash', 'Quest', 'Party', 'Run'])}`, progress: 0, done: false, q: 0, weeks: 0, total: 0, qs: [] };
   log(`🎮 You started making a new phone game: "${S.m2.game.name}"!`); done();
 }
 function codeGame() {

@@ -187,7 +187,7 @@ function groceryAisle() {
 
 // ---------- 22. library card ----------
 const LIB_BOOKS = [
-  ['🦖', 'Dinosaurs of the World', 'sci', 3], ['🚀', 'A Kid\'s Guide to Space', 'sci', 4], ['🐉', 'The Dragon of Maple Hill', 'write', 5], ['🕵️', 'The Missing Cupcake Mystery', 'write', 4],
+  ['🦖', 'Dinosaurs of the World', 'sci', 3], ['🚀', 'A Kid\'s Guide to Space', 'sci', 4], ['🐢', 'The Turtle of Maple Pond', 'write', 5], ['🕵️', 'The Missing Cupcake Mystery', 'write', 4],
   ['🔢', 'Math Puzzles & Brain Games', 'math', 3], ['🍳', 'Cooking for Beginners', 'cook', 3], ['🎨', 'Draw Anything!', 'art', 3], ['💻', 'Coding for Kids', 'comp', 4],
   ['🐾', 'Caring for Pets', 'animal', 3], ['🏰', 'Knights and Castles (History)', 'write', 4], ['💰', 'Money Smarts', 'math', 3], ['⚽', 'Soccer Skills', 'comm', 2],
 ];
@@ -284,7 +284,7 @@ function eyeExam() {
 function buyGlasses(col) { if (!spend(insured() ? 50 : 150, 'Glasses')) return; S.look.glasses = col; pass(0.5); log('👓 You got new glasses! WOW — everything is so sharp and clear now!', 'good'); done(); }
 
 // ---------- 25. the movie theater ----------
-const MOVIES = [['🐶', 'Space Puppies 3', 'G', 'An animated adventure'], ['🦸', 'Captain Kindness', 'PG', 'A superhero movie'], ['🐉', 'The Last Dragon Egg', 'PG', 'A fantasy adventure'], ['🤖', 'Robot Pals', 'G', 'A funny cartoon'], ['🏴‍☠️', 'Pirates of Pudding Island', 'PG', 'A silly pirate comedy'], ['🧊', 'Penguin Party', 'G', 'A cute animated movie']];
+const MOVIES = [['🐶', 'Space Puppies 3', 'G', 'An animated adventure'], ['🦸', 'Captain Kindness', 'PG', 'A superhero movie'], ['🦕', 'The Last Dinosaur Egg', 'PG', 'A dinosaur adventure'], ['🤖', 'Robot Pals', 'G', 'A funny cartoon'], ['🏴‍☠️', 'Pirates of Pudding Island', 'PG', 'A silly pirate comedy'], ['🧊', 'Penguin Party', 'G', 'A cute animated movie']];
 const SHOWTIMES = [13, 16, 19, 21.5];
 function moviesToday() { return [0, 2, 4].map(k => MOVIES[(S.day + k) % MOVIES.length]); }
 function movieCard() {

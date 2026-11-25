@@ -16,7 +16,7 @@ const TOYS = {
   ball:      { name: 'Bouncy Ball', icon: '🔴', price: 4, hours: 0.5, fun: 7, outside: true, desc: 'Bounce, catch and play fetch at the park.' },
 };
 const YOYO_TRICKS = ['the Sleeper', 'Walk the Dog', 'Around the World', 'Rock the Baby', 'the Elevator', 'Skin the Cat'];
-const BRICK_BUILDS = ['a castle with towers 🏰', 'a rocket ship 🚀', 'a giant robot 🤖', 'a pirate ship 🏴‍☠️', 'a race car 🏎️', 'a whole little town 🏘️', 'a dragon 🐉', 'a treehouse 🌳'];
+const BRICK_BUILDS = ['a castle with towers 🏰', 'a rocket ship 🚀', 'a giant robot 🤖', 'a pirate ship 🏴‍☠️', 'a race car 🏎️', 'a whole little town 🏘️', 'a tall lighthouse 🗼', 'a treehouse 🌳'];
 const PUZZLE_PICS = ['a lighthouse by the sea', 'a hot air balloon', 'puppies in a basket', 'a mountain lake', 'a big world map', 'outer space with planets'];
 const OUTSIDE_PLACES = ['park', 'beach', 'campground', 'lake'];
 

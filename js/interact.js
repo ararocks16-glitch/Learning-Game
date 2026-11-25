@@ -352,7 +352,7 @@ function verbDraw() {
   if (S.inv && S.inv.canvases > 0) return showModal('<h2>🖍️ Draw or Paint?</h2>', [{ label: '🖍️ Draw for fun', cls: 'ghost', fn: drawPicture }, { label: '🖼️ Paint on a canvas (to sell)', cls: 'primary', fn: () => { paint(); } }]);
   drawPicture();
 }
-function drawPicture() { pass(0.5, 'relax'); addSkill('art', 1.2); fun2(8); log(`🖍️ You drew ${pickR(['your family', 'a dragon eating spaghetti', 'your dream house', 'a rocket going to Mars', 'your pet', 'a rainbow over the town'])}. You stuck it on the fridge!`); done(); }
+function drawPicture() { pass(0.5, 'relax'); addSkill('art', 1.2); fun2(8); log(`🖍️ You drew ${pickR(['your family', 'a dog eating spaghetti', 'your dream house', 'a rocket going to Mars', 'your pet', 'a rainbow over the town'])}. You stuck it on the fridge!`); done(); }
 function verbSing() {
   pass(0.25, 'relax'); addSkill('music', 0.8); fun2(8);
   const inShower = S.tap && S.tap.what === 'shower';
