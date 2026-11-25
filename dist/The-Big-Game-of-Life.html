@@ -1600,6 +1600,7 @@ async function goWork() {
     } else {
       log(`💼 Worked 8 hours as ${job.name}. ${msgs.join(' ')}`, perf >= 65 ? 'good' : perf < 35 ? 'bad' : '');
     }
+    if (S.job) payday('day');
   }
   render();
   await travelTo('home', { quiet: true });
@@ -1629,8 +1630,10 @@ function payday(final = false) {
   const net = gross - fed - state - fica;
   S.taxYear.wages += gross; S.taxYear.withheld += fed + state;
   earn(net, `Paycheck from ${JOBS[j.id].name}`);
-  log(`💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
-  queueModal(`<h2>💵 ${final ? 'Final ' : ''}Paycheck</h2>
+  const boss = j.boss ? j.boss.name : 'Your boss';
+  log(final === 'day' ? `💵 ${boss} paid you for today! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.` : `💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
+  j.paidWeek = (j.paidWeek || 0) + j.weekHours;
+  queueModal(`<h2>💵 ${final === 'day' ? `${esc(boss)} Paid You for Today!` : final ? 'Final Paycheck' : 'Paycheck'}</h2>
     <table class="stub">
       <tr><td>${JOBS[j.id].name}: ${j.weekHours} hrs × $${j.wage.toFixed(2)}</td><td>${money(gross)}</td></tr>
       <tr class="minus"><td>Federal income tax (10%)</td><td>-${money(fed)}</td></tr>
@@ -3243,6 +3246,7 @@ function travelTo(dest, opts = {}) {
     if (placeId(dest) === placeId(S.loc)) { S.loc = dest; if (!opts.keepTab) tab = dest; render(); return resolve(true); }
     if (S.loc === 'home' && typeof leavingHome === 'function') { leavingHome(); leavingWithWater(); }
     const info = travelInfo(S.loc, dest);
+    if (typeof workTrip === 'function' && workTrip(dest) && info.cost) { info.cost = 0; info.how = info.how === 'took the bus' ? 'took the bus (your boss pays for your bus pass)' : info.how; }
     document.body.classList.add('traveling');
     cam.follow = true;
     traveler = { path: info.path, len: info.len, t: 0, dur: Math.max(0.7, Math.min(4.5, info.len / 700)), icon: info.icon, resolve: () => {
@@ -13144,7 +13148,7 @@ function packLunch() {
 }
 function lunchAtWork() {
   if (S.l4.lunch === S.day) { ateFood(35); log('🥪 Lunch break: you ate the lunch you packed. Yum, and it was free!'); }
-  else { charge(9, 'Lunch at work'); ateFood(35); log('🍔 Lunch break: you forgot to pack a lunch, so you bought one for $9. Packing lunch saves money!'); }
+  else { ateFood(35); log(`🍕 Lunch break: you forgot to pack a lunch, so ${S.job && S.job.boss ? S.job.boss.name : 'your boss'} shared free lunch with the team!`); }
 }
 
 // ---------- 28. carpooling ----------
@@ -13179,7 +13183,8 @@ function changeAnswer(saysRight) {
   S.l4.changeQ = null; done();
 }
 
-function life4NewDay() { ensureLife4State(); toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
+function workTrip(dest) { if (!S.job) return false; const wp = workplaceOf(JOBS[S.job.id]); return placeId(dest) === wp || placeId(S.loc) === wp; }
+function life4NewDay() { ensureLife4State(); if (S.job && weekday() === 0) S.job.paidWeek = 0; toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
 
 // ---------- the "Do Work" button: go to your job, then do your job's tasks ----------
 const WORK_TASKS = {
@@ -13872,7 +13877,7 @@ function jobCard() {
     <h3>💼 ${jobTitle(j)} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
     <p class="muted">${status} · Trip from home: ${c.icon} ${travelTime(c.hours)}${c.cost ? `, $${c.cost} bus each way` : ''}</p>
     <p class="muted">🕐 ${sh.label}</p>
-    <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
+    <p class="muted">This week: ${(j.paidWeek || 0) + j.weekHours} hrs (paid every day) · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
     <p class="muted">🏖️ Vacation days: ${j.pto || 0} · 🤒 Paid sick days: ${j.sickDays || 0}${j.boss ? ` · 👔 Boss: ${esc(j.boss.name)} (${j.boss.style}) · 👥 Coworkers: ${j.coworkers.map(w => esc(w.name)).join(', ')}` : ''}</p>
     <div class="row">
       ${atWork() ? `<button class="btn primary" ${canWorkNow() ? '' : 'disabled'} onclick="doWork()">💼 Do Work</button>` : `<button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goToJob()">${c.icon} Go to Work</button>`}

@@ -322,7 +322,7 @@ function packLunch() {
 }
 function lunchAtWork() {
   if (S.l4.lunch === S.day) { ateFood(35); log('🥪 Lunch break: you ate the lunch you packed. Yum, and it was free!'); }
-  else { charge(9, 'Lunch at work'); ateFood(35); log('🍔 Lunch break: you forgot to pack a lunch, so you bought one for $9. Packing lunch saves money!'); }
+  else { ateFood(35); log(`🍕 Lunch break: you forgot to pack a lunch, so ${S.job && S.job.boss ? S.job.boss.name : 'your boss'} shared free lunch with the team!`); }
 }
 
 // ---------- 28. carpooling ----------
@@ -357,7 +357,8 @@ function changeAnswer(saysRight) {
   S.l4.changeQ = null; done();
 }
 
-function life4NewDay() { ensureLife4State(); toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
+function workTrip(dest) { if (!S.job) return false; const wp = workplaceOf(JOBS[S.job.id]); return placeId(dest) === wp || placeId(S.loc) === wp; }
+function life4NewDay() { ensureLife4State(); if (S.job && weekday() === 0) S.job.paidWeek = 0; toothNewDay(); petAgeNewDay(); tankNewDay(); if (isBirthday()) { heightBirthday(); addPhoto('🎂', `Turning ${S.age}`); } }
 
 // ---------- the "Do Work" button: go to your job, then do your job's tasks ----------
 const WORK_TASKS = {

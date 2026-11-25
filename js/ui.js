@@ -245,7 +245,7 @@ function jobCard() {
     <h3>💼 ${jobTitle(j)} <span class="muted">$${j.wage.toFixed(2)}/hr at ${PLACES[wp].icon} ${PLACES[wp].name}</span></h3>
     <p class="muted">${status} · Trip from home: ${c.icon} ${travelTime(c.hours)}${c.cost ? `, $${c.cost} bus each way` : ''}</p>
     <p class="muted">🕐 ${sh.label}</p>
-    <p class="muted">This week: ${j.weekHours} hrs · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
+    <p class="muted">This week: ${(j.paidWeek || 0) + j.weekHours} hrs (paid every day) · Days worked: ${j.daysWorked} · Missed: ${j.misses}/3 · Warnings: ${j.warnings}/3</p>
     <p class="muted">🏖️ Vacation days: ${j.pto || 0} · 🤒 Paid sick days: ${j.sickDays || 0}${j.boss ? ` · 👔 Boss: ${esc(j.boss.name)} (${j.boss.style}) · 👥 Coworkers: ${j.coworkers.map(w => esc(w.name)).join(', ')}` : ''}</p>
     <div class="row">
       ${atWork() ? `<button class="btn primary" ${canWorkNow() ? '' : 'disabled'} onclick="doWork()">💼 Do Work</button>` : `<button class="btn primary" ${canWork ? '' : 'disabled'} onclick="goToJob()">${c.icon} Go to Work</button>`}

@@ -479,6 +479,7 @@ async function goWork() {
     } else {
       log(`💼 Worked 8 hours as ${job.name}. ${msgs.join(' ')}`, perf >= 65 ? 'good' : perf < 35 ? 'bad' : '');
     }
+    if (S.job) payday('day');
   }
   render();
   await travelTo('home', { quiet: true });
@@ -508,8 +509,10 @@ function payday(final = false) {
   const net = gross - fed - state - fica;
   S.taxYear.wages += gross; S.taxYear.withheld += fed + state;
   earn(net, `Paycheck from ${JOBS[j.id].name}`);
-  log(`💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
-  queueModal(`<h2>💵 ${final ? 'Final ' : ''}Paycheck</h2>
+  const boss = j.boss ? j.boss.name : 'Your boss';
+  log(final === 'day' ? `💵 ${boss} paid you for today! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.` : `💵 Payday! ${j.weekHours} hours × $${j.wage.toFixed(2)} = ${money(gross)}. After taxes you got ${money(net)}.`, 'good');
+  j.paidWeek = (j.paidWeek || 0) + j.weekHours;
+  queueModal(`<h2>💵 ${final === 'day' ? `${esc(boss)} Paid You for Today!` : final ? 'Final Paycheck' : 'Paycheck'}</h2>
     <table class="stub">
       <tr><td>${JOBS[j.id].name}: ${j.weekHours} hrs × $${j.wage.toFixed(2)}</td><td>${money(gross)}</td></tr>
       <tr class="minus"><td>Federal income tax (10%)</td><td>-${money(fed)}</td></tr>

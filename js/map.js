@@ -748,6 +748,7 @@ function travelTo(dest, opts = {}) {
     if (placeId(dest) === placeId(S.loc)) { S.loc = dest; if (!opts.keepTab) tab = dest; render(); return resolve(true); }
     if (S.loc === 'home' && typeof leavingHome === 'function') { leavingHome(); leavingWithWater(); }
     const info = travelInfo(S.loc, dest);
+    if (typeof workTrip === 'function' && workTrip(dest) && info.cost) { info.cost = 0; info.how = info.how === 'took the bus' ? 'took the bus (your boss pays for your bus pass)' : info.how; }
     document.body.classList.add('traveling');
     cam.follow = true;
     traveler = { path: info.path, len: info.len, t: 0, dur: Math.max(0.7, Math.min(4.5, info.len / 700)), icon: info.icon, resolve: () => {
