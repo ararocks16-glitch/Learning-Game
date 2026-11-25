@@ -61,7 +61,7 @@ function startFoster() { if (S.home === 'parents' && S.family.mom.rel < 60) retu
 function feedKittens() { const F = S.hob.foster; if (!F) return; if (F.fed === S.day) return nope('You already fed the kittens today.'); F.fed = S.day; pass(0.5, 'relax'); fun2(10); chartMark('pets'); log('🍼 You fed the kittens and played with them. They purred and fell asleep in a pile!'); done(); }
 function fosterNewDay() {
   const F = S.hob.foster; if (!F) return;
-  if (S.day - F.fed > 1) { F.until++; log('🐱 The foster kittens are hungry! Feed them at home.', 'bad'); }
+  if (S.day - F.fed > 1) { F.until++; F.fed = S.day; log('🐱 The shelter volunteer fed your foster kittens today. Feed them at home when you can!'); }
   if (S.day >= F.until) { log(`🏡 All ${F.n} of your foster kittens got adopted by loving families! You helped save them. ❤️`, 'good'); S.hob.foster = null; unlock('foster'); fun2(20); }
 }
 

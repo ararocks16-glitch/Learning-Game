@@ -172,7 +172,7 @@ function lostChip() { return S.lost ? `<button class="chip warn" onclick="search
 // ---------- extra details in your room ----------
 function drawRoomDetails(c) {
   // wall clock that shows the real game time
-  const cx = 605, cy = 58;
+  const cx = 440, cy = 42;
   c.fillStyle = 'rgba(0,0,0,.15)'; c.beginPath(); c.arc(cx + 2, cy + 3, 17, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#5d4037'; c.beginPath(); c.arc(cx, cy, 17, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#fdfaf2'; c.beginPath(); c.arc(cx, cy, 14, 0, Math.PI * 2); c.fill();

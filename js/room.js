@@ -619,6 +619,7 @@ function drawRoom(cv, fixedW) {
   } else ghost(806, 186, 70, 80, '🚽 Toilet?');
 
   drawRoomDetails(c);
+  drawKitchenBits(c);
   drawFurniture3(c);
   drawHolidayTree(c);
   drawToys(c);
@@ -627,8 +628,10 @@ function drawRoom(cv, fixedW) {
 
   // ---------- you ----------
   if (atHome()) {
-    c.save(); c.filter = 'blur(3px)'; c.fillStyle = 'rgba(30,20,10,.35)'; c.beginPath(); c.ellipse(306, 334, 26, 6, 0, 0, Math.PI * 2); c.fill(); c.restore();
-    drawPerson(c, 300, 334, 2.3, S.look);
+    const px = S.roomX || 300;
+    c.save(); c.filter = 'blur(3px)'; c.fillStyle = 'rgba(30,20,10,.35)'; c.beginPath(); c.ellipse(px + 6, 334, 26, 6, 0, 0, Math.PI * 2); c.fill(); c.restore();
+    drawPerson(c, px, 334, 2.3, S.look, S.roomPhase || 0, !!S.roomPhase);
+    drawHeld(c, px);
   }
 
   // ---------- light & mood ----------

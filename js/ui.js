@@ -49,6 +49,7 @@ function ensureRealLife() {
   ensureTown2State();
   ensureTown3State();
   ensureMoney2State();
+  ensureInteractState();
 }
 
 function render() {
@@ -111,7 +112,7 @@ function render() {
 
   $('#view').innerHTML = viewFor(tab);
   const roomCv = $('#room');
-  if (roomCv) drawRoom(roomCv);
+  if (roomCv) { drawRoom(roomCv); setupRoomInteract(roomCv); }
   const doorCv = $('#doorcv');
   if (doorCv && !doorAnim) drawDoorView(doorCv, 0);
   if (document.querySelector('canvas.petpic')) drawShopPics();
@@ -162,7 +163,8 @@ function viewFor(t) {
   const head = `<div class="placehead"><span class="pic">${t === 'home' ? home().icon : place.icon}</span><div><h2>${t === 'home' ? `Home: ${home().name}` : place.name}</h2><p class="muted">${outside || (t === 'home' && !S.doorOpen) ? 'You\'re outside.' : 'You are here.'}</p></div></div>`;
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
-  return head + body + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
+  return head + search + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -260,7 +262,7 @@ function viewHome() {
   }).join('');
   if (!S.doorOpen) return `${doorSection()}${jobCard()}${neighborsCard()}`;
   const [ti, tl, tc] = teethStatus();
-  return `${brokenCard()}${homeSection()}${petsSection()}${jobCard()}
+  return `${brokenCard()}${homeSection().replace('</canvas></div>', '</canvas></div>' + roomBar())}${petsSection()}${jobCard()}
     <div class="row info">
       <span class="chip">👕 Clothes: ${['', 'Basic', 'Nice', 'Business suit'][S.clothes]}${S.laundryDays > 7 ? ' (dirty!)' : ` (clean, ${7 - S.laundryDays}d left)`}</span>
       <span class="chip">${S.today.showered ? '✅' : '⬜'} Shower today</span>

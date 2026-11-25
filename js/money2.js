@@ -4,7 +4,7 @@
 function ensureMoney2State() {
   if (!S.m2) S.m2 = { done: {}, crafts: {}, supplies: {}, hive: null, coop: null, vid: { subs: 0, count: 0, pending: 0, safe: false }, game: null, flips: [], shop: null, cards: { common: 0, rare: 0, ultra: 0 }, cardPrice: { common: 0.25, rare: 3, ultra: 25 }, cds: [], bnb: null, orders: [], request: null, pumpkin: 0, fishBest: 0, lostpet: null, earned: 0 };
 }
-const m2day = id => S.m2.done[id] === S.day;
+const m2day = id => GIGS2[id] && GIGS2[id].weekly ? S.m2.done[id] !== undefined && Math.floor((S.m2.done[id] - 1) / 7) === weekNum() : S.m2.done[id] === S.day;
 function m2mark(id) { S.m2.done[id] = S.day; }
 function m2pay(amount, label) { amount = Math.round(amount * 100) / 100; if (amount > 0) { sideEarn(amount, label); S.m2.earned += amount; if (S.m2.earned >= 1000) unlock('hustler'); } return amount; }
 const m2month = () => dateOf().m;
@@ -14,7 +14,7 @@ const nthDay = (wd, n) => weekday() === wd && Math.ceil(dateOf().d / 7) === n;
 
 // ---------- simple jobs: [where, check (returns a reason it can't be done, or ''), hours, do it (returns the message)] ----------
 const GIGS2 = {
-  carwash: { icon: '🚗', name: 'Car wash fundraiser', where: ['home'], note: 'Saturdays 9 AM–3 PM · not in winter or rain · 3 hrs',
+  carwash: { weekly: true, icon: '🚗', name: 'Car wash fundraiser', where: ['home'], note: 'Saturdays 9 AM–3 PM · not in winter or rain · 3 hrs',
     check: () => weekday() !== 5 ? 'Only on Saturdays' : S.hour < 9 || S.hour >= 15 ? 'Open 9 AM – 3 PM' : seasonOf() === 'winter' || S.weather === 'rainy' || S.weather === 'snowy' ? 'Too cold or wet!' : '',
     hours: 3, go: () => { const n = 4 + Math.floor(Math.random() * 9); const p = m2pay(n * 8, 'Car wash'); fun2(10); return `🚗💦 You washed ${n} cars with sponges and a hose. ${money(p)} earned — and you got soaked!`; } },
   snowcone: { icon: '🍧', name: 'Snow-cone cart', where: ['beach'], note: 'Summer, sunny or hot days, 11 AM–5 PM · cart rental $15 · 3 hrs',
@@ -35,22 +35,22 @@ const GIGS2 = {
   foodtruck: { icon: '🚚', name: 'Food truck at the town event', where: ['park'], note: 'Only on town event days · Cooking 20 · truck rental $40 · 4 hrs',
     check: () => !eventToday() ? 'Only on town event days (fairs, parade, festival)' : S.skills.cook < 20 ? 'Needs Cooking 20' : S.money < 40 ? 'You need $40 for the truck' : S.hour < 10 || S.hour > 17 ? '10 AM – 5 PM' : '',
     hours: 4, go: () => { charge(40, 'Food truck rental'); const meals = 30 + Math.floor(Math.random() * 30 + S.skills.cook / 2); const p = m2pay(meals * 6, 'Food truck sales'); addSkill('cook', 2); return `🚚 You sold ${meals} ${pickR(['tacos', 'grilled cheeses', 'hot dogs', 'smoothie bowls'])} at the ${eventToday().name}! Sales ${money(p)} − $40 truck = ${money(p - 40)} profit.`; } },
-  websites: { icon: '💻', name: 'Build a website for a shop', where: ['home'], note: 'Needs a laptop & Computers 30 · 3 hrs · $90 · once every 3 days',
-    check: () => !has('laptop') && !has('computer') ? 'Needs a laptop' : S.skills.comp < 30 ? 'Needs Computers 30' : S.m2.done.web && S.day - S.m2.done.web < 3 ? 'Next client in a few days' : '',
+  websites: { weekly: true, icon: '💻', name: 'Build a website for a shop', where: ['home'], note: 'Needs a laptop & Computers 30 · 3 hrs · $90 · once every 3 days',
+    check: () => !has('laptop') && !has('computer') ? 'Needs a laptop' : S.skills.comp < 30 ? 'Needs Computers 30' : '',
     hours: 3, once: 'web', go: () => { m2pay(90, 'Website project'); addSkill('comp', 2); addSkill('art', 0.6); return `💻 You built a website for ${pickR(['the Bakery', 'Snip & Style Salon', 'Happy Paws Pet Shop', 'the Bike Shop'])} with photos, hours and a map. They paid you $90!`; } },
   fixtech: { icon: '🔧', name: 'Fix phones & computers', where: ['home'], note: 'Needs a toolbox & Computers 20 · 1.5 hrs · $35',
     check: () => !has('toolbox') ? 'Needs a toolbox' : S.skills.comp < 20 ? 'Needs Computers 20' : '',
     hours: 1.5, go: () => { addSkill('comp', 1.5); if (Math.random() < 0.15) return '🔧 You tried to fix a cracked phone screen but couldn\'t. You didn\'t charge them — that\'s fair. Keep practicing!'; m2pay(35, 'Tech repair'); return `🔧 You ${pickR(['replaced a cracked phone screen', 'got rid of a computer virus', 'fixed a laptop that wouldn\'t turn on', 'made a slow computer fast again'])}. $35!`; } },
-  photogig: { icon: '📷', name: 'Photography gig', where: ['home'], note: 'Weekends 10 AM–6 PM · needs a camera · 3 hrs · $70',
+  photogig: { weekly: true, icon: '📷', name: 'Photography gig', where: ['home'], note: 'Weekends 10 AM–6 PM · needs a camera · 3 hrs · $70',
     check: () => weekday() < 5 ? 'Parties are on weekends' : !has('camera') ? 'Needs a camera' : S.hour < 10 || S.hour >= 18 ? '10 AM – 6 PM' : '',
     hours: 3, go: () => { m2pay(70 + Math.round(S.skills.art / 2), 'Photography gig'); addSkill('art', 1.5); return `📷 You took photos at a ${pickR(['birthday party 🎂', 'wedding 💐', 'graduation 🎓', 'family reunion 👨‍👩‍👧'])}. Everyone loved them! You earned ${money(70 + Math.round(S.skills.art / 2))}.`; } },
-  teachmusic: { icon: '🎹', name: 'Teach music lessons', where: ['school'], note: 'Needs Music 40 · 2 hrs · $50',
+  teachmusic: { weekly: true, icon: '🎹', name: 'Teach music lessons', where: ['school'], note: 'Needs Music 40 · 2 hrs · $50',
     check: () => S.skills.music < 40 ? 'Needs Music 40' : S.hour < 9 || S.hour > 19 ? '9 AM – 7 PM' : '', hours: 2, go: () => { m2pay(50, 'Teaching music'); addSkill('music', 1); addSkill('lead', 0.6); return '🎹 You taught two kids how to play "Twinkle Twinkle Little Star." They were so proud! $50.'; } },
-  swimcoach: { icon: '🏊', name: 'Swim coach for little kids', where: ['sports'], note: 'Needs swim level 5 · 2 hrs · $40',
+  swimcoach: { weekly: true, icon: '🏊', name: 'Swim coach for little kids', where: ['sports'], note: 'Needs swim level 5 · 2 hrs · $40',
     check: () => !S.hob || S.hob.swim < 5 ? 'Needs swim level 5' : S.hour < 9 || S.hour > 18 ? '9 AM – 6 PM' : '', hours: 2, go: () => { m2pay(40, 'Swim coaching'); addSkill('lead', 1); return '🏊 You taught little kids to blow bubbles and kick with a kickboard. One swam all by herself! $40.'; } },
-  langtutor: { icon: '🗣️', name: 'Language tutor', where: ['library'], note: 'Needs level 40 in a language · 1.5 hrs · $30',
+  langtutor: { weekly: true, icon: '🗣️', name: 'Language tutor', where: ['library'], note: 'Needs level 40 in a language · 1.5 hrs · $30',
     check: () => !S.t3 || !Object.values(S.t3.langs).some(v => v >= 40) ? 'Needs level 40 in a language (College)' : S.hour < 9 || S.hour > 19 ? '9 AM – 7 PM' : '', hours: 1.5, go: () => { const L = Object.entries(S.t3.langs).find(([k, v]) => v >= 40)[0]; m2pay(30, 'Language tutoring'); S.t3.langs[L] = Math.min(100, S.t3.langs[L] + 1); return `🗣️ You tutored a student in ${LANGS[L].name}. Teaching helps you remember too! $30.`; } },
-  dogclass: { icon: '🦮', name: 'Dog training class', where: ['park'], note: 'Saturdays · needs Animal Care 40 · 2 hrs · $45',
+  dogclass: { weekly: true, icon: '🦮', name: 'Dog training class', where: ['park'], note: 'Saturdays · needs Animal Care 40 · 2 hrs · $45',
     check: () => weekday() !== 5 ? 'Classes are on Saturdays' : S.skills.animal < 40 ? 'Needs Animal Care 40' : S.hour < 8 || S.hour > 17 ? 'Daytime only' : '', hours: 2, go: () => { m2pay(45, 'Dog training class'); addSkill('animal', 1.5); return `🦮 You taught 5 dogs to sit and stay. A puppy named ${pickR(['Noodle', 'Waffles', 'Pickles', 'Bean'])} kept licking you! $45.`; } },
   rentout: { icon: '🚲', name: 'Rent out your car, bike or tools', where: ['home'], note: 'Once a day · car $30, bike $8, toolbox $5',
     check: () => !has('car') && !has('newcar') && !has('bike') && !has('toolbox') ? 'You need a car, bike or toolbox to rent out' : '', hours: 0.25, go: () => {
@@ -61,12 +61,12 @@ const GIGS2 = {
 };
 function gigRow2(id) {
   const g = GIGS2[id], why = m2day(id) ? 'Done today ✅' : g.check();
-  return mrow(g.icon, g.name, `${g.note}${why && !m2day(id) ? ` · <b>${why}</b>` : ''}`, b(m2day(id) ? 'Done ✅' : 'Do it', `doGig2('${id}')`, 'primary', !!why));
+  return mrow(g.icon, g.name + (g.weekly ? ' <span class="chip">once a week</span>' : ''), `${g.note}${why && !m2day(id) ? ` · <b>${why}</b>` : ''}`, b(m2day(id) ? (g.weekly ? 'Done this week ✅' : 'Done ✅') : 'Do it', `doGig2('${id}')`, 'primary', !!why));
 }
 function doGig2(id) {
   ensureMoney2State();
   const g = GIGS2[id];
-  if (m2day(id)) return nope('You already did that today!');
+  if (m2day(id)) return nope(g.weekly ? 'That job is once a week. Come back next week!' : 'You already did that today!');
   const why = g.check(); if (why) return nope(why);
   if (S.needs.energy < 15) return nope('You\'re too tired to work.');
   pass(g.hours, 'work'); m2mark(id); if (g.once) S.m2.done[g.once] = S.day;
@@ -77,8 +77,7 @@ function doGig2(id) {
 function requestNewDay() {
   const R = S.m2.request;
   if (R) {
-    if (R.last < S.day - 1) { log(`😕 You forgot to ${R.kind === 'plants' ? 'water the Johnsons\' plants' : 'check on the Parks\' house'} yesterday. They asked someone else.`, 'bad'); S.m2.request = null; }
-    else if (S.day > R.until) { const p = m2pay(R.pay * R.days, R.kind === 'plants' ? 'Plant watering' : 'House sitting'); log(`🏡 The ${R.who} family came home from vacation and paid you ${money(p)}! "Everything looks perfect, thank you!"`, 'good'); S.m2.request = null; }
+    if (S.day > R.until) { const v = R.visits || 0; if (v) { const p = m2pay(R.pay * v, R.kind === 'plants' ? 'Plant watering' : 'House sitting'); log(`🏡 The ${R.who} family came home and paid you ${money(p)} for the ${v} day${v > 1 ? 's' : ''} you helped. Thank you!`, 'good'); } else log(`🏡 The ${R.who} family came home. You didn't go over, so there's no pay — that's OK!`); S.m2.request = null; }
   } else if (Math.random() < 0.05) {
     const kind = Math.random() < 0.5 ? 'plants' : 'house', days = 3 + Math.floor(Math.random() * 3);
     S.m2.request = { kind, who: pickR(['Johnson', 'Park', 'Nguyen', 'Silva']), days, until: S.day + days, last: S.day, pay: kind === 'plants' ? 10 : 20, today: -1 };
@@ -88,7 +87,7 @@ function requestNewDay() {
 function doRequest() {
   const R = S.m2.request; if (!R) return;
   if (R.today === S.day) return nope('You already went over today.');
-  pass(R.kind === 'plants' ? 0.5 : 1, 'work'); R.today = S.day; R.last = S.day;
+  pass(R.kind === 'plants' ? 0.5 : 1, 'work'); R.today = S.day; R.last = S.day; R.visits = (R.visits || 0) + 1;
   log(R.kind === 'plants' ? '🪴 You watered the neighbors\' plants and checked their tomatoes.' : `🏡 You got the ${R.who}s' mail, watered the plants, turned a light on and checked that the doors were locked.`);
   done();
 }
@@ -175,8 +174,8 @@ function collectEggs() {
 function farmGoodsCard(pid) {
   if (!['market', 'park', 'village'].includes(pid) || (!S.m2.honey && !S.m2.eggJars)) return '';
   return `<div class="card money"><h3>🍯🥚 Sell Your Farm Goods</h3><div class="mrows">
-    ${S.m2.honey ? mrow('🍯', `Honey (${S.m2.honey} jars)`, `${money(9)} a jar`, b('Sell all', 'sellFarm("honey")')) : ''}
-    ${S.m2.eggJars ? mrow('🥚', `Egg cartons (${S.m2.eggJars})`, `${money(5)} a carton`, b('Sell all', 'sellFarm("eggs")')) : ''}</div></div>`;
+    ${S.m2.honey ? mrow('🍯', `Honey (${S.m2.honey} jars)`, `${money(9)} a jar`, b('Sell all', "sellFarm('honey')")) : ''}
+    ${S.m2.eggJars ? mrow('🥚', `Egg cartons (${S.m2.eggJars})`, `${money(5)} a carton`, b('Sell all', "sellFarm('eggs')")) : ''}</div></div>`;
 }
 function sellFarm(what) {
   pass(0.5, 'work');
@@ -187,12 +186,12 @@ function sellFarm(what) {
 function farmNewDay() {
   const H = S.m2.hive, C = S.m2.coop;
   if (H && seasonOf() !== 'winter') H.honey = Math.min(12, H.honey + 0.6);
-  if (C) { if (C.feed > 0) { C.feed--; C.eggs = Math.min(36, C.eggs + C.hens - (Math.random() < 0.3 ? 1 : 0)); } else if (Math.random() < 0.3) log('🐔 Your chickens are hungry! Buy feed so they keep laying eggs.', 'bad'); }
+  if (C) { if (C.feed > 0) { C.feed--; C.eggs = Math.min(36, C.eggs + C.hens - (Math.random() < 0.3 ? 1 : 0)); } else if (Math.random() < 0.3) log('🐔 Your chickens are out of feed, so they stopped laying eggs. Feed them if you want eggs!'); }
 }
 
 // ---------- cupcake orders ----------
 function ordersNewDay() {
-  S.m2.orders = S.m2.orders.filter(o => { if (S.day > o.due) { log(`😞 You missed a cupcake order for ${o.who}'s party. Always finish orders on time!`, 'bad'); return false; } return true; });
+  S.m2.orders = S.m2.orders.filter(o => { if (S.day > o.due) { log(`🧁 ${o.who} got cupcakes somewhere else. No problem — orders are optional!`); return false; } return true; });
   if (S.m2.orders.length < 2 && S.skills.cook >= 15 && Math.random() < 0.12) {
     const o = { who: pickR(FIRST_NAMES), kind: pickR(['birthday', 'graduation', 'baby shower', 'class party']), due: S.day + 3, pay: 36 };
     S.m2.orders.push(o);
@@ -416,10 +415,10 @@ function money2Section(pid) {
   ensureMoney2State();
   const gigs = Object.keys(GIGS2).filter(id => GIGS2[id].where.includes(pid));
   let out = '';
-  if (gigs.length) out += `<div class="card money"><h3>💵 More Ways to Earn Here</h3><div class="mrows">${gigs.map(gigRow2).join('')}</div></div>`;
+  if (gigs.length) out += `<div class="card money"><h3>💵 More Ways to Earn Here <span class="muted small">· all optional — skip any you want, you just don't get paid</span></h3><div class="mrows">${gigs.map(gigRow2).join('')}</div></div>`;
   if (pid === 'home') {
     const R = S.m2.request;
-    if (R) out += `<div class="card holiday"><h3>${R.kind === 'plants' ? '🪴 Watering the Neighbors\' Plants' : '🏡 House Sitting'}</h3><p>The ${R.who} family is away until ${dateText(R.until)}. Go over once a day! You'll get ${money(R.pay)} a day when they get back.</p><button class="btn sm primary" ${R.today === S.day ? 'disabled' : ''} onclick="doRequest()">${R.today === S.day ? '✅ Done today' : 'Go over now'}</button></div>`;
+    if (R) out += `<div class="card holiday"><h3>${R.kind === 'plants' ? '🪴 Watering the Neighbors\' Plants' : '🏡 House Sitting'}</h3><p>The ${R.who} family is away until ${dateText(R.until)}. Go over once a day! You get ${money(R.pay)} for each day you go (optional — skip a day and you just don't get paid for it).</p><button class="btn sm primary" ${R.today === S.day ? 'disabled' : ''} onclick="doRequest()">${R.today === S.day ? '✅ Done today' : 'Go over now'}</button></div>`;
     if (S.m2.orders.length) out += `<div class="card holiday"><h3>🧁 Cupcake Orders</h3><div class="mrows">${S.m2.orders.map((o, i) => mrow('🧁', `12 cupcakes for ${o.who}'s ${o.kind}`, `${money(o.pay)} · due ${dateText(o.due)} · uses eggs + milk · 2 hrs`, b('Bake', `bakeOrder(${i})`))).join('')}</div></div>`;
     out += farmAnimalsCard() + flipHomeCard() + bnbCard() + craftCard() + videoCard();
   }

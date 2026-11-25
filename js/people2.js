@@ -34,7 +34,7 @@ function grandmaNewDay() {
   const g = S.family.grandma; if (!g) return;
   if (isDate(2, 14)) { g.age++; log(`👵 It's Grandma's birthday! She's ${g.age} today. Give her a call!`); }
   if (!S.grandmaAsk && Math.random() < 0.05) { S.grandmaAsk = { day: S.day, what: pickR(['groceries', 'medicine', 'her garden', 'her computer']) }; if (has('phone')) text('👵 Grandma', { groceries: 'Sweetie, could you help me get my groceries this week? 🛒', medicine: 'Could you pick up my medicine at the pharmacy? 💊', 'her garden': 'My knees are sore. Could you help me pull weeds? 🌷', 'her computer': 'My computer is doing something strange... can you help? 💻' }[S.grandmaAsk.what]); }
-  if (S.grandmaAsk && S.day - S.grandmaAsk.day > 6) { S.grandmaAsk = null; g.rel = clamp(g.rel - 6); log('👵 Grandma needed help, but you didn\'t visit. She understands you\'re busy, but she misses you.'); }
+  if (S.grandmaAsk && S.day - S.grandmaAsk.day > 6) { S.grandmaAsk = null; log('👵 Grandma\'s neighbor helped her this time. You can visit her any time!'); }
 }
 function helpGrandma() {
   const a = S.grandmaAsk, g = S.family.grandma;
