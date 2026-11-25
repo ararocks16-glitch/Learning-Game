@@ -372,3 +372,8 @@ details.walls summary { cursor: pointer; }
 .roombar .hands { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .waterwarn { background: #e3f2fd; color: #0d47a1; border-radius: 10px; padding: 6px 10px; font-weight: 700; }
 .searchbar input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg2); color: var(--ink); font-size: 1rem; margin: 6px 0 10px; }
+
+.verbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+.verb { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 700; font-size: .8rem; cursor: pointer; }
+.verb span { font-size: 1.3rem; }
+.verb:hover { border-color: var(--primary); }

@@ -264,9 +264,9 @@ function openPlaceDoor(pid) {
     const ease = 1 - Math.pow(1 - k, 3);
     if ($('#entcv')) drawEntrance($('#entcv'), pid, ease);
     if (k < 1) requestAnimationFrame(step);
-    else { placeDoorAnim = null; S.insideOf = pid; log(ENTRANCE[pid].door === 'slide' ? `🚪 The automatic doors slid open. You walked into the ${PLACES[pid].name}.` : `🚪 You opened the door and went into the ${PLACES[pid].name}.`); save(); render(); }
+    else { placeDoorAnim = null; S.insideOf = pid; log(ENTRANCE[pid].door === 'slide' ? `🚪 The automatic doors slid open. You walked into the ${PLACES[pid].name}.` : `🚪 You opened the door and went into the ${PLACES[pid].name}.`); hiringWelcome(pid); save(); render(); nextModal(); }
   };
-  if (!cv) { placeDoorAnim = null; S.insideOf = pid; render(); return; }
+  if (!cv) { placeDoorAnim = null; S.insideOf = pid; hiringWelcome(pid); render(); nextModal(); return; }
   requestAnimationFrame(step);
 }
 function entranceSection(pid) {

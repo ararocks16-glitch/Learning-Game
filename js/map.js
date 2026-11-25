@@ -47,12 +47,12 @@ const PLACES = {
 const HOME_PLACE = { parents: 'h_parents', shared: 'h_apartments', studio: 'h_apartments', onebed: 'h_apartments', small: 'h_small', family: 'h_family', mansion: 'h_mansion' };
 const WORKPLACE = {
   Food: 'diner', Stores: 'mall', Office: 'office', Health: 'hospital', Education: 'school', Trades: 'construction',
-  Transport: 'warehouse', Tech: 'office', Arts: 'theater', Science: 'school', Animals: 'farm', 'Public Service': 'cityhall', Sports: 'sports',
+  Transport: 'warehouse', Tech: 'office', Arts: 'theater', Science: 'school', Animals: 'farm', 'Public Service': 'cityhall', Sports: 'sports', Hospitality: 'seahotel',
 };
 
 function placeId(loc) { return loc === 'home' ? HOME_PLACE[S.home] : loc; }
 function placeOf(loc) { return PLACES[placeId(loc)]; }
-function workplaceOf(job) { return WORKPLACE[job.cat]; }
+function workplaceOf(job) { return job.place && PLACES[job.place] ? job.place : WORKPLACE[job.cat]; }
 function locName(loc) { return loc === 'home' ? `Home (${home().name})` : PLACES[loc].name; }
 
 // ---------- roads & paths ----------
@@ -758,6 +758,7 @@ function travelTo(dest, opts = {}) {
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
       afterDrive(info);
+      if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
       safetyAfterTravel(info);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
       if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);

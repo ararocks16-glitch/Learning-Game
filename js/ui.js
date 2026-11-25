@@ -164,7 +164,7 @@ function viewFor(t) {
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
-  return head + search + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + search + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -433,12 +433,8 @@ function parkAct(id) {
 }
 
 function viewWorkplace(t) {
-  const cats = Object.keys(WORKPLACE).filter(c => WORKPLACE[c] === placeId(t));
-  const jobs = JOBS.filter(j => cats.includes(j.cat));
   const mine = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
-  return `${mine ? jobCard() : ''}
-    <p>People who work here: ${jobs.map(j => j.name).join(', ')}.</p>
-    <p class="muted">Want to work here? Apply at the <a onclick="setTab('jobcenter')">💼 Job Center</a>.</p>`;
+  return `${mine ? jobCard() : ''}`;
 }
 
 function viewHousing() {

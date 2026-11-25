@@ -60,16 +60,31 @@ function leftSpots(was) {
   if (was.includes('toilet') && !now.includes('toilet') && S.toiletUsed) { S.toiletUsed = false; S.mess = clamp(S.mess + 3); fun2(-2); log('🤢 Eww! You forgot to FLUSH the toilet. Always flush after you go!', 'bad'); }
 }
 function roomStep(dir) { walkTo(S.roomX + dir * 90); }
-function setupRoomInteract(cv) {
-  if (cv.dataset.walk) return;
-  cv.dataset.walk = '1'; cv.style.cursor = 'pointer';
-  cv.addEventListener('click', e => { const r = cv.getBoundingClientRect(); walkTo((e.clientX - r.left) / r.width * RW); });
+function setupRoomInteract(cv) { cv.dataset.walk = '1'; }
+// hold an arrow key to keep walking
+const keysDown = {};
+let keyWalk = null;
+function keyWalkLoop(t0) {
+  let last = t0;
+  const step = t => {
+    const dir = (keysDown.ArrowRight ? 1 : 0) - (keysDown.ArrowLeft ? 1 : 0);
+    if (!dir || !$('#room')) { keyWalk = null; S.roomPhase = 0; const cv = $('#room'); if (cv) drawRoom(cv); updateRoomBar(); save(); return; }
+    const was = nearSpots().map(s => s.id), before = nearSpots().map(s => s.id).join();
+    S.roomX = Math.max(30, Math.min(985, S.roomX + dir * (t - last) * 0.32)); S.roomPhase = t / 90; S.facing = dir; last = t;
+    const cv = $('#room'); if (cv) drawRoom(cv);
+    if (nearSpots().map(s => s.id).join() !== before) { leftSpots(was); updateRoomBar(); }
+    keyWalk = requestAnimationFrame(step);
+  };
+  keyWalk = requestAnimationFrame(step);
 }
 window.addEventListener('keydown', e => {
   if (!S || !$('#room') || document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || $('#modal').classList.contains('open')) return;
-  if (e.key === 'ArrowLeft') { roomStep(-1); e.preventDefault(); }
-  if (e.key === 'ArrowRight') { roomStep(1); e.preventDefault(); }
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault(); keysDown[e.key] = true;
+  if (!keyWalk) keyWalkLoop(performance.now());
 });
+window.addEventListener('keyup', e => { delete keysDown[e.key]; });
+window.addEventListener('blur', () => { delete keysDown.ArrowLeft; delete keysDown.ArrowRight; });
 
 // ---------- the button bar under your room ----------
 function roomBar() { return `<div id="roombar" class="roombar">${roomBarHtml()}</div>`; }
@@ -85,7 +100,8 @@ function roomBarHtml() {
   });
   const hands = S.hands.length ? `<div class="hands"><b>🤲 Your stuff:</b> ${S.hands.map((h, i) => `<span class="chip">${handIcon(h)} ${handName(h)} ${handEdible(h) ? `<button class="btn sm ghost" onclick="eatHand(${i})">Eat</button>` : ''}</span>`).join('')}</div>` : '<div class="hands muted small">🤲 Your hands are empty.</div>';
   const water = S.tap ? `<div class="waterwarn">💧 The ${S.tap.what} is running! ${Math.round(tapGallons())} gallons so far — ${S.tap.what === 'shower' ? 'you pay for every gallon!' : 'turn it off!'} ${rb('🚱 Turn off', 'tapOff()', 'primary')}</div>` : '';
-  return `<div class="walk"><button class="btn sm ghost" onclick="roomStep(-1)" aria-label="Walk left">◀ Walk</button><span class="muted small">Tap the room or use ← → to walk around. Get close to things!</span><button class="btn sm ghost" onclick="roomStep(1)" aria-label="Walk right">Walk ▶</button></div>
+  return `<div class="walk muted small">⌨️ Use the ← → arrow keys on your keyboard to walk. Get close to things and buttons appear!</div>
+    ${verbBar()}
     ${water}${parts.length ? `<div class="spots">${parts.join('')}</div>` : '<p class="muted small">Walk up to something to use it.</p>'}${hands}`;
 }
 function spotButtons(id) {
@@ -111,7 +127,7 @@ function handKey(h) { return h.kind === 'snack' ? 'snack:' + h.k : h.id; }
 function eatHand(i) {
   const h = S.hands[i]; if (!h || !handEdible(h)) return;
   S.hands.splice(i, 1);
-  if (h.kind === 'dish') { pass(0.3); ateFood(h.food); fun2(5); S.dishes++; S.handsDirty && toast('🧼 Did you wash your hands first?'); log(`${h.icon} You ate the ${h.name.toLowerCase()} you cooked. Delicious!`, 'good'); }
+  if (h.kind === 'dish') { pass(0.3); ateFood(h.food); fun2(5); S.dishes++; S.handsDirty && toast('🧼 Did you wash your hands first?'); log(`${h.icon} You ate the ${h.name.toLowerCase()} you made. Delicious!`, "good"); }
   else if (h.kind === 'snack') { S.pantry[h.k] = (S.pantry[h.k] || 0) + 1; eatSnack(h.k); }
   else { const f = FOODS[h.id]; pass(0.1); ateFood(f.snack[0]); S.needs.thirst = clamp(S.needs.thirst + (f.snack[1] || 0)); S.trash = clamp(S.trash + 1); log(`${f.icon} You ${h.id === 'milk' ? 'drank a glass of' : 'ate some'} ${f.name.toLowerCase()}.`); }
   done();
@@ -264,4 +280,105 @@ function drawHeld(c, px) {
   c.font = '18px system-ui, "Apple Color Emoji", "Segoe UI Emoji"'; c.textAlign = 'center';
   S.hands.slice(0, 2).forEach((h, i) => c.fillText(handIcon(h), px + (i ? -22 : 22), 296));
   c.textAlign = 'start';
+}
+
+// ---------- action buttons: cook, cut, eat, drink, hold, read, write, draw, sing, dance, clean, sleep ----------
+const VERBS = [['🍳', 'Cook', 'verbCook()'], ['🔪', 'Cut', 'verbCut()'], ['🍽️', 'Eat', 'verbEat()'], ['💧', 'Drink', 'verbDrink()'], ['🤲', 'Hold', 'verbHold()'], ['📖', 'Read', 'verbRead()'],
+  ['✍️', 'Write', 'verbWrite()'], ['🖍️', 'Draw', 'verbDraw()'], ['🎤', 'Sing', 'verbSing()'], ['💃', 'Dance', 'verbDance()'], ['🧹', 'Clean', "homeAct('clean')"], ['😴', 'Sleep', "homeAct('sleep')"]];
+function verbBar() { return `<div class="verbs">${VERBS.map(v => `<button class="verb" onclick="${v[2]}"><span>${v[0]}</span>${v[1]}</button>`).join('')}</div>`; }
+function verbCook() {
+  const near = nearSpots().map(s => s.id), cookable = S.hands.some(h => COOKS[handKey(h)]);
+  if (cookable && near.includes('stove')) return putIn('stove');
+  if (cookable && near.includes('microwave')) return putIn('microwave');
+  if (cookable) return nope('Walk over to the stove or microwave to cook what you\'re holding!');
+  recipeModal();
+}
+const CUTS = { veggies: ['Salad', '🥗', 22], bread: ['Sandwich', '🥪', 25], apples: ['Apple slices', '🍏', 14], bananas: ['Banana slices', '🍌', 13], cheese: ['Cheese slices', '🧀', 12], tortillas: ['Tortilla chips', '🌮', 12] };
+function verbCut() {
+  const list = S.hands.map((h, i) => [h, i]).filter(([h]) => h.kind === 'food' && (CUTS[h.id] || h.id === 'chicken'));
+  if (!list.length) return nope('Hold some food to cut first! Grab veggies, bread, apples, bananas, cheese or chicken from the fridge or cabinet.');
+  showModal(`<h2>🔪 What do you want to cut?</h2><p class="muted">Safety first: cut on a cutting board, keep your fingers curled back, and ask a grown-up to help with sharp knives!</p>
+    <div class="grid actions">${list.map(([h, i]) => `<button class="action" onclick="closeModal();doCut(${i})"><span class="ic">${FOODS[h.id].icon}</span><b>${FOODS[h.id].name}</b><small>${h.id === 'chicken' ? 'cut into pieces (cooks faster)' : `makes ${CUTS[h.id][1]} ${CUTS[h.id][0]}`}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function doCut(i) {
+  const h = S.hands[i]; if (!h) return;
+  pass(5 / 60); addSkill('cook', 0.8);
+  if (S.skills.cook < 10 && Math.random() < 0.1) { S.needs.health = clamp(S.needs.health - 3); log('🩹 Ouch! You nicked your finger. Curl your fingers back and go slow!', 'bad'); }
+  if (h.id === 'chicken') { h.cut = true; log('🔪 You cut the chicken into pieces on a cutting board. Wash your hands after touching raw chicken!'); S.handsDirty = true; }
+  else { const c = CUTS[h.id]; S.hands[i] = { kind: 'dish', name: c[0], icon: c[1], food: c[2] }; log(`🔪 You cut the ${FOODS[h.id].name.toLowerCase()} and made ${c[1]} ${c[0].toLowerCase()}!`); }
+  S.dishes++; done();
+}
+function verbEat() {
+  const i = S.hands.findIndex(handEdible);
+  if (i >= 0) return eatHand(i);
+  snackMenu();
+}
+function verbDrink() { const near = nearSpots().map(s => s.id); if (near.includes('sink') && S.tap && S.tap.what === 'sink') return sinkDo('drink'); drink('tap'); done(); }
+function verbHold() {
+  const opts = [];
+  (S.pets || []).forEach((p, i) => opts.push([PET_TYPES[p.kind].icon, `Hold ${p.name}`, 'cuddle your pet', `holdPet(${i})`]));
+  if (hasToy('teddy')) opts.push(['🧸', 'Hold your teddy bear', 'a big hug', "playToy('teddy')"]);
+  const near = nearSpots().map(s => s.id);
+  ['fridge', 'cabinet'].forEach(k => { if (near.includes(k)) opts.push([k === 'fridge' ? '🧊' : '🗄️', `Hold something from the ${k === 'fridge' ? 'fridge' : 'cabinet'}`, 'grab it', `grabFrom('${k}')`]); });
+  if (S.hands.length) opts.push(['📥', 'Put something down', 'free your hands', 'putDownModal()']);
+  if (!opts.length) return nope('Walk over to the fridge or cabinet to grab something to hold — or get a pet or teddy bear!');
+  showModal(`<h2>🤲 Hold</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function holdPet(i) { const p = S.pets[i]; pass(0.25, 'relax'); p.happy = clamp(p.happy + 12); fun2(8); log(`🤗 You held ${p.name} close. ${baseOf(p) === 'cat' ? 'They purred like a little engine!' : baseOf(p) === 'dog' ? 'They licked your face!' : baseOf(p) === 'fish' ? '...well, you smiled at them through the glass. 🐟' : 'They snuggled right in.'}`, 'good'); done(); }
+function putDownModal() {
+  const near = nearSpots().map(s => s.id), where = ['fridge', 'cabinet'].find(k => near.includes(k));
+  if (where) return putIn(where);
+  showModal(`<h2>📥 Put something down</h2><p class="muted">Walk to the fridge or snack cabinet to put food away. Or put it on the table:</p><div class="grid actions">${S.hands.map((h, i) => `<button class="action" onclick="closeModal();tableDrop(${i})"><span class="ic">${handIcon(h)}</span><b>${handName(h)}</b><small>put it in the kitchen</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function tableDrop(i) { const h = S.hands[i]; S.hands.splice(i, 1); if (h.kind === 'snack') S.pantry[h.k] = (S.pantry[h.k] || 0) + 1; else if (h.kind === 'food') S.fridgeFood.push({ id: h.id, exp: h.exp, where: FOODS[h.id].cold ? 'fridge' : 'cabinet' }); else S.fridgeFood.push({ id: 'veggies', exp: S.day + 2, where: 'fridge', leftover: h.name }); log(`📥 You put the ${handName(h).toLowerCase()} away.`); render(); save(); }
+function verbRead() {
+  const opts = [['📕', 'Read a book', has('bookshelf') ? 'from your bookshelf · Writing skill' : 'a book you own · Writing skill', "homeAct('read')"]];
+  if (S.lib && S.lib.books.length) opts.push(['📚', 'Read a library book', `${S.lib.books.length} borrowed`, 'readLibraryBook()']);
+  opts.push(['📰', 'Read the newspaper', 'town news', "showNews('📰 The Maple Times')"]);
+  opts.push(['💭', 'Read a comic book', 'just for fun', 'readComic()']);
+  showModal(`<h2>📖 Read</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function readComic() { pass(0.5, 'relax'); fun2(10); addSkill('write', 0.4); log(`💭 You read a comic about ${pickR(['a superhero dog', 'space pirates', 'a robot who loves pancakes', 'a girl who can talk to birds'])}. So funny!`); done(); }
+const DIARY = ['Today I learned something new...', 'Something that made me happy today was...', 'One thing I want to do this year is...', 'My favorite thing about my friends is...', 'If I could have any job, I would be...', 'Something hard I did today was...'];
+function verbWrite() {
+  const ch = S.book ? S.book.chapters || 0 : 0;
+  const opts = [['📔', 'Write in your diary', 'about your day · Writing skill', 'writeDiary()'], ['📝', 'Write a poem', 'be creative!', 'writePoem()'], ['📕', 'Write a book chapter', 'publish it later for money', 'writeChapter()']];
+  if (has('desk')) opts.push(['🗒️', 'Do homework', 'at your desk', "homeAct('homework')"]);
+  showModal(`<h2>✍️ Write</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function writeDiary() { pass(0.5, 'relax'); addSkill('write', 1.2); fun2(6); S.diary = (S.diary || 0) + 1; log(`📔 Dear Diary... "${pickR(DIARY)}" You filled a whole page! (${S.diary} entries)`); done(); }
+function writePoem() { pass(0.5, 'relax'); addSkill('write', 1.4); addSkill('art', 0.4); fun2(7); log(`📝 You wrote a poem: "${pickR(['The moon is a cookie, / the stars are the crumbs, / I eat them all up / when nighttime comes.', 'My dog has a tail / that wags like a flag, / he runs to the door / with his toy in a bag.', 'Rain on the window, / tap tap tap, / I read my book / with a cat on my lap.', 'Snowflakes falling, / soft and white, / I build a snowman / out in the light.'])}"`, 'good'); done(); }
+function verbDraw() {
+  if (S.inv && S.inv.canvases > 0) return showModal('<h2>🖍️ Draw or Paint?</h2>', [{ label: '🖍️ Draw for fun', cls: 'ghost', fn: drawPicture }, { label: '🖼️ Paint on a canvas (to sell)', cls: 'primary', fn: () => { paint(); } }]);
+  drawPicture();
+}
+function drawPicture() { pass(0.5, 'relax'); addSkill('art', 1.2); fun2(8); log(`🖍️ You drew ${pickR(['your family', 'a dragon eating spaghetti', 'your dream house', 'a rocket going to Mars', 'your pet', 'a rainbow over the town'])}. You stuck it on the fridge!`); done(); }
+function verbSing() {
+  pass(0.25, 'relax'); addSkill('music', 0.8); fun2(8);
+  const inShower = S.tap && S.tap.what === 'shower';
+  if (S.hour >= 22 || S.hour < 7) { S.lateNoise = true; log('🎤 You sang loudly... but it\'s late! Shhh, people are sleeping.'); }
+  else log(inShower ? '🚿🎤 You sang in the shower! The echo made you sound like a pop star.' : `🎤 You sang "${pickR(['Happy Birthday', 'Twinkle Twinkle Little Star', 'a song you made up', 'your favorite radio song', 'The Alphabet Song'])}" at the top of your lungs!`);
+  done();
+}
+function verbDance() { if (S.needs.energy < 10) return nope('Too tired to dance!'); pass(0.25, 'relax'); addSkill('fit', 0.6); fun2(12); S.needs.energy = clamp(S.needs.energy - 4); log(`💃 You turned on music and danced ${pickR(['the robot', 'like a chicken', 'a happy wiggle dance', 'the moonwalk', 'a twirly spin dance'])}!`); done(); }
+
+// ---------- jobs at every place: interview right where you are ----------
+function jobsHereCard(pid) {
+  if (!pid || pid === 'jobcenter') return '';
+  const jobs = JOBS.filter(j => workplaceOf(j) === pid).sort((a, b) => a.pay - b.pay);
+  if (!jobs.length) return '';
+  return `<details class="card jobshere" ${S.job ? '' : 'open'}><summary>💼 Jobs Here <span class="muted small">· ${jobs.length} jobs · ask for an interview right now! (weekdays 8 AM – 4 PM)</span></summary>
+    <div class="mrows">${jobs.map(j => { const ok = meetsReqs(j), mine = S.job && S.job.id === j.id, cd = S.cooldown[j.id] && S.cooldown[j.id] > S.day;
+      return mrow(ok ? '✅' : '💼', `${j.name} · $${j.pay}/hr`, `${EDU_NAMES[j.edu]}${j.req.length ? ' · ' + j.req.map(r => `${skillName(r.s)} ${r.lvl}`).join(', ') : ' · no skills needed'}${j.insurance ? ' · 🩺 insurance' : ''}`,
+        mine ? b('Your job', '', 'ghost', true) : cd ? b(`Re-apply day ${S.cooldown[j.id]}`, '', 'ghost', true) : b('🤝 Interview', `startInterview(${j.id})`, ok ? 'primary' : 'ghost')); }).join('')}</div></details>`;
+}
+// the first time you visit a place that's hiring, the manager offers you an interview
+function hiringWelcome(pid) {
+  if (!S.visitedJobs) S.visitedJobs = {};
+  if (S.visitedJobs[pid] || S.job) return;
+  const jobs = JOBS.filter(j => workplaceOf(j) === pid && meetsReqs(j));
+  S.visitedJobs[pid] = true;
+  if (!jobs.length || isWeekend() || S.hour < 8 || S.hour > 16) return;
+  const j = jobs.sort((a, b2) => b2.pay - a.pay)[0];
+  queueModal(`<h2>👋 We're Hiring!</h2><p>The manager at the ${PLACES[pid].name} saw you come in: <b>"Hi! We need a ${j.name}. It pays $${j.pay}/hour. Want to do an interview right now?"</b></p><button class="btn primary" onclick="closeModal();startInterview(${j.id})">🤝 Yes, interview me!</button> <span class="muted small">(or tap OK to say no thanks)</span>`);
 }

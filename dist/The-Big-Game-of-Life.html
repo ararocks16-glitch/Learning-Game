@@ -380,6 +380,11 @@ details.walls summary { cursor: pointer; }
 .waterwarn { background: #e3f2fd; color: #0d47a1; border-radius: 10px; padding: 6px 10px; font-weight: 700; }
 .searchbar input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg2); color: var(--ink); font-size: 1rem; margin: 6px 0 10px; }
 
+.verbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+.verb { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 700; font-size: .8rem; cursor: pointer; }
+.verb span { font-size: 1.3rem; }
+.verb:hover { border-color: var(--primary); }
+
 </style>
 </head>
 <body>
@@ -729,6 +734,263 @@ const JOB_DATA = [
   ['Pro Tennis Player', 'Sports', 80, 0, ['tennis:80']],
   ['Pro Soccer Player', 'Sports', 100, 0, ['soccer:85']],
   ['Pro Basketball Player', 'Sports', 120, 0, ['basketball:85']],
+  // ----- 256 more jobs (each one works at a real place in the game) -----
+  ['Restaurant Host', 'Food', 11, 0, ['comm'], 'diner'],
+  ['Prep Cook', 'Food', 13, 0, ['cook'], 'diner'],
+  ['Short-Order Cook', 'Food', 15, 0, ['cook'], 'diner'],
+  ['Sous Chef', 'Food', 24, 1, ['cook:45', 'lead'], 'diner'],
+  ['Pastry Chef', 'Food', 22, 1, ['cook:40', 'art'], 'bakery'],
+  ['Cake Decorator', 'Food', 17, 0, ['art', 'cook'], 'bakery'],
+  ['Bakery Counter Clerk', 'Food', 11, 0, ['service'], 'bakery'],
+  ['Ice Cream Scooper', 'Food', 11, 0, ['service'], 'icecream'],
+  ['Pancake Cook', 'Food', 12, 0, ['cook'], 'pancake'],
+  ['Hot Cocoa Barista', 'Food', 12, 0, ['service'], 'cocoa'],
+  ['Fishmonger', 'Food', 15, 0, ['sales'], 'fishmarket'],
+  ['Butcher', 'Food', 18, 0, ['cook', 'build'], 'market'],
+  ['Deli Worker', 'Food', 13, 0, ['service'], 'market'],
+  ['Produce Clerk', 'Food', 12, 0, ['fit'], 'market'],
+  ['Grocery Store Manager', 'Food', 28, 1, ['lead', 'math'], 'market'],
+  ['Food Truck Cook', 'Food', 16, 0, ['cook', 'sales'], 'park'],
+  ['Caterer', 'Food', 20, 1, ['cook', 'service'], 'diner'],
+  ['Food Critic', 'Food', 30, 2, ['write:45'], 'diner'],
+  ['Gas Station Attendant', 'Stores', 12, 0, ['service'], 'gasstation'],
+  ['Car Wash Attendant', 'Stores', 11, 0, ['fit'], 'gasstation'],
+  ['Toy Store Clerk', 'Stores', 12, 0, ['service'], 'mall'],
+  ['Bookstore Clerk', 'Stores', 12, 0, ['write'], 'mall'],
+  ['Shoe Salesperson', 'Stores', 13, 0, ['sales'], 'mall'],
+  ['Jewelry Salesperson', 'Stores', 16, 0, ['sales'], 'mall'],
+  ['Electronics Salesperson', 'Stores', 15, 0, ['comp', 'sales'], 'mall'],
+  ['Hardware Store Clerk', 'Stores', 14, 0, ['build'], 'generalstore'],
+  ['General Store Clerk', 'Stores', 12, 0, ['service'], 'generalstore'],
+  ['Outdoor Gear Specialist', 'Stores', 15, 0, ['fit', 'sales'], 'gearshop'],
+  ['Visual Merchandiser', 'Stores', 17, 1, ['art'], 'mall'],
+  ['Personal Shopper', 'Stores', 18, 0, ['comm', 'sales'], 'mall'],
+  ['Mall Security Officer', 'Stores', 15, 0, ['fit'], 'mall'],
+  ['Hair Stylist', 'Stores', 16, 0, ['art', 'service'], 'salon'],
+  ['Barber', 'Stores', 15, 0, ['art'], 'salon'],
+  ['Nail Technician', 'Stores', 13, 0, ['art'], 'salon'],
+  ['Makeup Artist', 'Stores', 17, 0, ['art'], 'salon'],
+  ['Salon Owner', 'Stores', 30, 1, ['art:40', 'lead'], 'salon'],
+  ['Loan Officer', 'Office', 30, 2, ['math', 'comm'], 'bank'],
+  ['Bank Manager', 'Office', 40, 2, ['lead', 'math'], 'bank'],
+  ['Stockbroker', 'Office', 38, 2, ['math', 'sales'], 'bank'],
+  ['Notary', 'Office', 15, 0, ['write'], 'bank'],
+  ['Insurance Agent', 'Office', 24, 1, ['sales', 'comm'], 'office'],
+  ['Tax Preparer', 'Office', 22, 1, ['math'], 'office'],
+  ['Auditor', 'Office', 34, 2, ['math:45'], 'office'],
+  ['Payroll Clerk', 'Office', 18, 1, ['math'], 'office'],
+  ['Human Resources Specialist', 'Office', 26, 2, ['comm'], 'office'],
+  ['Recruiter', 'Office', 25, 1, ['comm', 'sales'], 'jobcenter'],
+  ['Career Counselor', 'Office', 22, 2, ['comm'], 'jobcenter'],
+  ['Job Center Clerk', 'Office', 15, 0, ['service'], 'jobcenter'],
+  ['Office Manager', 'Office', 26, 1, ['lead'], 'office'],
+  ['Executive Assistant', 'Office', 22, 1, ['comm', 'comp'], 'office'],
+  ['Event Planner', 'Office', 22, 1, ['lead', 'comm'], 'office'],
+  ['Public Relations Specialist', 'Office', 27, 2, ['comm', 'write'], 'office'],
+  ['Advertising Manager', 'Office', 35, 2, ['art', 'sales'], 'office'],
+  ['Economist', 'Office', 42, 3, ['math:55'], 'office'],
+  ['Medical Receptionist', 'Health', 15, 0, ['comm'], 'hospital'],
+  ['Medical Assistant', 'Health', 17, 1, ['aid'], 'hospital'],
+  ['Nursing Assistant', 'Health', 16, 0, ['aid'], 'hospital'],
+  ['Phlebotomist', 'Health', 18, 1, ['aid'], 'hospital'],
+  ['X-Ray Technician', 'Health', 26, 2, ['sci', 'aid'], 'hospital'],
+  ['Respiratory Therapist', 'Health', 30, 2, ['aid', 'sci'], 'hospital'],
+  ['Occupational Therapist', 'Health', 36, 3, ['aid'], 'hospital'],
+  ['Speech Therapist', 'Health', 34, 3, ['comm', 'aid'], 'hospital'],
+  ['Dental Hygienist', 'Health', 33, 2, ['aid'], 'hospital'],
+  ['Dental Assistant', 'Health', 19, 1, ['aid'], 'hospital'],
+  ['Optometrist', 'Health', 50, 3, ['sci:55'], 'hospital'],
+  ['Optician', 'Health', 20, 1, ['service', 'sci'], 'hospital'],
+  ['Pediatrician', 'Health', 85, 3, ['aid:65', 'sci:55'], 'hospital'],
+  ['Midwife', 'Health', 45, 3, ['aid:55'], 'hospital'],
+  ['Psychologist', 'Health', 48, 3, ['comm:55'], 'hospital'],
+  ['Home Health Aide', 'Health', 15, 0, ['aid'], 'hospital'],
+  ['Ambulance Driver', 'Health', 18, 0, ['drive:25', 'aid'], 'hospital'],
+  ['Surgical Technician', 'Health', 26, 2, ['aid', 'sci'], 'hospital'],
+  ['Teacher\'s Aide', 'Education', 14, 0, ['comm'], 'school'],
+  ['Substitute Teacher', 'Education', 18, 1, ['comm'], 'school'],
+  ['School Nurse', 'Education', 28, 2, ['aid'], 'school'],
+  ['School Counselor', 'Education', 30, 2, ['comm'], 'school'],
+  ['Art Teacher', 'Education', 26, 2, ['art:40'], 'school'],
+  ['Science Teacher', 'Education', 28, 2, ['sci:40'], 'school'],
+  ['Math Teacher', 'Education', 28, 2, ['math:40'], 'school'],
+  ['P.E. Teacher', 'Education', 26, 2, ['fit:40'], 'school'],
+  ['Spanish Teacher', 'Education', 27, 2, ['comm', 'write'], 'school'],
+  ['Kindergarten Teacher', 'Education', 25, 2, ['comm'], 'school'],
+  ['Special Education Teacher', 'Education', 30, 2, ['comm', 'aid'], 'school'],
+  ['College Dean', 'Education', 60, 3, ['lead:60'], 'school'],
+  ['Library Assistant', 'Education', 13, 0, ['write'], 'library'],
+  ['Children\'s Librarian', 'Education', 24, 2, ['write'], 'library'],
+  ['Storytime Reader', 'Education', 12, 0, ['comm'], 'library'],
+  ['Museum Guide', 'Education', 15, 0, ['comm'], 'museum'],
+  ['Museum Curator', 'Education', 35, 3, ['write', 'art'], 'museum'],
+  ['Archaeologist', 'Education', 38, 3, ['sci:45'], 'museum'],
+  ['Roofer', 'Trades', 19, 0, ['build', 'fit'], 'construction'],
+  ['Welder', 'Trades', 22, 0, ['build:30'], 'construction'],
+  ['Bricklayer', 'Trades', 20, 0, ['build'], 'construction'],
+  ['Heavy Equipment Operator', 'Trades', 26, 0, ['drive', 'build'], 'construction'],
+  ['Crane Operator', 'Trades', 30, 1, ['drive:40'], 'construction'],
+  ['HVAC Technician', 'Trades', 26, 1, ['build', 'sci'], 'construction'],
+  ['Locksmith', 'Trades', 20, 0, ['build'], 'construction'],
+  ['Window Installer', 'Trades', 19, 0, ['build'], 'construction'],
+  ['Tile Setter', 'Trades', 19, 0, ['build', 'art'], 'construction'],
+  ['Drywall Installer', 'Trades', 18, 0, ['build'], 'construction'],
+  ['Handyman', 'Trades', 17, 0, ['build'], 'construction'],
+  ['Lumberjack', 'Trades', 18, 0, ['fit:30'], 'lumbermill'],
+  ['Sawmill Worker', 'Trades', 16, 0, ['build'], 'lumbermill'],
+  ['Furniture Maker', 'Trades', 21, 0, ['build', 'art'], 'lumbermill'],
+  ['Solar Panel Installer', 'Trades', 22, 1, ['build', 'sci'], 'construction'],
+  ['Elevator Mechanic', 'Trades', 32, 1, ['build:45'], 'construction'],
+  ['Land Surveyor', 'Trades', 25, 1, ['math'], 'construction'],
+  ['Interior Designer', 'Trades', 30, 2, ['art:45'], 'office'],
+  ['Forklift Driver', 'Transport', 17, 0, ['drive'], 'warehouse'],
+  ['Package Sorter', 'Transport', 14, 0, ['fit'], 'postoffice'],
+  ['Postal Clerk', 'Transport', 17, 0, ['service'], 'postoffice'],
+  ['Postmaster', 'Transport', 30, 1, ['lead'], 'postoffice'],
+  ['Moving Company Worker', 'Transport', 15, 0, ['fit'], 'warehouse'],
+  ['Tow Truck Driver', 'Transport', 19, 0, ['drive:30'], 'gasstation'],
+  ['Train Conductor', 'Transport', 28, 1, ['drive', 'lead'], 'warehouse'],
+  ['Tram Driver', 'Transport', 25, 0, ['drive'], 'warehouse'],
+  ['Ferry Captain', 'Transport', 30, 1, ['drive', 'lead'], 'harbor'],
+  ['Deckhand', 'Transport', 14, 0, ['fit'], 'harbor'],
+  ['Boat Tour Guide', 'Transport', 15, 0, ['comm'], 'harbor'],
+  ['Ship Captain', 'Transport', 50, 2, ['drive:55', 'lead'], 'harbor'],
+  ['Airport Baggage Handler', 'Transport', 16, 0, ['fit'], 'airport'],
+  ['Gate Agent', 'Transport', 17, 0, ['service'], 'airport'],
+  ['Airport Security Officer', 'Transport', 19, 0, ['comm'], 'airport'],
+  ['Aircraft Mechanic', 'Transport', 30, 1, ['build:45'], 'airport'],
+  ['Helicopter Pilot', 'Transport', 45, 2, ['drive:60'], 'airport'],
+  ['Logistics Manager', 'Transport', 34, 2, ['math', 'lead'], 'warehouse'],
+  ['Computer Repair Technician', 'Tech', 20, 0, ['comp'], 'office'],
+  ['Network Technician', 'Tech', 26, 1, ['comp:35'], 'office'],
+  ['Cybersecurity Analyst', 'Tech', 45, 2, ['comp:55'], 'office'],
+  ['App Developer', 'Tech', 42, 2, ['comp:50'], 'office'],
+  ['Game Artist', 'Tech', 30, 1, ['art:45', 'comp'], 'office'],
+  ['UX Designer', 'Tech', 38, 2, ['art', 'comp'], 'office'],
+  ['Database Administrator', 'Tech', 40, 2, ['comp:50', 'math'], 'office'],
+  ['Cloud Engineer', 'Tech', 50, 2, ['comp:60'], 'office'],
+  ['Social Media Manager', 'Tech', 22, 1, ['comm', 'comp'], 'office'],
+  ['Tech Support Specialist', 'Tech', 18, 0, ['comp', 'service'], 'office'],
+  ['3D Animator', 'Tech', 32, 1, ['art:45', 'comp'], 'office'],
+  ['Drone Pilot', 'Tech', 24, 0, ['drive', 'comp'], 'office'],
+  ['Electrical Engineer', 'Tech', 45, 2, ['sci:50', 'math'], 'office'],
+  ['Mechanical Engineer', 'Tech', 44, 2, ['build:45', 'math'], 'office'],
+  ['Computer Chip Designer', 'Tech', 55, 3, ['sci:60', 'comp:55'], 'office'],
+  ['IT Manager', 'Tech', 50, 2, ['comp:55', 'lead'], 'office'],
+  ['Website Tester', 'Tech', 15, 0, ['comp'], 'office'],
+  ['Smart Home Installer', 'Tech', 20, 0, ['comp', 'build'], 'office'],
+  ['Stagehand', 'Arts', 14, 0, ['build'], 'theater'],
+  ['Lighting Technician', 'Arts', 18, 0, ['comp', 'build'], 'theater'],
+  ['Costume Designer', 'Arts', 22, 1, ['art:40'], 'theater'],
+  ['Set Designer', 'Arts', 24, 1, ['art', 'build'], 'theater'],
+  ['Theater Ticket Seller', 'Arts', 11, 0, ['service'], 'theater'],
+  ['Singer', 'Arts', 30, 0, ['music:55'], 'theater'],
+  ['Comedian', 'Arts', 22, 0, ['comm:45'], 'theater'],
+  ['Magician', 'Arts', 20, 0, ['comm', 'art'], 'theater'],
+  ['Puppeteer', 'Arts', 18, 0, ['art', 'comm'], 'theater'],
+  ['Voice Actor', 'Arts', 26, 0, ['comm:45'], 'theater'],
+  ['Choir Director', 'Arts', 26, 2, ['music:50', 'lead'], 'theater'],
+  ['Orchestra Musician', 'Arts', 34, 2, ['music:65'], 'theater'],
+  ['Potter', 'Arts', 15, 0, ['art'], 'pottery'],
+  ['Pottery Teacher', 'Arts', 18, 0, ['art:35'], 'pottery'],
+  ['Painter', 'Arts', 18, 0, ['art:40'], 'museum'],
+  ['Sculptor', 'Arts', 20, 0, ['art:45'], 'museum'],
+  ['Animator', 'Arts', 30, 1, ['art:50'], 'office'],
+  ['Illustrator', 'Arts', 24, 1, ['art:45'], 'office'],
+  ['Meteorologist', 'Science', 38, 2, ['sci:45'], 'office'],
+  ['Geologist', 'Science', 40, 2, ['sci:45'], 'trailhead'],
+  ['Botanist', 'Science', 34, 2, ['sci'], 'park'],
+  ['Zoologist', 'Science', 36, 2, ['sci', 'animal'], 'zoo'],
+  ['Ecologist', 'Science', 34, 2, ['sci'], 'lake'],
+  ['Oceanographer', 'Science', 42, 3, ['sci:50'], 'beach'],
+  ['Physicist', 'Science', 55, 3, ['sci:65', 'math:60'], 'school'],
+  ['Lab Technician', 'Science', 20, 1, ['sci'], 'hospital'],
+  ['Forensic Scientist', 'Science', 40, 2, ['sci:50'], 'police'],
+  ['Environmental Scientist', 'Science', 36, 2, ['sci'], 'cityhall'],
+  ['Volcanologist', 'Science', 45, 3, ['sci:55'], 'trailhead'],
+  ['Paleontologist', 'Science', 40, 3, ['sci:50'], 'museum'],
+  ['Rocket Scientist', 'Science', 70, 3, ['sci:70', 'math:65'], 'airport'],
+  ['Geneticist', 'Science', 60, 3, ['sci:65'], 'hospital'],
+  ['Science Writer', 'Science', 26, 2, ['write', 'sci'], 'library'],
+  ['Planetarium Guide', 'Science', 16, 0, ['sci'], 'museum'],
+  ['Weather Balloon Launcher', 'Science', 18, 0, ['sci'], 'airport'],
+  ['Water Quality Tester', 'Science', 20, 1, ['sci'], 'lake'],
+  ['Dog Trainer', 'Animals', 18, 0, ['animal:30'], 'petshop'],
+  ['Pet Sitter', 'Animals', 12, 0, ['animal'], 'petshop'],
+  ['Animal Shelter Worker', 'Animals', 13, 0, ['animal'], 'petshop'],
+  ['Aquarium Keeper', 'Animals', 17, 0, ['animal', 'sci'], 'zoo'],
+  ['Horse Trainer', 'Animals', 20, 0, ['animal:35', 'fit'], 'farm'],
+  ['Beekeeper', 'Animals', 16, 0, ['animal'], 'farm'],
+  ['Dairy Farmer', 'Animals', 18, 0, ['animal', 'fit'], 'farm'],
+  ['Ranch Hand', 'Animals', 14, 0, ['fit'], 'farm'],
+  ['Fish Hatchery Worker', 'Animals', 15, 0, ['animal'], 'lake'],
+  ['Wildlife Rescuer', 'Animals', 19, 0, ['animal', 'aid'], 'zoo'],
+  ['Animal Control Officer', 'Animals', 20, 0, ['animal', 'drive'], 'cityhall'],
+  ['Vet Receptionist', 'Animals', 13, 0, ['comm'], 'vet'],
+  ['Animal Nutritionist', 'Animals', 32, 2, ['animal', 'sci'], 'vet'],
+  ['Marine Mammal Trainer', 'Animals', 26, 1, ['animal:45', 'fit'], 'zoo'],
+  ['Wildlife Photographer', 'Animals', 25, 0, ['art', 'animal'], 'zoo'],
+  ['Birding Guide', 'Animals', 14, 0, ['animal'], 'park'],
+  ['Chicken Farmer', 'Animals', 15, 0, ['animal'], 'farm'],
+  ['Sheep Shearer', 'Animals', 16, 0, ['animal', 'fit'], 'farm'],
+  ['Goat Cheese Maker', 'Animals', 17, 0, ['animal', 'cook'], 'village'],
+  ['Police Records Clerk', 'Public Service', 15, 0, ['write'], 'police'],
+  ['K-9 Officer', 'Public Service', 30, 1, ['animal', 'fit'], 'police'],
+  ['Traffic Officer', 'Public Service', 26, 1, ['drive'], 'police'],
+  ['Police Chief', 'Public Service', 55, 2, ['lead:60'], 'police'],
+  ['Probation Officer', 'Public Service', 28, 2, ['comm'], 'police'],
+  ['Fire Captain', 'Public Service', 40, 1, ['lead:45', 'fit'], 'firestation'],
+  ['Fire Inspector', 'Public Service', 30, 1, ['build', 'sci'], 'firestation'],
+  ['Wildland Firefighter', 'Public Service', 26, 0, ['fit:45'], 'firestation'],
+  ['Search and Rescue Worker', 'Public Service', 24, 0, ['fit', 'aid'], 'firestation'],
+  ['City Planner', 'Public Service', 36, 2, ['math', 'lead'], 'cityhall'],
+  ['City Council Member', 'Public Service', 30, 1, ['comm:45', 'lead'], 'cityhall'],
+  ['Town Clerk', 'Public Service', 18, 0, ['write'], 'cityhall'],
+  ['Park Maintenance Worker', 'Public Service', 14, 0, ['fit'], 'park'],
+  ['Street Sweeper', 'Public Service', 15, 0, ['drive'], 'cityhall'],
+  ['Recycling Center Worker', 'Public Service', 13, 0, ['fit'], 'recycling'],
+  ['Water Plant Operator', 'Public Service', 24, 1, ['sci'], 'cityhall'],
+  ['Emergency Manager', 'Public Service', 38, 2, ['lead', 'aid'], 'cityhall'],
+  ['Lifeguard Captain', 'Public Service', 22, 0, ['swimming:50', 'lead'], 'beach'],
+  ['Ski Patrol', 'Public Service', 20, 0, ['fit:40', 'aid'], 'skilodge'],
+  ['Referee', 'Sports', 18, 0, ['fit'], 'sports'],
+  ['Baseball Umpire', 'Sports', 18, 0, ['fit'], 'sports'],
+  ['Ski Instructor', 'Sports', 20, 0, ['fit:35'], 'skilodge'],
+  ['Surf Instructor', 'Sports', 18, 0, ['fit:35'], 'beach'],
+  ['Rock Climbing Guide', 'Sports', 20, 0, ['fit:40'], 'trailhead'],
+  ['Kayak Guide', 'Sports', 16, 0, ['fit'], 'lake'],
+  ['Camp Director', 'Sports', 26, 1, ['lead'], 'campground'],
+  ['Sports Agent', 'Sports', 40, 2, ['sales:50', 'comm'], 'office'],
+  ['Athletic Trainer', 'Sports', 28, 2, ['aid', 'fit'], 'sports'],
+  ['Soccer Coach', 'Sports', 22, 0, ['soccer:45'], 'sports'],
+  ['Basketball Coach', 'Sports', 22, 0, ['basketball:45'], 'sports'],
+  ['Golf Pro', 'Sports', 30, 0, ['golf:55'], 'sports'],
+  ['Pro Runner', 'Sports', 40, 0, ['running:75'], 'sports'],
+  ['Pro Golfer', 'Sports', 70, 0, ['golf:80'], 'sports'],
+  ['Sports Photographer', 'Sports', 22, 0, ['art'], 'sports'],
+  ['Stadium Snack Vendor', 'Sports', 11, 0, ['sales'], 'sports'],
+  ['Equipment Manager', 'Sports', 16, 0, ['build'], 'sports'],
+  ['Fitness Instructor', 'Sports', 18, 0, ['fit:40'], 'sports'],
+  ['Hiking Trail Guide', 'Sports', 16, 0, ['fit'], 'trailhead'],
+  ['Hotel Front Desk Clerk', 'Hospitality', 13, 0, ['service'], 'seahotel'],
+  ['Hotel Housekeeper', 'Hospitality', 12, 0, ['fit'], 'pineinn'],
+  ['Bellhop', 'Hospitality', 11, 0, ['service'], 'seahotel'],
+  ['Hotel Concierge', 'Hospitality', 18, 0, ['comm'], 'seahotel'],
+  ['Hotel Manager', 'Hospitality', 34, 1, ['lead'], 'seahotel'],
+  ['Innkeeper', 'Hospitality', 22, 0, ['service', 'lead'], 'riverinn'],
+  ['Village Tour Guide', 'Hospitality', 15, 0, ['comm'], 'village'],
+  ['Travel Agent', 'Hospitality', 18, 1, ['comm', 'sales'], 'airport'],
+  ['Hot Springs Attendant', 'Hospitality', 12, 0, ['service'], 'hotsprings'],
+  ['Ski Lift Operator', 'Hospitality', 13, 0, [], 'skilodge'],
+  ['Ski Lodge Cook', 'Hospitality', 15, 0, ['cook'], 'skilodge'],
+  ['Campground Host', 'Hospitality', 12, 0, ['service'], 'campground'],
+  ['Zoo Tour Guide', 'Hospitality', 13, 0, ['comm', 'animal'], 'zoo'],
+  ['Beach Chair Rental Clerk', 'Hospitality', 11, 0, ['sales'], 'beach'],
+  ['Cruise Director', 'Hospitality', 30, 1, ['comm', 'lead'], 'harbor'],
+  ['Zoo Gift Shop Clerk', 'Hospitality', 11, 0, ['service'], 'zoo'],
+  ['Farmers Market Vendor', 'Hospitality', 13, 0, ['sales'], 'village'],
+  ['Lighthouse Tour Guide', 'Hospitality', 13, 0, ['comm'], 'lighthouse'],
+  ['Inn Breakfast Cook', 'Hospitality', 14, 0, ['cook'], 'pineinn'],
 ];
 
 const DEFAULT_REQ = [10, 15, 30, 45];
@@ -744,6 +1006,7 @@ const JOBS = JOB_DATA.map((j, i) => ({
     return { s, lvl: lvl ? Number(lvl) : DEFAULT_REQ[j[3]] };
   }),
   insurance: j[3] >= 2 || j[2] >= 40,
+  place: j[5] || null,
 }));
 
 const LIFE_TIPS = [
@@ -2261,12 +2524,12 @@ const PLACES = {
 const HOME_PLACE = { parents: 'h_parents', shared: 'h_apartments', studio: 'h_apartments', onebed: 'h_apartments', small: 'h_small', family: 'h_family', mansion: 'h_mansion' };
 const WORKPLACE = {
   Food: 'diner', Stores: 'mall', Office: 'office', Health: 'hospital', Education: 'school', Trades: 'construction',
-  Transport: 'warehouse', Tech: 'office', Arts: 'theater', Science: 'school', Animals: 'farm', 'Public Service': 'cityhall', Sports: 'sports',
+  Transport: 'warehouse', Tech: 'office', Arts: 'theater', Science: 'school', Animals: 'farm', 'Public Service': 'cityhall', Sports: 'sports', Hospitality: 'seahotel',
 };
 
 function placeId(loc) { return loc === 'home' ? HOME_PLACE[S.home] : loc; }
 function placeOf(loc) { return PLACES[placeId(loc)]; }
-function workplaceOf(job) { return WORKPLACE[job.cat]; }
+function workplaceOf(job) { return job.place && PLACES[job.place] ? job.place : WORKPLACE[job.cat]; }
 function locName(loc) { return loc === 'home' ? `Home (${home().name})` : PLACES[loc].name; }
 
 // ---------- roads & paths ----------
@@ -2972,6 +3235,7 @@ function travelTo(dest, opts = {}) {
       else S.insideOf = null;                       // ...or outside the building's door
       pass(info.hours, 'awake');
       afterDrive(info);
+      if (dest !== 'home' && typeof hiringWelcome === 'function' && PLACES[placeId(dest)] && !ENTRANCE[placeId(dest)]) hiringWelcome(placeId(dest));
       safetyAfterTravel(info);
       if (!opts.quiet) log(`${info.icon} You ${info.how} to ${locName(dest)} (${travelTime(info.hours)}${info.cost ? `, $${info.cost}` : ''}).${info.rush ? ' 🚦 Rush hour traffic made it slow!' : ''}`);
       if (Math.random() < 0.04 && ['park', 'diner', 'sports', 'school'].includes(dest)) meetFriend(dest);
@@ -6182,9 +6446,9 @@ function openPlaceDoor(pid) {
     const ease = 1 - Math.pow(1 - k, 3);
     if ($('#entcv')) drawEntrance($('#entcv'), pid, ease);
     if (k < 1) requestAnimationFrame(step);
-    else { placeDoorAnim = null; S.insideOf = pid; log(ENTRANCE[pid].door === 'slide' ? `🚪 The automatic doors slid open. You walked into the ${PLACES[pid].name}.` : `🚪 You opened the door and went into the ${PLACES[pid].name}.`); save(); render(); }
+    else { placeDoorAnim = null; S.insideOf = pid; log(ENTRANCE[pid].door === 'slide' ? `🚪 The automatic doors slid open. You walked into the ${PLACES[pid].name}.` : `🚪 You opened the door and went into the ${PLACES[pid].name}.`); hiringWelcome(pid); save(); render(); nextModal(); }
   };
-  if (!cv) { placeDoorAnim = null; S.insideOf = pid; render(); return; }
+  if (!cv) { placeDoorAnim = null; S.insideOf = pid; hiringWelcome(pid); render(); nextModal(); return; }
   requestAnimationFrame(step);
 }
 function entranceSection(pid) {
@@ -12006,16 +12270,31 @@ function leftSpots(was) {
   if (was.includes('toilet') && !now.includes('toilet') && S.toiletUsed) { S.toiletUsed = false; S.mess = clamp(S.mess + 3); fun2(-2); log('🤢 Eww! You forgot to FLUSH the toilet. Always flush after you go!', 'bad'); }
 }
 function roomStep(dir) { walkTo(S.roomX + dir * 90); }
-function setupRoomInteract(cv) {
-  if (cv.dataset.walk) return;
-  cv.dataset.walk = '1'; cv.style.cursor = 'pointer';
-  cv.addEventListener('click', e => { const r = cv.getBoundingClientRect(); walkTo((e.clientX - r.left) / r.width * RW); });
+function setupRoomInteract(cv) { cv.dataset.walk = '1'; }
+// hold an arrow key to keep walking
+const keysDown = {};
+let keyWalk = null;
+function keyWalkLoop(t0) {
+  let last = t0;
+  const step = t => {
+    const dir = (keysDown.ArrowRight ? 1 : 0) - (keysDown.ArrowLeft ? 1 : 0);
+    if (!dir || !$('#room')) { keyWalk = null; S.roomPhase = 0; const cv = $('#room'); if (cv) drawRoom(cv); updateRoomBar(); save(); return; }
+    const was = nearSpots().map(s => s.id), before = nearSpots().map(s => s.id).join();
+    S.roomX = Math.max(30, Math.min(985, S.roomX + dir * (t - last) * 0.32)); S.roomPhase = t / 90; S.facing = dir; last = t;
+    const cv = $('#room'); if (cv) drawRoom(cv);
+    if (nearSpots().map(s => s.id).join() !== before) { leftSpots(was); updateRoomBar(); }
+    keyWalk = requestAnimationFrame(step);
+  };
+  keyWalk = requestAnimationFrame(step);
 }
 window.addEventListener('keydown', e => {
   if (!S || !$('#room') || document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || $('#modal').classList.contains('open')) return;
-  if (e.key === 'ArrowLeft') { roomStep(-1); e.preventDefault(); }
-  if (e.key === 'ArrowRight') { roomStep(1); e.preventDefault(); }
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault(); keysDown[e.key] = true;
+  if (!keyWalk) keyWalkLoop(performance.now());
 });
+window.addEventListener('keyup', e => { delete keysDown[e.key]; });
+window.addEventListener('blur', () => { delete keysDown.ArrowLeft; delete keysDown.ArrowRight; });
 
 // ---------- the button bar under your room ----------
 function roomBar() { return `<div id="roombar" class="roombar">${roomBarHtml()}</div>`; }
@@ -12031,7 +12310,8 @@ function roomBarHtml() {
   });
   const hands = S.hands.length ? `<div class="hands"><b>🤲 Your stuff:</b> ${S.hands.map((h, i) => `<span class="chip">${handIcon(h)} ${handName(h)} ${handEdible(h) ? `<button class="btn sm ghost" onclick="eatHand(${i})">Eat</button>` : ''}</span>`).join('')}</div>` : '<div class="hands muted small">🤲 Your hands are empty.</div>';
   const water = S.tap ? `<div class="waterwarn">💧 The ${S.tap.what} is running! ${Math.round(tapGallons())} gallons so far — ${S.tap.what === 'shower' ? 'you pay for every gallon!' : 'turn it off!'} ${rb('🚱 Turn off', 'tapOff()', 'primary')}</div>` : '';
-  return `<div class="walk"><button class="btn sm ghost" onclick="roomStep(-1)" aria-label="Walk left">◀ Walk</button><span class="muted small">Tap the room or use ← → to walk around. Get close to things!</span><button class="btn sm ghost" onclick="roomStep(1)" aria-label="Walk right">Walk ▶</button></div>
+  return `<div class="walk muted small">⌨️ Use the ← → arrow keys on your keyboard to walk. Get close to things and buttons appear!</div>
+    ${verbBar()}
     ${water}${parts.length ? `<div class="spots">${parts.join('')}</div>` : '<p class="muted small">Walk up to something to use it.</p>'}${hands}`;
 }
 function spotButtons(id) {
@@ -12057,7 +12337,7 @@ function handKey(h) { return h.kind === 'snack' ? 'snack:' + h.k : h.id; }
 function eatHand(i) {
   const h = S.hands[i]; if (!h || !handEdible(h)) return;
   S.hands.splice(i, 1);
-  if (h.kind === 'dish') { pass(0.3); ateFood(h.food); fun2(5); S.dishes++; S.handsDirty && toast('🧼 Did you wash your hands first?'); log(`${h.icon} You ate the ${h.name.toLowerCase()} you cooked. Delicious!`, 'good'); }
+  if (h.kind === 'dish') { pass(0.3); ateFood(h.food); fun2(5); S.dishes++; S.handsDirty && toast('🧼 Did you wash your hands first?'); log(`${h.icon} You ate the ${h.name.toLowerCase()} you made. Delicious!`, "good"); }
   else if (h.kind === 'snack') { S.pantry[h.k] = (S.pantry[h.k] || 0) + 1; eatSnack(h.k); }
   else { const f = FOODS[h.id]; pass(0.1); ateFood(f.snack[0]); S.needs.thirst = clamp(S.needs.thirst + (f.snack[1] || 0)); S.trash = clamp(S.trash + 1); log(`${f.icon} You ${h.id === 'milk' ? 'drank a glass of' : 'ate some'} ${f.name.toLowerCase()}.`); }
   done();
@@ -12210,6 +12490,107 @@ function drawHeld(c, px) {
   c.font = '18px system-ui, "Apple Color Emoji", "Segoe UI Emoji"'; c.textAlign = 'center';
   S.hands.slice(0, 2).forEach((h, i) => c.fillText(handIcon(h), px + (i ? -22 : 22), 296));
   c.textAlign = 'start';
+}
+
+// ---------- action buttons: cook, cut, eat, drink, hold, read, write, draw, sing, dance, clean, sleep ----------
+const VERBS = [['🍳', 'Cook', 'verbCook()'], ['🔪', 'Cut', 'verbCut()'], ['🍽️', 'Eat', 'verbEat()'], ['💧', 'Drink', 'verbDrink()'], ['🤲', 'Hold', 'verbHold()'], ['📖', 'Read', 'verbRead()'],
+  ['✍️', 'Write', 'verbWrite()'], ['🖍️', 'Draw', 'verbDraw()'], ['🎤', 'Sing', 'verbSing()'], ['💃', 'Dance', 'verbDance()'], ['🧹', 'Clean', "homeAct('clean')"], ['😴', 'Sleep', "homeAct('sleep')"]];
+function verbBar() { return `<div class="verbs">${VERBS.map(v => `<button class="verb" onclick="${v[2]}"><span>${v[0]}</span>${v[1]}</button>`).join('')}</div>`; }
+function verbCook() {
+  const near = nearSpots().map(s => s.id), cookable = S.hands.some(h => COOKS[handKey(h)]);
+  if (cookable && near.includes('stove')) return putIn('stove');
+  if (cookable && near.includes('microwave')) return putIn('microwave');
+  if (cookable) return nope('Walk over to the stove or microwave to cook what you\'re holding!');
+  recipeModal();
+}
+const CUTS = { veggies: ['Salad', '🥗', 22], bread: ['Sandwich', '🥪', 25], apples: ['Apple slices', '🍏', 14], bananas: ['Banana slices', '🍌', 13], cheese: ['Cheese slices', '🧀', 12], tortillas: ['Tortilla chips', '🌮', 12] };
+function verbCut() {
+  const list = S.hands.map((h, i) => [h, i]).filter(([h]) => h.kind === 'food' && (CUTS[h.id] || h.id === 'chicken'));
+  if (!list.length) return nope('Hold some food to cut first! Grab veggies, bread, apples, bananas, cheese or chicken from the fridge or cabinet.');
+  showModal(`<h2>🔪 What do you want to cut?</h2><p class="muted">Safety first: cut on a cutting board, keep your fingers curled back, and ask a grown-up to help with sharp knives!</p>
+    <div class="grid actions">${list.map(([h, i]) => `<button class="action" onclick="closeModal();doCut(${i})"><span class="ic">${FOODS[h.id].icon}</span><b>${FOODS[h.id].name}</b><small>${h.id === 'chicken' ? 'cut into pieces (cooks faster)' : `makes ${CUTS[h.id][1]} ${CUTS[h.id][0]}`}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function doCut(i) {
+  const h = S.hands[i]; if (!h) return;
+  pass(5 / 60); addSkill('cook', 0.8);
+  if (S.skills.cook < 10 && Math.random() < 0.1) { S.needs.health = clamp(S.needs.health - 3); log('🩹 Ouch! You nicked your finger. Curl your fingers back and go slow!', 'bad'); }
+  if (h.id === 'chicken') { h.cut = true; log('🔪 You cut the chicken into pieces on a cutting board. Wash your hands after touching raw chicken!'); S.handsDirty = true; }
+  else { const c = CUTS[h.id]; S.hands[i] = { kind: 'dish', name: c[0], icon: c[1], food: c[2] }; log(`🔪 You cut the ${FOODS[h.id].name.toLowerCase()} and made ${c[1]} ${c[0].toLowerCase()}!`); }
+  S.dishes++; done();
+}
+function verbEat() {
+  const i = S.hands.findIndex(handEdible);
+  if (i >= 0) return eatHand(i);
+  snackMenu();
+}
+function verbDrink() { const near = nearSpots().map(s => s.id); if (near.includes('sink') && S.tap && S.tap.what === 'sink') return sinkDo('drink'); drink('tap'); done(); }
+function verbHold() {
+  const opts = [];
+  (S.pets || []).forEach((p, i) => opts.push([PET_TYPES[p.kind].icon, `Hold ${p.name}`, 'cuddle your pet', `holdPet(${i})`]));
+  if (hasToy('teddy')) opts.push(['🧸', 'Hold your teddy bear', 'a big hug', "playToy('teddy')"]);
+  const near = nearSpots().map(s => s.id);
+  ['fridge', 'cabinet'].forEach(k => { if (near.includes(k)) opts.push([k === 'fridge' ? '🧊' : '🗄️', `Hold something from the ${k === 'fridge' ? 'fridge' : 'cabinet'}`, 'grab it', `grabFrom('${k}')`]); });
+  if (S.hands.length) opts.push(['📥', 'Put something down', 'free your hands', 'putDownModal()']);
+  if (!opts.length) return nope('Walk over to the fridge or cabinet to grab something to hold — or get a pet or teddy bear!');
+  showModal(`<h2>🤲 Hold</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function holdPet(i) { const p = S.pets[i]; pass(0.25, 'relax'); p.happy = clamp(p.happy + 12); fun2(8); log(`🤗 You held ${p.name} close. ${baseOf(p) === 'cat' ? 'They purred like a little engine!' : baseOf(p) === 'dog' ? 'They licked your face!' : baseOf(p) === 'fish' ? '...well, you smiled at them through the glass. 🐟' : 'They snuggled right in.'}`, 'good'); done(); }
+function putDownModal() {
+  const near = nearSpots().map(s => s.id), where = ['fridge', 'cabinet'].find(k => near.includes(k));
+  if (where) return putIn(where);
+  showModal(`<h2>📥 Put something down</h2><p class="muted">Walk to the fridge or snack cabinet to put food away. Or put it on the table:</p><div class="grid actions">${S.hands.map((h, i) => `<button class="action" onclick="closeModal();tableDrop(${i})"><span class="ic">${handIcon(h)}</span><b>${handName(h)}</b><small>put it in the kitchen</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function tableDrop(i) { const h = S.hands[i]; S.hands.splice(i, 1); if (h.kind === 'snack') S.pantry[h.k] = (S.pantry[h.k] || 0) + 1; else if (h.kind === 'food') S.fridgeFood.push({ id: h.id, exp: h.exp, where: FOODS[h.id].cold ? 'fridge' : 'cabinet' }); else S.fridgeFood.push({ id: 'veggies', exp: S.day + 2, where: 'fridge', leftover: h.name }); log(`📥 You put the ${handName(h).toLowerCase()} away.`); render(); save(); }
+function verbRead() {
+  const opts = [['📕', 'Read a book', has('bookshelf') ? 'from your bookshelf · Writing skill' : 'a book you own · Writing skill', "homeAct('read')"]];
+  if (S.lib && S.lib.books.length) opts.push(['📚', 'Read a library book', `${S.lib.books.length} borrowed`, 'readLibraryBook()']);
+  opts.push(['📰', 'Read the newspaper', 'town news', "showNews('📰 The Maple Times')"]);
+  opts.push(['💭', 'Read a comic book', 'just for fun', 'readComic()']);
+  showModal(`<h2>📖 Read</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function readComic() { pass(0.5, 'relax'); fun2(10); addSkill('write', 0.4); log(`💭 You read a comic about ${pickR(['a superhero dog', 'space pirates', 'a robot who loves pancakes', 'a girl who can talk to birds'])}. So funny!`); done(); }
+const DIARY = ['Today I learned something new...', 'Something that made me happy today was...', 'One thing I want to do this year is...', 'My favorite thing about my friends is...', 'If I could have any job, I would be...', 'Something hard I did today was...'];
+function verbWrite() {
+  const ch = S.book ? S.book.chapters || 0 : 0;
+  const opts = [['📔', 'Write in your diary', 'about your day · Writing skill', 'writeDiary()'], ['📝', 'Write a poem', 'be creative!', 'writePoem()'], ['📕', 'Write a book chapter', 'publish it later for money', 'writeChapter()']];
+  if (has('desk')) opts.push(['🗒️', 'Do homework', 'at your desk', "homeAct('homework')"]);
+  showModal(`<h2>✍️ Write</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+function writeDiary() { pass(0.5, 'relax'); addSkill('write', 1.2); fun2(6); S.diary = (S.diary || 0) + 1; log(`📔 Dear Diary... "${pickR(DIARY)}" You filled a whole page! (${S.diary} entries)`); done(); }
+function writePoem() { pass(0.5, 'relax'); addSkill('write', 1.4); addSkill('art', 0.4); fun2(7); log(`📝 You wrote a poem: "${pickR(['The moon is a cookie, / the stars are the crumbs, / I eat them all up / when nighttime comes.', 'My dog has a tail / that wags like a flag, / he runs to the door / with his toy in a bag.', 'Rain on the window, / tap tap tap, / I read my book / with a cat on my lap.', 'Snowflakes falling, / soft and white, / I build a snowman / out in the light.'])}"`, 'good'); done(); }
+function verbDraw() {
+  if (S.inv && S.inv.canvases > 0) return showModal('<h2>🖍️ Draw or Paint?</h2>', [{ label: '🖍️ Draw for fun', cls: 'ghost', fn: drawPicture }, { label: '🖼️ Paint on a canvas (to sell)', cls: 'primary', fn: () => { paint(); } }]);
+  drawPicture();
+}
+function drawPicture() { pass(0.5, 'relax'); addSkill('art', 1.2); fun2(8); log(`🖍️ You drew ${pickR(['your family', 'a dragon eating spaghetti', 'your dream house', 'a rocket going to Mars', 'your pet', 'a rainbow over the town'])}. You stuck it on the fridge!`); done(); }
+function verbSing() {
+  pass(0.25, 'relax'); addSkill('music', 0.8); fun2(8);
+  const inShower = S.tap && S.tap.what === 'shower';
+  if (S.hour >= 22 || S.hour < 7) { S.lateNoise = true; log('🎤 You sang loudly... but it\'s late! Shhh, people are sleeping.'); }
+  else log(inShower ? '🚿🎤 You sang in the shower! The echo made you sound like a pop star.' : `🎤 You sang "${pickR(['Happy Birthday', 'Twinkle Twinkle Little Star', 'a song you made up', 'your favorite radio song', 'The Alphabet Song'])}" at the top of your lungs!`);
+  done();
+}
+function verbDance() { if (S.needs.energy < 10) return nope('Too tired to dance!'); pass(0.25, 'relax'); addSkill('fit', 0.6); fun2(12); S.needs.energy = clamp(S.needs.energy - 4); log(`💃 You turned on music and danced ${pickR(['the robot', 'like a chicken', 'a happy wiggle dance', 'the moonwalk', 'a twirly spin dance'])}!`); done(); }
+
+// ---------- jobs at every place: interview right where you are ----------
+function jobsHereCard(pid) {
+  if (!pid || pid === 'jobcenter') return '';
+  const jobs = JOBS.filter(j => workplaceOf(j) === pid).sort((a, b) => a.pay - b.pay);
+  if (!jobs.length) return '';
+  return `<details class="card jobshere" ${S.job ? '' : 'open'}><summary>💼 Jobs Here <span class="muted small">· ${jobs.length} jobs · ask for an interview right now! (weekdays 8 AM – 4 PM)</span></summary>
+    <div class="mrows">${jobs.map(j => { const ok = meetsReqs(j), mine = S.job && S.job.id === j.id, cd = S.cooldown[j.id] && S.cooldown[j.id] > S.day;
+      return mrow(ok ? '✅' : '💼', `${j.name} · $${j.pay}/hr`, `${EDU_NAMES[j.edu]}${j.req.length ? ' · ' + j.req.map(r => `${skillName(r.s)} ${r.lvl}`).join(', ') : ' · no skills needed'}${j.insurance ? ' · 🩺 insurance' : ''}`,
+        mine ? b('Your job', '', 'ghost', true) : cd ? b(`Re-apply day ${S.cooldown[j.id]}`, '', 'ghost', true) : b('🤝 Interview', `startInterview(${j.id})`, ok ? 'primary' : 'ghost')); }).join('')}</div></details>`;
+}
+// the first time you visit a place that's hiring, the manager offers you an interview
+function hiringWelcome(pid) {
+  if (!S.visitedJobs) S.visitedJobs = {};
+  if (S.visitedJobs[pid] || S.job) return;
+  const jobs = JOBS.filter(j => workplaceOf(j) === pid && meetsReqs(j));
+  S.visitedJobs[pid] = true;
+  if (!jobs.length || isWeekend() || S.hour < 8 || S.hour > 16) return;
+  const j = jobs.sort((a, b2) => b2.pay - a.pay)[0];
+  queueModal(`<h2>👋 We're Hiring!</h2><p>The manager at the ${PLACES[pid].name} saw you come in: <b>"Hi! We need a ${j.name}. It pays $${j.pay}/hour. Want to do an interview right now?"</b></p><button class="btn primary" onclick="closeModal();startInterview(${j.id})">🤝 Yes, interview me!</button> <span class="muted small">(or tap OK to say no thanks)</span>`);
 }
 
 </script>
@@ -12380,7 +12761,7 @@ function viewFor(t) {
   if (outside) return head + entranceSection(pid) + (S.job && workplaceOf(JOBS[S.job.id]) === pid ? jobCard() : '');
   const body = (t !== 'home' && ENTRANCE[pid] ? interiorSection(pid) : '') + (PLACE_VIEWS[t] ? PLACE_VIEWS[t]() : TOWN_ACTIONS[t] ? viewTownPlace(t) : viewWorkplace(t));
   const search = t !== 'home' && /onclick="(buy|buyFood|farEat|farFood|farGear|buyCraftKit|buyPet|buyFlip|buyPack)/.test(body) ? shopSearchBar() : '';
-  return head + search + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
+  return head + search + body + tipJar(pid) + tourCard(pid) + (pid !== 'home' ? teenJobsAt(pid) : '') + (WILD[pid] ? `<div class="card"><h3>👀 Spot Wildlife</h3><p class="muted">Look for animals and add them to your nature journal!</p><button class="btn sm primary" onclick="spotWildlife()">👀 Look around (45 min)</button></div>` : '') + farStoreCard(pid) + outdoorToysCard(pid) + (t !== 'home' ? jobsHereCard(pid) : '') + volunteerCard(pid) + (t !== 'home' || S.doorOpen ? money2Section(t === 'home' ? 'home' : pid) : '') + moneySection(t) + (t === 'home' ? '' : restroomBar());
 }
 
 function viewGoThere(t) {
@@ -12649,12 +13030,8 @@ function parkAct(id) {
 }
 
 function viewWorkplace(t) {
-  const cats = Object.keys(WORKPLACE).filter(c => WORKPLACE[c] === placeId(t));
-  const jobs = JOBS.filter(j => cats.includes(j.cat));
   const mine = S.job && workplaceOf(JOBS[S.job.id]) === placeId(t);
-  return `${mine ? jobCard() : ''}
-    <p>People who work here: ${jobs.map(j => j.name).join(', ')}.</p>
-    <p class="muted">Want to work here? Apply at the <a onclick="setTab('jobcenter')">💼 Job Center</a>.</p>`;
+  return `${mine ? jobCard() : ''}`;
 }
 
 function viewHousing() {
