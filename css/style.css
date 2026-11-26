@@ -390,3 +390,8 @@ details.walls summary { cursor: pointer; }
 .np-head { font-size: 1.8rem; font-weight: 900; text-align: center; letter-spacing: 1px; border-bottom: 3px double #222; }
 .np-date { text-align: center; font-size: .8rem; color: #555; margin: 4px 0 8px; }
 .np-ad { border: 1px dashed #999; padding: 6px 8px; margin: 4px 0; border-radius: 4px; }
+
+.walletbtn { background: none; border: 0; color: inherit; text-align: right; cursor: pointer; padding: 2px 4px; border-radius: 8px; font: inherit; }
+.walletbtn:hover { background: var(--bg2); }
+.bill { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; background: #d7ecd0; color: #1b4d1b; border: 1px solid #8cbf86; font-weight: 700; font-size: .85rem; }
+.bill.coin { border-radius: 999px; background: #eee3c2; color: #5b4a1a; border-color: #c9b27a; }

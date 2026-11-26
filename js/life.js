@@ -59,12 +59,14 @@ function lifeNewDay() {
   // getting sick
   if (S.ill) {
     S.ill.days--;
-    if (S.ill.days <= 0) { log(`😊 You're all better! No more ${ILLNESS[S.ill.type].name.toLowerCase()}.`, 'good'); S.ill = null; }
+    if (S.ill.days <= 0) { log(`😊 You're all better! No more ${ILLNESS[S.ill.type].name.toLowerCase()}.`, 'good'); S.ill = null; S.healthyUntil = S.day + 21; }
   } else {
     const se = seasonOf();
-    let cold = 0.025 + (se === 'winter' ? 0.04 : se === 'fall' ? 0.015 : 0) + (S.needs.hygiene < 30 ? 0.04 : 0) + (S.gotCold > 2 ? 0.1 : 0);
-    let flu = se === 'winter' && S.fluShot !== dateOf().year ? 0.025 : 0;
+    // getting sick is rare (about 2-3 times a year), and after you get better you stay healthy for at least 3 weeks
+    let cold = 0.004 + (se === 'winter' ? 0.008 : se === 'fall' ? 0.003 : 0) + (S.needs.hygiene < 30 ? 0.01 : 0) + (S.gotCold > 2 ? 0.03 : 0);
+    let flu = se === 'winter' && S.fluShot !== dateOf().year ? 0.006 : 0;
     if (perk('safety')) cold *= 0.9;
+    if (S.healthyUntil && S.day < S.healthyUntil) { cold = 0; flu = 0; }
     if (Math.random() < flu) getSick('flu');
     else if (Math.random() < cold) getSick('cold');
   }
@@ -101,7 +103,7 @@ const ILLNESS = {
   arm:     { name: 'Broken Arm', icon: '🦾', days: 21, energy: 0, fun: 0.5, perf: 15, about: 'Your arm is in a cast. No sports until it heals!' },
 };
 function getSick(type) {
-  if (S.ill) return;
+  if (S.ill || (S.healthyUntil && S.day < S.healthyUntil)) return;
   const t = ILLNESS[type];
   S.ill = { type, days: t.days };
   log(`${t.icon} You got a ${t.name.toLowerCase()}. ${t.about}`, 'bad');
@@ -118,7 +120,7 @@ function takeMedicine() {
   log('💊 You took your medicine with a glass of water. You feel a little better.'); done();
 }
 function sportsInjury() {
-  if (S.ill || Math.random() > 0.02) return false;
+  if (S.ill || Math.random() > 0.004) return false;
   S.ill = { type: 'arm', days: 21 };
   const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
   const bill = insured ? 150 : 1200;

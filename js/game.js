@@ -625,7 +625,7 @@ function dailyEvent() {
   ev.push({ w: 3, f: () => { earn(20, 'Found money'); return ['💵 Lucky Day', 'You found $20 on the sidewalk!', '']; } });
   ev.push({ w: S.needs.hygiene < 40 ? 5 : 2, f: () => { S.needs.fun = clamp(S.needs.fun + 4); return ['☀️ Nice Day', 'You took a deep breath of fresh air and felt great.', '']; } });
   ev.push({ w: 2, f: () => { earn(50, 'Birthday card from Grandma'); return ['💌 Card from Grandma', 'Grandma sent you a card with $50 inside!', '']; } });
-  ev.push({ w: 2, f: () => { charge(60, 'Gift for friend\'s graduation'); return ['🎓 Graduation Party', 'Your friend graduated! You bought them a $60 gift.', 'Some expenses are surprises. That\'s why saving matters.']; } });
+  ev.push({ w: 2, f: () => { charge(20, 'Gift for friend\'s graduation'); return ['🎓 Graduation Party', 'Your friend graduated! You bought them a $20 gift.', 'Some expenses are surprises. That\'s why saving matters.']; } });
   ev.push({ w: 2, f: () => { S.needs.fun = clamp(S.needs.fun + 20); return ['🎉 Party!', 'Your friends threw a party. Fun +20!', '']; } });
   if (has('car') && !has('newcar')) ev.push({ w: 3, f: () => { charge(400, 'Car repair'); return ['🔧 Car Trouble', 'Your used car broke down. Repair: $400.', 'Older cars cost less to buy, but need more repairs.']; } });
   if (has('car') || has('newcar')) ev.push({ w: 1, f: () => { charge(45, 'Parking ticket'); return ['🅿️ Parking Ticket', 'You parked in the wrong spot. $45 ticket!', '']; } });
@@ -653,11 +653,11 @@ function dailyEvent() {
 function ateFood(amount) {
   S.needs.food = clamp(S.needs.food + amount);
   S.needs.bladder = clamp(S.needs.bladder - 8);   // you drink something with your meal
-  if (S.handsDirty && Math.random() < 0.3) {
+  if (S.handsDirty && Math.random() < 0.12) {
     S.needs.health = clamp(S.needs.health - 15);
     S.needs.fun = clamp(S.needs.fun - 10);
     log('🤢 You got a tummy ache. You ate without washing your hands after using the toilet!', 'bad');
-    if (Math.random() < 0.35) getSick('stomach');
+    if (Math.random() < 0.15) getSick('stomach');
     toast('🤢 Tummy ache! Wash your hands before eating.', 'bad');
   }
 }
