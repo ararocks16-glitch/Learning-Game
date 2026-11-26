@@ -189,14 +189,16 @@ function tick(h, mode) {
   } else {
     n.energy += r[1] * h;
   }
-  if (n.food <= 0) n.health -= 3 * h;
+  if (n.food <= 0) n.health -= 1.5 * h;
+  // your body heals by itself when you're fed, have water and are clean
+  if (mode !== 'sleep' && n.food > 30 && (n.thirst === undefined || n.thirst > 25) && n.hygiene > 25 && !S.ill) n.health += 0.6 * h;
   petTick(h);
   lifeTick(h, mode);
   jetlagTick(h, mode);
   if (S.l4) outfitTick(h, mode);
   if (mode !== 'sleep') sunTick(h);
-  if (n.hygiene < 15) { n.health -= 0.4 * h; n.fun -= 1 * h; }
-  if (n.fun < 10) n.health -= 0.3 * h;
+  if (n.hygiene < 15) { n.health -= 0.2 * h; n.fun -= 1 * h; }
+  if (n.fun < 10) n.health -= 0.1 * h;
   if (atHome() && has('couch') && mode === 'relax') n.fun += 2 * h;
   if (atHome() && mode !== 'sleep') n.fun += cozy() * 0.03 * h;
   if (atHome() && has('fan') && S.weather === 'hot') n.fun += 0.5 * h;
@@ -653,11 +655,11 @@ function dailyEvent() {
 function ateFood(amount) {
   S.needs.food = clamp(S.needs.food + amount);
   S.needs.bladder = clamp(S.needs.bladder - 8);   // you drink something with your meal
-  if (S.handsDirty && Math.random() < 0.12) {
-    S.needs.health = clamp(S.needs.health - 15);
+  if (S.handsDirty && Math.random() < 0.08) {
+    S.needs.health = clamp(S.needs.health - 5);
     S.needs.fun = clamp(S.needs.fun - 10);
     log('🤢 You got a tummy ache. You ate without washing your hands after using the toilet!', 'bad');
-    if (Math.random() < 0.15) getSick('stomach');
+    if (Math.random() < 0.08) getSick('stomach');
     toast('🤢 Tummy ache! Wash your hands before eating.', 'bad');
   }
 }
@@ -1100,6 +1102,11 @@ function checkBody() {
     log('😳 Oops! You didn\'t make it to the bathroom in time.', 'bad');
     queueModal(`<h2>😳 Oops!</h2><p>You waited too long and didn't make it to the bathroom in time. Your clothes need washing and you need a shower.</p><p class="lesson">💡 When the 🚽 Bathroom bar gets low, go! Every store, school and workplace has a restroom.</p>`);
   }
+  if (n.health < 30 && n.health > 0 && !S.healthWarned) {
+    S.healthWarned = true;
+    queueModal(`<h2>❤️ Your Health Is Getting Low</h2><p>Take care of yourself so you don't end up in the hospital:</p><ul class="notes"><li>🍽️ Eat a meal</li><li>💧 Drink water</li><li>😴 Get some sleep</li><li>🚿 Take a shower</li></ul><p class="muted">Your health goes back up by itself when you're fed, have water and are clean.</p>`);
+  }
+  if (n.health >= 50) S.healthWarned = false;
   if (n.health <= 0) {
     const insured = S.insurance || (S.job && JOBS[S.job.id].insurance);
     const bill = insured ? 300 : 3000;

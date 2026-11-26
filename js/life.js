@@ -13,21 +13,23 @@ function ensureLifeState() {
   if (S.lightsOn === undefined) S.lightsOn = true;
   if (S.volunteerHours === undefined) S.volunteerHours = 0;
   if (S.medicine === undefined) S.medicine = 0;
+  if (S.ill && S.ill.type !== 'arm' && S.ill.days > 3) S.ill.days = 2;   // colds and flu are short now
+  if (S.healthyUntil === undefined) S.healthyUntil = (S.day || 0) + 30;
   if (S.taxRefundDone === false) S.taxRefundDone = true;   // replaced by yearly taxes
 }
 
 // ---------- every hour ----------
-const THIRST = { awake: 5, work: 5.5, study: 5, sport: 11, relax: 4, sleep: 1.4 };
+const THIRST = { awake: 3.5, work: 4, study: 3.5, sport: 8, relax: 3, sleep: 1 };
 function lifeTick(h, mode) {
   const n = S.needs;
   n.thirst = clamp(n.thirst - THIRST[mode] * h * (S.weather === 'hot' ? 1.5 : 1));
-  if (n.thirst <= 0) { n.health -= 2 * h; n.energy -= 1 * h; }
+  if (n.thirst <= 0) { n.health -= 1 * h; n.energy -= 1 * h; }
   // being sick
   const ill = S.ill && ILLNESS[S.ill.type];
   if (ill && mode !== 'sleep') { n.energy -= ill.energy * h; n.fun -= ill.fun * h; if (mode === 'sport') n.health -= 2 * h; }
   // cold outside in winter without a coat
   if (seasonOf() === 'winter' && mode !== 'sleep' && !atHome() && !S.insideOf && !has('coat') && !S.today.warm) {
-    n.health -= 1.2 * h; n.fun -= 1.5 * h; S.gotCold = (S.gotCold || 0) + h;
+    n.health -= 0.4 * h; n.fun -= 1 * h; S.gotCold = (S.gotCold || 0) + h;
   }
   // a messy home is no fun
   if (atHome() && mode !== 'sleep' && S.mess > 60) n.fun -= 0.6 * h;
@@ -59,12 +61,12 @@ function lifeNewDay() {
   // getting sick
   if (S.ill) {
     S.ill.days--;
-    if (S.ill.days <= 0) { log(`😊 You're all better! No more ${ILLNESS[S.ill.type].name.toLowerCase()}.`, 'good'); S.ill = null; S.healthyUntil = S.day + 21; }
+    if (S.ill.days <= 0) { log(`😊 You're all better! No more ${ILLNESS[S.ill.type].name.toLowerCase()}.`, 'good'); S.ill = null; S.healthyUntil = S.day + 60; }
   } else {
     const se = seasonOf();
-    // getting sick is rare (about 2-3 times a year), and after you get better you stay healthy for at least 3 weeks
-    let cold = 0.004 + (se === 'winter' ? 0.008 : se === 'fall' ? 0.003 : 0) + (S.needs.hygiene < 30 ? 0.01 : 0) + (S.gotCold > 2 ? 0.03 : 0);
-    let flu = se === 'winter' && S.fluShot !== dateOf().year ? 0.006 : 0;
+    // getting sick is rare (about once a year), and after you get better you stay healthy for at least 3 weeks
+    let cold = 0.001 + (se === 'winter' ? 0.002 : 0) + (S.needs.hygiene < 20 ? 0.004 : 0) + (S.gotCold > 4 ? 0.01 : 0);
+    let flu = se === 'winter' && S.fluShot !== dateOf().year ? 0.001 : 0;
     if (perk('safety')) cold *= 0.9;
     if (S.healthyUntil && S.day < S.healthyUntil) { cold = 0; flu = 0; }
     if (Math.random() < flu) getSick('flu');
@@ -97,8 +99,8 @@ function drinkSoda() {
 
 // ---------- getting sick ----------
 const ILLNESS = {
-  cold:    { name: 'Cold', icon: '🤧', days: 5, energy: 0.8, fun: 0.8, perf: 10, about: 'A runny nose, sneezing and a sore throat.' },
-  flu:     { name: 'Flu', icon: '🤒', days: 8, energy: 1.6, fun: 1.2, perf: 25, about: 'A fever, aches and feeling super tired.' },
+  cold:    { name: 'Cold', icon: '🤧', days: 3, energy: 0.8, fun: 0.8, perf: 10, about: 'A runny nose, sneezing and a sore throat.' },
+  flu:     { name: 'Flu', icon: '🤒', days: 4, energy: 1.6, fun: 1.2, perf: 25, about: 'A fever, aches and feeling super tired.' },
   stomach: { name: 'Stomach Bug', icon: '🤢', days: 2, energy: 1, fun: 1.5, perf: 20, about: 'A tummy ache from germs. Wash your hands!' },
   arm:     { name: 'Broken Arm', icon: '🦾', days: 21, energy: 0, fun: 0.5, perf: 15, about: 'Your arm is in a cast. No sports until it heals!' },
 };
@@ -106,6 +108,7 @@ function getSick(type) {
   if (S.ill || (S.healthyUntil && S.day < S.healthyUntil)) return;
   const t = ILLNESS[type];
   S.ill = { type, days: t.days };
+  S.healthyUntil = S.day + t.days + 60;
   log(`${t.icon} You got a ${t.name.toLowerCase()}. ${t.about}`, 'bad');
   queueModal(`<h2>${t.icon} You Have a ${t.name}</h2><p>${t.about}</p>
     <ul class="notes"><li>😴 Rest and sleep a lot</li><li>💊 Take medicine (from the Supermarket)</li><li>🩺 A doctor can help you get better faster</li>${type !== 'arm' ? '<li>📞 You can call in sick to work</li>' : '<li>🚫 No sports until your cast comes off</li>'}<li>💧 Drink lots of water</li></ul>

@@ -31,7 +31,7 @@ const TRIP_ACTIONS = {
     { id: 'sun', icon: '😎', name: 'Relax in the Sun', hint: '1 hr', fn: () => {
       if (S.weather === 'rainy') return nope('It\'s raining!');
       pass(1, 'relax'); fun(10);
-      if (S.weather === 'hot' && Math.random() < 0.45) { S.needs.health = clamp(S.needs.health - 10); log('🥵 Ouch, you got a sunburn! Next time sit in the shade or wear sunscreen.', 'bad'); }
+      if (S.weather === 'hot' && Math.random() < 0.2) { S.needs.health = clamp(S.needs.health - 5); log('🥵 Ouch, you got a sunburn! Next time sit in the shade or wear sunscreen.', 'bad'); }
       else log('😎 You relaxed on the warm sand and listened to the waves.'); } },
     { id: 'shells', icon: '🐚', name: 'Collect Seashells', hint: '1 hr · sell them at Riverside Village', fn: () => {
       if (!tripCheck(10)) return;
