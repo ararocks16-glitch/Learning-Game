@@ -129,7 +129,7 @@ const MONEY_IDEAS_3 = [
   ['🦴', 'Dog treats', 'Make at Home, sell at Pet Shop/Park'], ['🍓', 'Homemade jam', 'Make at Home, sell at Village/Supermarket'], ['🪴', 'Potted plants', 'Make at Home, sell at Village/Park'], ['💐', 'Flower bouquets', 'Make at Home, sell at Supermarket/Park'],
 ];
 function moneyIdeas3Card() {
-  return `<details class="card"><summary>💡 32 Newest Money Ideas</summary><ol class="ideas">${MONEY_IDEAS_3.map(i => `<li>${i[0]} <b>${i[1]}</b> <span class="muted small">— ${i[2]}</span></li>`).join('')}</ol></details>`;
+  return `<details class="card"><summary>💡 52 Newest Money Ideas</summary><ol class="ideas">${MONEY_IDEAS_3.map(i => `<li>${i[0]} <b>${i[1]}</b> <span class="muted small">— ${i[2]}</span></li>`).join('')}</ol></details>`;
 }
 
 // ---------- brush your teeth button ----------

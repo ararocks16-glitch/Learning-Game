@@ -377,3 +377,16 @@ details.walls summary { cursor: pointer; }
 .verb { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-weight: 700; font-size: .8rem; cursor: pointer; }
 .verb span { font-size: 1.3rem; }
 .verb:hover { border-color: var(--primary); }
+
+#quickbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.qb { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); font-weight: 700; font-size: .85rem; cursor: pointer; box-shadow: var(--shadow); }
+.qb span { font-size: 1.05rem; }
+.qb:hover { border-color: var(--primary); }
+.bookpage { background: #fffdf5; color: #2b2116; border-radius: 10px; padding: 22px 24px; border: 1px solid #e8dcc0; box-shadow: inset 0 0 30px rgba(160,120,60,.12); min-height: 180px; display: flex; flex-direction: column; gap: 12px; }
+.booktitle { font-weight: 800; color: #6d4c41; border-bottom: 1px solid #e8dcc0; padding-bottom: 6px; }
+.booktext { font-family: Georgia, 'Times New Roman', serif; font-size: 1.25rem; line-height: 1.6; margin: 0; flex: 1; }
+.newspaper { background: #faf8f2; color: #222; border-radius: 6px; padding: 16px 18px; font-family: Georgia, 'Times New Roman', serif; }
+.newspaper h3, .newspaper h4 { margin: 10px 0 4px; }
+.np-head { font-size: 1.8rem; font-weight: 900; text-align: center; letter-spacing: 1px; border-bottom: 3px double #222; }
+.np-date { text-align: center; font-size: .8rem; color: #555; margin: 4px 0 8px; }
+.np-ad { border: 1px dashed #999; padding: 6px 8px; margin: 4px 0; border-radius: 4px; }

@@ -254,6 +254,7 @@ function newDay() {
   life4NewDay();
   town4NewDay();
   money3NewDay();
+  readingNewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -802,7 +803,7 @@ const HOME_ACTIONS = [
   { id: 'laptop', icon: '💻', name: 'Practice on Laptop', hint: '2 hrs · Computers skill', need: 'laptop',
     fn: () => { pass(2, 'study'); const g = addSkill('comp', 4); log(`💻 You practiced coding. Computers +${g.toFixed(1)}`); } },
   { id: 'read', icon: '📖', name: 'Read a Book', hint: '1 hr · Writing skill',
-    fn: () => { pass(1, 'relax'); addSkill('write', has('bookshelf') ? 2.5 : 1.5); log(has('bookshelf') ? '📖 You read a book from your bookshelf.' : '📖 You read a good book.'); } },
+    fn: () => bookPicker() },
   { id: 'run', icon: '🏃', name: 'Exercise', hint: '1 hr · Fitness skill · free',
     fn: () => { if (S.needs.energy < 15) return nope('Too tired to exercise.'); pass(1, 'sport'); addSkill('fit', 2.5); S.needs.health = clamp(S.needs.health + 3); log('🏃 You exercised. Fitness up! (Better shower now...)'); } },
   { id: 'friend', icon: '📞', name: 'Call a Friend', hint: '1 hr · Fun & talking skill',

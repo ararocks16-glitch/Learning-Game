@@ -54,6 +54,7 @@ function ensureRealLife() {
   ensureLife4State();
   ensureTown4State();
   ensureMoney3State();
+  ensureReadingState();
 }
 
 function render() {
@@ -67,6 +68,7 @@ function render() {
     <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">${wd}, ${dateText()}${isWeekend() ? ' 🎉' : ''} · ${SEASONS[seasonOf()].icon} ${SEASONS[seasonOf()].name}</div><div class="muted">${weatherText()}${holidayToday() ? ` · ${holidayToday().icon} ${holidayToday().name}` : ''}${eventToday() ? ` · ${eventToday().icon} ${eventToday().name}` : ''}</div></div>
     <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
 
+  { const qb = $('#quickbar'); if (qb) qb.innerHTML = quickBar(); }
   $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 

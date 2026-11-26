@@ -385,6 +385,19 @@ details.walls summary { cursor: pointer; }
 .verb span { font-size: 1.3rem; }
 .verb:hover { border-color: var(--primary); }
 
+#quickbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.qb { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg2); color: var(--ink); font-weight: 700; font-size: .85rem; cursor: pointer; box-shadow: var(--shadow); }
+.qb span { font-size: 1.05rem; }
+.qb:hover { border-color: var(--primary); }
+.bookpage { background: #fffdf5; color: #2b2116; border-radius: 10px; padding: 22px 24px; border: 1px solid #e8dcc0; box-shadow: inset 0 0 30px rgba(160,120,60,.12); min-height: 180px; display: flex; flex-direction: column; gap: 12px; }
+.booktitle { font-weight: 800; color: #6d4c41; border-bottom: 1px solid #e8dcc0; padding-bottom: 6px; }
+.booktext { font-family: Georgia, 'Times New Roman', serif; font-size: 1.25rem; line-height: 1.6; margin: 0; flex: 1; }
+.newspaper { background: #faf8f2; color: #222; border-radius: 6px; padding: 16px 18px; font-family: Georgia, 'Times New Roman', serif; }
+.newspaper h3, .newspaper h4 { margin: 10px 0 4px; }
+.np-head { font-size: 1.8rem; font-weight: 900; text-align: center; letter-spacing: 1px; border-bottom: 3px double #222; }
+.np-date { text-align: center; font-size: .8rem; color: #555; margin: 4px 0 8px; }
+.np-ad { border: 1px dashed #999; padding: 6px 8px; margin: 4px 0; border-radius: 4px; }
+
 </style>
 </head>
 <body>
@@ -393,6 +406,7 @@ details.walls summary { cursor: pointer; }
   <div id="app">
     <header id="hud"></header>
     <section id="needs"></section>
+    <section id="quickbar" aria-label="Quick actions"></section>
     <div id="warnings"></div>
     <div class="main">
       <div class="left">
@@ -1101,6 +1115,7 @@ const ACHIEVEMENTS = [
   { id: 'petrescue',     icon: '🐶', name: 'Pet Rescuer',         desc: 'Find a lost pet and bring it home.' },
   { id: 'holidayfun',    icon: '🎉', name: 'Holiday Spirit',      desc: 'Join a holiday event.' },
   { id: 'treestar',      icon: '⭐', name: 'Star of the Town',    desc: 'Put the star on the big town Christmas tree.' },
+  { id: 'reader8',       icon: '📚', name: 'Super Reader',        desc: 'Read 8 different books, page by page.' },
   { id: 'voter',         icon: '🗳️', name: 'Voter',               desc: 'Vote in an election.' },
   { id: 'eco',           icon: '♻️', name: 'Eco Hero',            desc: 'Sort 20 pieces of trash correctly.' },
   { id: 'helper',        icon: '🤝', name: 'Helper',              desc: 'Volunteer for 20 hours.' },
@@ -1375,6 +1390,7 @@ function newDay() {
   life4NewDay();
   town4NewDay();
   money3NewDay();
+  readingNewDay();
   if (Math.random() < 0.025) emergencyEvent();
   S.today = { worked: false, brushed: false, brushAM: false, brushPM: false, showered: false, sick: false };
   if (!(has('wardrobe') && S.day % 2)) S.laundryDays++;
@@ -1923,7 +1939,7 @@ const HOME_ACTIONS = [
   { id: 'laptop', icon: '💻', name: 'Practice on Laptop', hint: '2 hrs · Computers skill', need: 'laptop',
     fn: () => { pass(2, 'study'); const g = addSkill('comp', 4); log(`💻 You practiced coding. Computers +${g.toFixed(1)}`); } },
   { id: 'read', icon: '📖', name: 'Read a Book', hint: '1 hr · Writing skill',
-    fn: () => { pass(1, 'relax'); addSkill('write', has('bookshelf') ? 2.5 : 1.5); log(has('bookshelf') ? '📖 You read a book from your bookshelf.' : '📖 You read a good book.'); } },
+    fn: () => bookPicker() },
   { id: 'run', icon: '🏃', name: 'Exercise', hint: '1 hr · Fitness skill · free',
     fn: () => { if (S.needs.energy < 15) return nope('Too tired to exercise.'); pass(1, 'sport'); addSkill('fit', 2.5); S.needs.health = clamp(S.needs.health + 3); log('🏃 You exercised. Fitness up! (Better shower now...)'); } },
   { id: 'friend', icon: '📞', name: 'Call a Friend', hint: '1 hr · Fun & talking skill',
@@ -13763,7 +13779,7 @@ const MONEY_IDEAS_3 = [
   ['🦴', 'Dog treats', 'Make at Home, sell at Pet Shop/Park'], ['🍓', 'Homemade jam', 'Make at Home, sell at Village/Supermarket'], ['🪴', 'Potted plants', 'Make at Home, sell at Village/Park'], ['💐', 'Flower bouquets', 'Make at Home, sell at Supermarket/Park'],
 ];
 function moneyIdeas3Card() {
-  return `<details class="card"><summary>💡 32 Newest Money Ideas</summary><ol class="ideas">${MONEY_IDEAS_3.map(i => `<li>${i[0]} <b>${i[1]}</b> <span class="muted small">— ${i[2]}</span></li>`).join('')}</ol></details>`;
+  return `<details class="card"><summary>💡 52 Newest Money Ideas</summary><ol class="ideas">${MONEY_IDEAS_3.map(i => `<li>${i[0]} <b>${i[1]}</b> <span class="muted small">— ${i[2]}</span></li>`).join('')}</ol></details>`;
 }
 
 // ---------- brush your teeth button ----------
@@ -13771,6 +13787,278 @@ function verbBrush() {
   const near = typeof nearSpots === 'function' ? nearSpots().map(s => s.id) : [];
   if (near.includes('sink') && S.tap && S.tap.what === 'sink') { sinkDo('teeth'); return; }
   brushTeeth(); done();
+}
+
+</script>
+  <script>
+// ===================== MONEY 4: 20 more ways to get money =====================
+// They plug into the "More Ways to Earn Here" card (GIGS2) at the place where you do them.
+
+Object.assign(GIGS2, {
+  shelver:   { icon: '📚', name: 'Put library books back on the shelves', where: ['library'], note: '1 hr · $10', check: () => !daytime(9, 19) ? '9 AM – 7 PM' : '', hours: 1, go: () => { m2pay(10, 'Library shelving'); addSkill('write', 0.4); return '📚 You put 80 books back in the right order using the numbers on their spines. $10!'; } },
+  detailing: { weekly: true, icon: '🚙', name: 'Clean the inside of neighbors\' cars', where: ['home'], note: 'Once a week · 2 hrs · $35', check: () => !daytime(9, 18) ? 'Daytime only' : '', hours: 2, go: () => { m2pay(35, 'Car cleaning'); return '🚙 You vacuumed the seats, wiped the dashboard and found $0.75 in the cushions (you gave it back!). $35.'; } },
+  pool:      { icon: '🏊', name: 'Clean neighbors\' swimming pool', where: ['home'], note: 'Summer · 1.5 hrs · $30', check: () => seasonOf() !== 'summer' ? 'Pools are open in summer' : !daytime(8, 18) ? 'Daytime only' : '', hours: 1.5, go: () => { m2pay(30, 'Pool cleaning'); addSkill('sci', 0.5); return '🏊 You skimmed out the leaves, scrubbed the steps and tested the water. Sparkling clean! $30.'; } },
+  bikefix:   { icon: '🚲', name: 'Fix kids\' bikes', where: ['home'], note: 'Needs a toolbox & Building 15 · 1 hr · $15', check: () => !has('toolbox') ? 'Needs a toolbox' : S.skills.build < 15 ? 'Needs Building & Fixing 15' : !daytime(8, 19) ? 'Daytime only' : '', hours: 1, go: () => { m2pay(15, 'Bike repair'); addSkill('build', 1); return '🚲 You pumped up flat tires, oiled a squeaky chain and fixed a wobbly seat. $15!'; } },
+  errands:   { icon: '📦', name: 'Mail packages for neighbors', where: ['postoffice'], note: '1 hr · $10', check: () => !daytime(8, 18) ? '8 AM – 6 PM' : '', hours: 1, go: () => { m2pay(10, 'Running errands'); return '📦 You carried 3 packages to the post office for busy neighbors and brought back their receipts. $10!'; } },
+  fruitpick: { icon: '🍎', name: 'Pick fruit at the farm', where: ['farm'], note: 'Summer & fall · 3 hrs · $4 a basket', check: () => !['summer', 'fall'].includes(seasonOf()) ? 'Fruit is ready in summer and fall' : !daytime(7, 16) ? '7 AM – 4 PM' : '', hours: 3, go: () => { const n = 5 + Math.floor(Math.random() * 6); m2pay(n * 4, 'Fruit picking'); addSkill('fit', 0.8); return `🍎 You picked ${n} baskets of ${seasonOf() === 'summer' ? 'strawberries and peaches' : 'apples'}. ${money(n * 4)}! (You ate a few too 😋)`; } },
+  readbuddy: { icon: '🧒', name: 'Be a reading buddy for little kids', where: ['library'], note: 'Needs Writing 20 · 1 hr · $15', check: () => S.skills.write < 20 ? 'Needs Writing 20' : !daytime(9, 18) ? '9 AM – 6 PM' : '', hours: 1, go: () => { m2pay(15, 'Reading buddy'); addSkill('comm', 0.8); return '🧒 You helped a first-grader sound out words. She read a whole page by herself! $15.'; } },
+  halloween: { icon: '🎃', name: 'Help decorate houses for Halloween', where: ['home'], note: 'October only · 2 hrs · $25', check: () => dateOf().m !== 9 ? 'Only in October' : !daytime(9, 18) ? 'Daytime only' : '', hours: 2, go: () => { m2pay(25, 'Halloween decorating'); addSkill('art', 0.6); return '🎃 You hung orange lights, set out pumpkins and put up fake spider webs. Spooky-fun! $25.'; } },
+  adoptday:  { weekly: true, icon: '🐶', name: 'Help at pet adoption day', where: ['petshop'], note: 'Once a week, weekends · 3 hrs · $20', check: () => weekday() < 5 ? 'Adoption days are on weekends' : !daytime(10, 16) ? '10 AM – 4 PM' : '', hours: 3, go: () => { m2pay(20, 'Adoption day helper'); addSkill('animal', 1); fun2(10); return `🐶 You walked dogs and cuddled kittens while families met them. ${2 + Math.floor(Math.random() * 4)} pets found forever homes today! $20.`; } },
+  lotclean:  { icon: '🧤', name: 'Clean up the Mall parking lot', where: ['mall'], note: 'Early morning 7–10 AM · 1.5 hrs · $14', check: () => !daytime(7, 10) ? '7 – 10 AM, before shoppers come' : '', hours: 1.5, go: () => { m2pay(14, 'Parking lot cleanup'); return '🧤 With gloves and a grabber, you picked up every piece of trash in the parking lot. $14!'; } },
+  usher:     { weekly: true, icon: '🎭', name: 'Help at the school play', where: ['school'], note: 'Once a week, Fridays 5–8 PM · 3 hrs · $25', check: () => weekday() !== 4 || !daytime(17, 20) ? 'Fridays 5 – 8 PM' : '', hours: 3, go: () => { m2pay(25, 'School play helper'); fun2(8); return '🎭 You handed out programs and showed families to their seats. The play was great! $25.'; } },
+  birdcount: { icon: '🐦', name: 'Count birds for scientists', where: ['park'], note: '1 hr · $10 · real scientists use your count!', check: () => !daytime(6, 18) ? 'Daytime only' : '', hours: 1, go: () => { const n = 12 + Math.floor(Math.random() * 25); m2pay(10, 'Bird count'); addSkill('sci', 1); return `🐦 You counted ${n} birds at the park and sent the list to scientists who study birds. $10!`; } },
+  flyers:    { icon: '📄', name: 'Hand out fliers for a business', where: ['park'], note: '1.5 hrs · $15', check: () => !daytime(9, 18) ? 'Daytime only' : wet() ? 'Your fliers would get wet!' : '', hours: 1.5, go: () => { m2pay(15, 'Handing out fliers'); return `📄 You handed out 100 fliers for ${pickR(['the bakery', 'the bowling alley', 'the pet shop'])}. $15!`; } },
+  icepops:   { icon: '🍧', name: 'Homemade ice pop stand', where: ['park'], note: 'Summer · 2 hrs · supplies $5', check: () => seasonOf() !== 'summer' ? 'Summer only' : !daytime(11, 18) ? '11 AM – 6 PM' : S.money < 5 ? 'You need $5 for juice and molds' : '', hours: 2, go: () => { charge(5, 'Ice pop supplies'); const n = 15 + Math.floor(Math.random() * 15); const p = m2pay(n, 'Ice pop sales'); return `🍧 You sold ${n} homemade juice pops for $1 each. Profit: ${money(p - 5)}!`; } },
+  trees:     { weekly: true, icon: '🌳', name: 'Join the tree-planting crew', where: ['park'], note: 'Spring · once a week · 3 hrs · $30', check: () => seasonOf() !== 'spring' ? 'Trees are planted in spring' : !daytime(8, 15) ? '8 AM – 3 PM' : '', hours: 3, go: () => { m2pay(30, 'Tree planting'); S.eco = (S.eco || 0) + 3; return '🌳 You dug holes and planted 10 baby trees in the park. In 20 years they\'ll be giants! $30.'; } },
+  inventory: { weekly: true, icon: '📋', name: 'Count boxes at the warehouse', where: ['warehouse'], note: 'Once a week · needs Math 20 · 3 hrs · $40', check: () => S.skills.math < 20 ? 'Needs Math 20' : !daytime(8, 16) ? '8 AM – 4 PM' : '', hours: 3, go: () => { m2pay(40, 'Warehouse inventory'); addSkill('math', 1.2); return '📋 You counted every box on the shelves and wrote the numbers on a clipboard. 1,248 boxes! $40.'; } },
+  salt:      { icon: '🧂', name: 'Salt icy driveways', where: ['home'], note: 'Winter · 1 hr · $10', check: () => seasonOf() !== 'winter' ? 'Only when it\'s icy in winter' : !daytime(6, 18) ? 'Daytime only' : '', hours: 1, go: () => { m2pay(10, 'Salting driveways'); return '🧂 You sprinkled salt on 4 icy driveways so nobody slips. $10!'; } },
+  firetruck: { weekly: true, icon: '🚒', name: 'Wash the fire truck (fundraiser)', where: ['firestation'], note: 'Once a week · 2 hrs · $20', check: () => seasonOf() === 'winter' ? 'Too cold to wash trucks' : !daytime(10, 16) ? '10 AM – 4 PM' : '', hours: 2, go: () => { m2pay(20, 'Fire truck wash'); fun2(10); return '🚒 You scrubbed the giant red fire truck until it shined. A firefighter let you ring the bell! $20.'; } },
+  typing:    { icon: '⌨️', name: 'Type letters for Grandma\'s friends', where: ['home'], note: 'Needs a laptop · 1 hr · $15', check: () => !has('laptop') && !has('computer') ? 'Needs a laptop' : '', hours: 1, go: () => { m2pay(15, 'Typing letters'); addSkill('comp', 0.8); return '⌨️ You typed and printed 3 letters for Grandma\'s friends. They said your typing is super fast! $15.'; } },
+  newsletter: { weekly: true, icon: '🗞️', name: 'Make a neighborhood newsletter', where: ['home'], note: 'Once a week · needs Writing 20 · 2 hrs · neighbors pay $1 each', check: () => S.skills.write < 20 ? 'Needs Writing 20' : '', hours: 2, go: () => { const n = 10 + Math.floor(S.skills.write / 4); m2pay(n, 'Newsletter'); addSkill('write', 1.2); return `🗞️ You wrote "The Maple Street News" with a joke, a recipe and neighbor news. ${n} neighbors bought a copy! $${n}.`; } },
+});
+MONEY_IDEAS_3.push(['📚', 'Put library books away', 'Library'], ['🚙', 'Clean inside neighbors\' cars', 'Home'], ['🏊', 'Clean a swimming pool', 'Home, summer'], ['🚲', 'Fix kids\' bikes', 'Home'], ['📦', 'Mail packages for neighbors', 'Post Office'],
+  ['🍎', 'Pick fruit', 'Farm'], ['🧒', 'Reading buddy', 'Library'], ['🎃', 'Halloween decorating', 'Home, October'], ['🐶', 'Pet adoption day helper', 'Pet Shop, weekends'], ['🧤', 'Parking lot cleanup', 'Mall, mornings'],
+  ['🎭', 'Help at the school play', 'College, Fridays'], ['🐦', 'Count birds for scientists', 'Park'], ['📄', 'Hand out fliers', 'Park'], ['🍧', 'Ice pop stand', 'Park, summer'], ['🌳', 'Tree-planting crew', 'Park, spring'],
+  ['📋', 'Warehouse box count', 'Warehouse'], ['🧂', 'Salt icy driveways', 'Home, winter'], ['🚒', 'Wash the fire truck', 'Fire Station'], ['⌨️', 'Type letters', 'Home (laptop)'], ['🗞️', 'Neighborhood newsletter', 'Home']);
+
+</script>
+  <script>
+// ===================== READING: real books you pick up and read page by page, the daily newspaper,
+// fliers in the mail (jobs, events, sales), and the quick-action buttons (brush teeth, wash hands, clean...) =====================
+
+function ensureReadingState() { if (!S.rd) S.rd = { read: {}, pages: 0 }; }
+
+// ---------- the books (every one has real pages to read) ----------
+const BOOK_TEXT = {
+  lemonade: { title: 'Mia\'s Lemonade Stand', icon: '🍋', skill: 'sales', home: true, pages: [
+    'Mia wanted a new bike. It cost $120. She had $14 in her piggy bank.',
+    '"I could sell lemonade!" Mia said. Her dad helped her buy lemons, sugar and cups. That cost $8.',
+    'On Saturday it was hot and sunny. Mia made a big sign: LEMONADE 50¢. Her first customer was Mr. Lee from next door.',
+    'By lunchtime Mia had sold 30 cups. That was $15! But she had spent $8, so her profit was $7.',
+    'Every Saturday all summer, Mia sold lemonade. She saved every dollar in a jar.',
+    'In August, Mia counted her jar: $121! She rode her new bike all the way to the park. "Saving was worth it," she said.'] },
+  swim: { title: 'Leo Learns to Swim', icon: '🏊', skill: 'fit', home: true, pages: [
+    'Leo was scared of the deep end. He always stayed on the steps of the pool.',
+    'His swim teacher, Coach Rosa, said, "Let\'s start small. Can you put your face in the water and blow bubbles?"',
+    'Leo blew bubbles. Then he floated on his back while Coach Rosa held him. It felt like lying on a cloud.',
+    'Every week Leo practiced kicking with a kickboard. His legs got stronger.',
+    'One day, Coach Rosa let go — and Leo kept floating! Then he swam all the way across the pool.',
+    'At the end of summer, Leo jumped into the deep end. SPLASH! "I did it!" he shouted.'] },
+  storm: { title: 'The Big Storm', icon: '⛈️', skill: 'aid', home: true, pages: [
+    'The sky turned dark gray. The TV beeped: "Storm warning for Maple Town."',
+    'Ava\'s family got ready. They found the flashlights, filled water bottles and charged their phones.',
+    'BOOM! Thunder shook the windows. Then the lights went out.',
+    'Ava wasn\'t scared, because her family was ready. They lit lanterns and played board games in the hallway, away from the windows.',
+    'In the morning the sun came out. Branches were everywhere. Neighbors came outside to help clean up together.',
+    '"Being prepared made the storm a little less scary," said Ava\'s mom.'] },
+  garden: { title: 'Grandma\'s Garden', icon: '🌻', skill: 'sci', home: true, pages: [
+    'Every spring, Sam helped Grandma plant her garden.',
+    'They dug little holes and dropped in seeds: tomatoes, carrots, beans and sunflowers.',
+    '"Seeds need three things," Grandma said. "Sun, water and time."',
+    'Sam watered the garden every day. At first nothing happened. Then tiny green sprouts poked out of the dirt!',
+    'By summer the sunflowers were taller than Sam. The tomatoes were red and juicy.',
+    'Grandma and Sam made a big salad with everything they grew. It was the best salad Sam ever ate.'] },
+  dino: { title: 'Dinosaurs of the World', icon: '🦖', skill: 'sci', pages: [
+    'Dinosaurs lived on Earth a very long time ago — more than 65 million years ago!',
+    'Tyrannosaurus rex was a meat-eater. It had about 60 teeth, and some were as long as bananas.',
+    'Brachiosaurus ate plants. Its long neck let it reach leaves at the tops of tall trees.',
+    'Scientists who study dinosaur bones are called paleontologists. They dig up fossils very carefully with brushes.',
+    'Birds are related to dinosaurs! Some dinosaurs even had feathers.'] },
+  space: { title: 'A Kid\'s Guide to Space', icon: '🚀', skill: 'sci', pages: [
+    'Our Sun is a star. It is so big that about one million Earths could fit inside it!',
+    'There are 8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune.',
+    'Jupiter is the biggest planet. Saturn has beautiful rings made of ice and rock.',
+    'The Moon goes around the Earth about once a month. Astronauts first walked on the Moon in 1969.',
+    'At night, the stars you see are other suns, very, very far away.'] },
+  turtle: { title: 'The Turtle of Maple Pond', icon: '🐢', skill: 'write', pages: [
+    'In Maple Pond lived an old turtle named Shelly. Every morning she sunned herself on a log.',
+    'One day a girl named Nia saw that Shelly\'s log had floated away. Shelly had no place to rest!',
+    'Nia asked the park ranger for help. Together they tied a new log near the shore.',
+    'The next morning, Nia ran to the pond. There was Shelly, warming her shell on the new log.',
+    'Nia visited every week. She learned that turtles can live for more than 50 years.',
+    'Years later, Nia became a park ranger herself — and Shelly was still there, sunning on her log.'] },
+  cupcake: { title: 'The Missing Cupcake Mystery', icon: '🕵️', skill: 'write', pages: [
+    'Twelve cupcakes cooled on the kitchen table for the bake sale. When Jamal came back, there were only eleven!',
+    'Jamal looked for clues. There were crumbs on the floor... leading toward the living room.',
+    'On the couch he found a pink sprinkle. And a little paw print made of frosting!',
+    'Jamal followed the paw prints to the laundry basket. Inside was Biscuit the puppy, with frosting on his nose.',
+    '"Case closed!" Jamal laughed. From then on, he kept the cupcakes high up on the counter.'] },
+  mathpuzzle: { title: 'Math Puzzles & Brain Games', icon: '🔢', skill: 'math', pages: [
+    'Puzzle 1: You have 3 apples and buy 4 more. How many apples? (Answer: 7)',
+    'Puzzle 2: A pizza has 8 slices. You and 3 friends share it equally. How many slices each? (Answer: 2)',
+    'Puzzle 3: What comes next? 2, 4, 6, 8, ... (Answer: 10 — count by twos!)',
+    'Puzzle 4: You have $5. A snack costs $2. How much change do you get? (Answer: $3)',
+    'Puzzle 5: How many legs do 3 dogs have? (Answer: 12 — that\'s 4 + 4 + 4!)'] },
+  cooking: { title: 'Cooking for Beginners', icon: '🍳', skill: 'cook', pages: [
+    'Rule 1: Always wash your hands before you cook.',
+    'Rule 2: Ask a grown-up before using the stove, oven or sharp knives.',
+    'Easy recipe — Fruit Salad: Cut a banana, an apple and some berries. Mix them in a bowl. Done!',
+    'Easy recipe — Toast with Peanut Butter: Toast a slice of bread. Spread peanut butter on top. Add banana slices!',
+    'Rule 3: Clean up when you\'re done. A good cook leaves the kitchen clean!'] },
+  draw: { title: 'Draw Anything!', icon: '🎨', skill: 'art', pages: [
+    'Every drawing starts with simple shapes: circles, squares and triangles.',
+    'To draw a cat: draw a circle for the head and an oval for the body. Add two triangles for ears.',
+    'To draw a house: draw a square, then put a triangle on top for the roof. Add a door and windows.',
+    'Shading makes drawings look real. Press harder with your pencil on the side away from the light.',
+    'The most important rule: practice a little every day, and have fun!'] },
+  coding: { title: 'Coding for Kids', icon: '💻', skill: 'comp', pages: [
+    'Computers follow instructions, step by step. A list of instructions is called a program.',
+    'Instructions must be in the right order. You put on socks BEFORE shoes — computers need the right order too!',
+    'A "loop" means doing something again and again. Like: "Jump 10 times."',
+    'An "if" means making a choice. Like: "IF it is raining, take an umbrella."',
+    'When a program has a mistake, it\'s called a "bug." Fixing it is called "debugging."'] },
+  pets: { title: 'Caring for Pets', icon: '🐾', skill: 'animal', pages: [
+    'Pets need food and fresh water every day.',
+    'Dogs need walks to stay healthy and happy. Most dogs need at least two walks a day.',
+    'Cats keep themselves clean, but their litter box needs to be cleaned every day.',
+    'Fish need clean tank water. Feed them only a small pinch — too much food makes the water dirty.',
+    'All pets need a checkup at the vet once a year. And lots of love!'] },
+  castles: { title: 'Knights and Castles', icon: '🏰', skill: 'write', pages: [
+    'About 800 years ago, kings and queens built big stone castles to keep people safe.',
+    'Castles had thick walls, tall towers and a moat — a deep ditch filled with water.',
+    'Knights trained for many years. They started as pages when they were about 7 years old!',
+    'Knights wore heavy armor made of metal. A suit of armor could weigh as much as a 6-year-old kid.',
+    'You can still visit real castles today in countries like England, France and Scotland.'] },
+  money: { title: 'Money Smarts', icon: '💰', skill: 'math', pages: [
+    'There are 3 smart things to do with money: SAVE it, SPEND it and SHARE it.',
+    'Saving means keeping money for later. A bank keeps it safe and even pays you a little extra, called interest.',
+    'Before you buy something, ask: "Is this a NEED or a WANT?" Food is a need. A new toy is a want.',
+    'A budget is a plan for your money. Write down what you earn and what you spend.',
+    'Sharing means giving to help others, like donating to an animal shelter.'] },
+  soccer: { title: 'Soccer Skills', icon: '⚽', skill: 'comm', pages: [
+    'In soccer, you can\'t use your hands — only the goalkeeper can!',
+    'Dribbling means moving the ball with small taps of your feet while you run.',
+    'Passing to a teammate is often better than trying to score alone. Soccer is a team game!',
+    'Always warm up and stretch before playing, and drink lots of water.',
+    'Win or lose, shake hands with the other team and say "Good game!"'] },
+};
+const LIB_TEXT = ['dino', 'space', 'turtle', 'cupcake', 'mathpuzzle', 'cooking', 'draw', 'coding', 'pets', 'castles', 'money', 'soccer'];
+function homeBooks() { const own = ['lemonade', 'swim', 'storm', 'garden']; return has('bookshelf') ? own.concat(['dino', 'space', 'money']) : own.slice(0, 2); }
+
+// read a book, one page at a time
+function openBook(id, page = 0, libIdx) {
+  ensureReadingState();
+  const B = BOOK_TEXT[id]; if (!B) return;
+  const last = page >= B.pages.length - 1;
+  showModal(`<div class="bookpage"><div class="booktitle">${B.icon} ${esc(B.title)}</div><p class="booktext">${esc(B.pages[page])}</p><div class="muted small">Page ${page + 1} of ${B.pages.length}</div></div>`,
+    [page > 0 ? { label: '◀ Back', cls: 'ghost', fn: () => openBook(id, page - 1, libIdx) } : { label: 'Close the book', cls: 'ghost', fn: () => { done(); } },
+     last ? { label: '📕 The End', cls: 'primary', fn: () => finishBook(id, libIdx) } : { label: 'Next page ▶', cls: 'primary', fn: () => { pass(4 / 60, 'relax'); S.rd.pages++; openBook(id, page + 1, libIdx); } }]);
+}
+function finishBook(id, libIdx) {
+  const B = BOOK_TEXT[id], first = !S.rd.read[id];
+  S.rd.read[id] = (S.rd.read[id] || 0) + 1;
+  pass(5 / 60, 'relax'); addSkill(B.skill, first ? 2 : 0.8); addSkill('write', 0.6); fun2(8);
+  if (libIdx !== undefined && S.lib) { const bk = S.lib.books.find(x => x.i === libIdx); if (bk && bk.read < LIB_BOOKS[libIdx][3]) { bk.read = LIB_BOOKS[libIdx][3]; S.lib.read++; if (S.lib.read >= 5) unlock('bookworm'); } }
+  log(`📕 You finished reading "${B.title}"!${first ? ' You learned something new.' : ' It was just as good the second time.'} (${Object.keys(S.rd.read).length} different books read)`, 'good');
+  if (Object.keys(S.rd.read).length >= 8) unlock('reader8');
+  done();
+}
+function bookPicker() {
+  const home = homeBooks(), lib = S.lib ? S.lib.books : [];
+  const rows = home.map(id => [id, BOOK_TEXT[id], undefined, has('bookshelf') ? 'from your bookshelf' : 'your own book'])
+    .concat(lib.map(bk => [LIB_TEXT[bk.i], BOOK_TEXT[LIB_TEXT[bk.i]], bk.i, `library book · due ${dateText(bk.due)}`]));
+  showModal(`<h2>📚 Pick a Book to Read</h2><div class="grid actions">${rows.map(([id, B, li, note]) => `<button class="action" onclick="closeModal();openBook('${id}',0${li !== undefined ? ',' + li : ''})"><span class="ic">${B.icon}</span><b>${esc(B.title)}</b><small>${note}${S.rd && S.rd.read[id] ? ' · ✅ read' : ''}</small></button>`).join('')}</div>
+    ${has('bookshelf') ? '' : '<p class="muted small">Buy a bookshelf at the Mall for more books, or borrow free books at the 📚 Library!</p>'}`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+// library books now open the real book
+function readLibraryBook() {
+  const L = S.lib; if (!L || !L.books.length) return nope('You don\'t have any library books. Borrow some at the 📚 Library — it\'s free!');
+  if (L.books.length === 1) return openBook(LIB_TEXT[L.books[0].i], 0, L.books[0].i);
+  bookPicker();
+}
+
+// ---------- pick up a book and hold it ----------
+function pickUpBook() {
+  if (S.hands.length >= MAX_HANDS) return nope('Your hands are full!');
+  const home = homeBooks();
+  showModal(`<h2>✋ Pick Up a Book</h2><div class="grid actions">${home.map(id => `<button class="action" onclick="closeModal();S.hands.push({kind:'book',id:'${id}'});log('✋ You picked up &quot;${BOOK_TEXT[id].title.replace(/'/g, '')}&quot;.');render();save()"><span class="ic">${BOOK_TEXT[id].icon}</span><b>${esc(BOOK_TEXT[id].title)}</b></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+const _handIcon5 = handIcon, _handName5 = handName, _handEdible5 = handEdible;
+handIcon = h => h.kind === 'book' ? '📖' : _handIcon5(h);
+handName = h => h.kind === 'book' ? `"${BOOK_TEXT[h.id].title}"` : _handName5(h);
+handEdible = h => h.kind === 'book' ? false : _handEdible5(h);
+const _roomBarHtml5 = roomBarHtml;
+roomBarHtml = function () {
+  let html = _roomBarHtml5();
+  // books you're holding get a Read button
+  S.hands.forEach((h, i) => { if (h.kind === 'book') html = html.replace(`📖 "${BOOK_TEXT[h.id].title}" `, `📖 "${BOOK_TEXT[h.id].title}" <button class="btn sm primary" onclick="openBook('${h.id}')">Read</button> <button class="btn sm ghost" onclick="S.hands.splice(${i},1);render()">Put back</button> `); });
+  return html;
+};
+const _spotButtons5 = spotButtons;
+spotButtons = function (id) {
+  const B = _spotButtons5(id);
+  if (id === 'books') { B.length = 0; B.push(rb('✋ Pick up a book', 'pickUpBook()'), rb('📖 Read', 'bookPicker()', 'ghost')); }
+  return B;
+};
+function verbRead() {
+  const opts = [['📕', 'Read a book', 'turn real pages!', 'bookPicker()'], ['📰', 'Read today\'s newspaper', 'news, weather & jobs', 'readNewspaper()'], ['💭', 'Read a comic book', 'just for fun', 'readComic()']];
+  showModal(`<h2>📖 Read</h2><div class="grid actions">${opts.map(o => `<button class="action" onclick="closeModal();${o[3]}"><span class="ic">${o[0]}</span><b>${o[1]}</b><small>${o[2]}</small></button>`).join('')}</div>`, [{ label: 'Cancel', cls: 'ghost' }]);
+}
+
+// ---------- the daily newspaper: The Maple Times ----------
+function jobAdsToday(n = 4) {
+  const day = S.day, list = [];
+  for (let k = 0; list.length < n && k < 60; k++) { const j = JOBS[(day * 37 + k * 53) % JOBS.length]; if (!list.includes(j) && (!S.job || S.job.id !== j.id)) list.push(j); }
+  return list;
+}
+function readNewspaper(day = S.day) {
+  const d0 = S.day; S.day = day;
+  const fc = (S.forecast || []).slice(0, 3).map(f => `${dateText(f.day).replace(/^\w+, /, '')}: ${WEATHER[f.w] ? WEATHER[f.w].icon + ' ' + WEATHER[f.w].name : f.w}`).join(' · ');
+  const news = (S.news || []).filter(n => !String(n.text).startsWith('🌦️')).slice(0, 4);
+  const ev = eventToday(), hol = holidayToday();
+  S.day = d0;
+  const ads = jobAdsToday();
+  const facts = ['Honeybees visit about 2 million flowers to make one jar of honey.', 'An octopus has three hearts!', 'The Eiffel Tower grows about 6 inches taller in summer because metal expands in the heat.', 'A group of flamingos is called a "flamboyance."', 'Sea otters hold hands when they sleep so they don\'t drift apart.'];
+  pass(0.25, 'relax'); addSkill('write', 0.3);
+  showModal(`<div class="newspaper"><div class="np-head">📰 THE MAPLE TIMES</div><div class="np-date">${dateText(day, true)} · Free town newspaper</div>
+    <h3>${news[0] ? esc(news[0].text) : 'Sunny days ahead for Maple Town!'}</h3>
+    ${news.slice(1).map(n => `<p>• ${esc(n.text)}</p>`).join('')}
+    ${hol ? `<p><b>${hol.icon} Today is ${hol.name}!</b> ${hol.about}</p>` : ''}${ev ? `<p><b>${ev.icon} ${ev.name}</b> is happening at Lakeside Park!</p>` : ''}
+    <h4>🌦️ Weather</h4><p>${fc || 'Check the sky!'}</p>
+    <h4>💼 Help Wanted</h4>${ads.map(j => `<div class="np-ad"><b>${esc(j.name)}</b> — $${j.pay}/hr at the ${esc(PLACES[workplaceOf(j)].name)}. ${EDU_NAMES[j.edu]}. <button class="btn sm ghost" onclick="closeModal();goInterview(${j.id})">📍 Go apply</button></div>`).join('')}
+    <h4>🤓 Fun Fact</h4><p>${pickR(facts)}</p></div>`, [{ label: 'Fold up the newspaper', cls: 'ghost' }]);
+}
+async function goInterview(id) {
+  const pid = workplaceOf(JOBS[id]);
+  await travelTo(pid); if (ENTRANCE[pid]) { S.insideOf = pid; }
+  render(); startInterview(id);
+}
+
+// ---------- fliers in the mailbox ----------
+function readingNewDay() {
+  ensureReadingState();
+  if (!S.mail) return;
+  // a fresh newspaper every morning (old ones get recycled)
+  S.mail = S.mail.filter(m => m.kind !== 'newspaper');
+  addMail({ kind: 'newspaper', from: '📰 The Maple Times', text: `Today's newspaper: ${S.news && S.news[0] ? S.news[0].text : 'news, weather and job ads'}`, paper: S.day });
+  const r = Math.random();
+  if (r < 0.35) { const j = pickR(JOBS.filter(x => meetsReqs(x) && (!S.job || S.job.id !== x.id))) || pickR(JOBS); addMail({ kind: 'flyer', from: `📄 Flier: ${PLACES[workplaceOf(j)].name}`, text: `NOW HIRING! ${j.name} — $${j.pay}/hour. ${EDU_NAMES[j.edu]}. Come in for an interview!`, job: j.id }); }
+  else if (r < 0.5) { const e = pickR([['🎳', 'Strike Zone Bowling', 'Kids bowl FREE on Tuesdays!', 'bowling'], ['🌊', 'Splash Water Park', 'Summer is coming — get ready to splash!', 'waterpark'], ['🏛️', 'Maple Museum', 'New dinosaur exhibit! Free on the 1st Sunday.', 'museum'], ['🎪', 'Lakeside Park', 'Farmers\' market every Saturday morning!', 'park'], ['🐶', 'Happy Paws Pet Shop', 'Pet adoption day this weekend!', 'petshop']]); addMail({ kind: 'flyer', from: `📄 Flier: ${e[1]}`, text: `${e[0]} ${e[2]}`, place: e[3] }); }
+  else if (r < 0.6) { const ids = Object.keys(FOODS).filter(id => saleToday(id)); addMail({ kind: 'flyer', from: '📄 Flier: Maple Supermarket', text: `🏷️ ON SALE THIS WEEK: ${ids.map(id => FOODS[id].name).join(', ') || 'lots of things'}!`, place: 'market' }); }
+}
+// the mailbox shows Read / Go there / Interview buttons for newspapers and fliers
+const _mailbox5 = mailbox;
+mailbox = function () {
+  _mailbox5();
+  const body = $('#modal-body'); if (!body) return;
+  const items = body.querySelectorAll('.mail');
+  S.mail.slice(0, 12).forEach((m, i) => {
+    const el = items[i]; if (!el) return;
+    if (m.kind === 'newspaper') el.insertAdjacentHTML('beforeend', `<button class="btn sm primary" onclick="closeModal();readNewspaper(${m.paper})">📰 Read the newspaper</button>`);
+    if (m.job !== undefined) el.insertAdjacentHTML('beforeend', `<button class="btn sm primary" onclick="closeModal();goInterview(${m.job})">📍 Go apply for this job</button>`);
+    if (m.place && PLACES[m.place]) el.insertAdjacentHTML('beforeend', `<button class="btn sm ghost" onclick="closeModal();travelTo('${m.place}')">📍 Go there</button>`);
+  });
+};
+showNews = function () { readNewspaper(); };
+
+// ---------- quick buttons for everyday things, always at the top ----------
+function quickBar() {
+  if (!S) return '';
+  const home = S.loc === 'home' && S.doorOpen;
+  const B = [['🪥', 'Brush Teeth', 'brushTeeth();done()'], ['🧼', 'Wash Hands', 'washHands();done()'], ['🚽', 'Toilet', home ? "homeAct('toilet')" : 'useToilet();done()'], ['💧', 'Drink', 'quickDrink()']];
+  if (home) B.push(['🚿', 'Shower', 'homeShowerChoice()'], ['🧹', 'Clean', "homeAct('clean')"], ['🍽️', 'Eat', 'verbEat()'], ['🍽️', 'Dishes', "homeAct('dishes')"]);
+  B.push(['📖', 'Read', 'verbRead()'], ['😴', 'Sleep', 'goToBed()']);
+  return B.map(b2 => `<button class="qb" onclick="${b2[2]}"><span>${b2[0]}</span>${b2[1]}</button>`).join('');
 }
 
 </script>
@@ -13831,6 +14119,7 @@ function ensureRealLife() {
   ensureLife4State();
   ensureTown4State();
   ensureMoney3State();
+  ensureReadingState();
 }
 
 function render() {
@@ -13844,6 +14133,7 @@ function render() {
     <div class="clock"><div class="big">${fmtTime(S.hour)}</div><div class="muted">${wd}, ${dateText()}${isWeekend() ? ' 🎉' : ''} · ${SEASONS[seasonOf()].icon} ${SEASONS[seasonOf()].name}</div><div class="muted">${weatherText()}${holidayToday() ? ` · ${holidayToday().icon} ${holidayToday().name}` : ''}${eventToday() ? ` · ${eventToday().icon} ${eventToday().name}` : ''}</div></div>
     <div class="cash"><div class="big ${S.money < 0 ? 'neg' : ''}">${money(S.money)}</div><div class="muted">${S.savings > 0 ? '🐷 ' + money(S.savings) : ''}${S.loan > 0 ? ' · 💳 owe ' + money(S.loan) : ''}</div></div>`;
 
+  { const qb = $('#quickbar'); if (qb) qb.innerHTML = quickBar(); }
   $('#needs').innerHTML = Object.entries(NEEDS).map(([k, d]) =>
     `<div class="need" title="${d.name}"><span>${d.icon} ${d.name}</span>${bar(S.needs[k])}<span class="num">${Math.round(S.needs[k])}</span></div>`).join('');
 
